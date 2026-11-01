@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ind AS 102 / IFRS 2 ESOP Graded Vesting Amortization Schedule",
+  "description": "Calculates the mandatory tranche-by-tranche front-loaded amortization schedule of equity-settled share-based payment compensation expense.",
+  "type": "object",
+  "required": [
+    "grantDate",
+    "totalOptionsGranted",
+    "grantDateFairValuePerOptionInr",
+    "vestingTranches"
+  ],
+  "properties": {
+    "grantDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Grant date YYYY-MM-DD"
+    },
+    "schemeName": {
+      "type": "string",
+      "description": "Name of ESOP scheme or grant plan"
+    },
+    "totalOptionsGranted": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "exercisePriceInr": {
+      "type": "number",
+      "minimum": 0
+    },
+    "grantDateFairValuePerOptionInr": {
+      "type": "number",
+      "minimum": 0.01,
+      "description": "Option fair value determined via Black-Scholes-Merton model"
+    },
+    "vestingTranches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["trancheNumber", "vestingYears", "allocationPercentage"],
+        "properties": {
+          "trancheNumber": { "type": "integer", "minimum": 1 },
+          "vestingYears": { "type": "number", "minimum": 0.5 },
+          "allocationPercentage": { "type": "number", "minimum": 0, "maximum": 100 },
+          "expectedForfeitureRate": { "type": "number", "minimum": 0, "maximum": 100, "default": 0 }
+        }
+      }
+    }
+  }
+}

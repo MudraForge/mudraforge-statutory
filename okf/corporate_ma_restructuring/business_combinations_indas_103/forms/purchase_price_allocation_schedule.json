@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IndAS103PurchasePriceAllocationSchedule",
+  "description": "Standardized regulatory and compliance reporting schedule for business combinations, purchase price allocation (PPA), and goodwill determination under Ind AS 103 / IFRS 3.",
+  "type": "object",
+  "required": [
+    "acquisitionIdentifier",
+    "acquirerName",
+    "acquireeName",
+    "acquisitionDate",
+    "considerationTransferred",
+    "identifiableAssetsAcquired",
+    "liabilitiesAssumed",
+    "nonControllingInterest",
+    "goodwillOrBargainPurchase"
+  ],
+  "properties": {
+    "acquisitionIdentifier": {
+      "type": "string",
+      "pattern": "^[A-Z0-9_-]+$"
+    },
+    "acquirerName": {
+      "type": "string"
+    },
+    "acquireeName": {
+      "type": "string"
+    },
+    "acquisitionDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "considerationTransferred": {
+      "type": "object",
+      "required": [
+        "cashConsiderationInr",
+        "equitySharesFairValueInr",
+        "contingentConsiderationFairValueInr",
+        "deferredConsiderationPresentValueInr",
+        "totalConsiderationTransferredInr"
+      ],
+      "properties": {
+        "cashConsiderationInr": { "type": "number", "minimum": 0 },
+        "equitySharesFairValueInr": { "type": "number", "minimum": 0 },
+        "contingentConsiderationFairValueInr": { "type": "number", "minimum": 0 },
+        "deferredConsiderationPresentValueInr": { "type": "number", "minimum": 0 },
+        "totalConsiderationTransferredInr": { "type": "number", "minimum": 0 }
+      }
+    },
+    "identifiableAssetsAcquired": {
+      "type": "object",
+      "required": [
+        "tangibleAssetsFairValueInr",
+        "identifiableIntangiblesFairValueInr",
+        "totalIdentifiableAssetsInr"
+      ],
+      "properties": {
+        "tangibleAssetsFairValueInr": { "type": "number", "minimum": 0 },
+        "identifiableIntangiblesFairValueInr": { "type": "number", "minimum": 0 },
+        "totalIdentifiableAssetsInr": { "type": "number", "minimum": 0 }
+      }
+    },
+    "liabilitiesAssumed": {
+      "type": "object",
+      "required": [
+        "borrowingsFairValueInr",
+        "tradePayablesAndAccrualsInr",
+        "deferredTaxLiabilityInr",
+        "totalLiabilitiesAssumedInr"
+      ],
+      "properties": {
+        "borrowingsFairValueInr": { "type": "number", "minimum": 0 },
+        "tradePayablesAndAccrualsInr": { "type": "number", "minimum": 0 },
+        "deferredTaxLiabilityInr": { "type": "number", "minimum": 0 },
+        "totalLiabilitiesAssumedInr": { "type": "number", "minimum": 0 }
+      }
+    },
+    "nonControllingInterest": {
+      "type": "object",
+      "required": [
+        "measurementMethod",
+        "nciPercentage",
+        "nciAmountInr"
+      ],
+      "properties": {
+        "measurementMethod": {
+          "type": "string",
+          "enum": ["PROPORTIONATE_SHARE", "FAIR_VALUE"]
+        },
+        "nciPercentage": { "type": "number", "minimum": 0, "maximum": 100 },
+        "nciAmountInr": { "type": "number", "minimum": 0 }
+      }
+    },
+    "goodwillOrBargainPurchase": {
+      "type": "object",
+      "required": [
+        "netIdentifiableAssetsInr",
+        "disposition",
+        "resultingAmountInr"
+      ],
+      "properties": {
+        "netIdentifiableAssetsInr": { "type": "number" },
+        "disposition": {
+          "type": "string",
+          "enum": ["GOODWILL_RECOGNIZED", "BARGAIN_PURCHASE_CAPITAL_RESERVE"]
+        },
+        "resultingAmountInr": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "sectionId": "INDAS_12_IAS_12_ASC_740_INCOME_TAXES",
+  "sectionCode": "INDAS-12-ASC-740",
+  "aliases": [
+    "Ind AS 12",
+    "IAS 12",
+    "ASC 740",
+    "deferred tax",
+    "DTA",
+    "DTL",
+    "deferred tax asset",
+    "deferred tax liability",
+    "temporary difference",
+    "effective tax rate",
+    "ETR reconciliation",
+    "book tax difference"
+  ],
+  "governingStatute": "Companies (Indian Accounting Standards) Rules, 2015 read with Section 133 of Companies Act, 2013, Income-tax Act, 1961, and US GAAP FASB ASC Topic 740 (Income Taxes)",
+  "statutorySection": "Ind AS 12 (Income Taxes) converged with IAS 12 and aligned with US GAAP ASC 740",
+  "successorStatute": "Companies Act, 2013 (Indian Accounting Standards)",
+  "successorSection": "Ind AS 12",
+  "title": "Income Taxes & Deferred Tax Accounting (Balance Sheet Temporary Differences & Effective Tax Rate Reconciliation)",
+  "effectivePeriod": {
+    "validFrom": "2015-04-01",
+    "validTo": "OPEN_ENDED",
+    "annualReset": "Annual and quarterly remeasurement of temporary differences, DTA recoverability test, and enacted tax rate changes",
+    "sunsetNotes": "Mandatory standard notified via MCA G.S.R. 111(E) effective FY 2015-16 onwards."
+  },
+  "plainTextSummary": "Under Ind AS 12 (converged with IAS 12 and aligned with US GAAP ASC 740), income taxes comprise current tax and deferred tax. Current tax represents the amount of income taxes payable or recoverable in respect of the taxable profit or tax loss for the period, calculated using enacted tax rates (e.g. 25.168% under Section 115BAA or 30% plus surcharge and cess). Deferred tax is accounted for using the balance sheet liability method, measuring temporary differences between the carrying amounts of assets and liabilities in the financial statements and their corresponding tax bases. Deductible temporary differences generate Deferred Tax Assets (DTAs), such as statutory disallowances for delayed MSME payments under Section 43B(h), unpaid employee benefits under Section 43B, Expected Credit Loss provisions under Ind AS 109 disallowed under Section 36(1)(vii), and lease liabilities under Ind AS 116. DTAs are recognized only to the extent that it is probable that future taxable profit will be available against which the deductible temporary differences can be utilized. Taxable temporary differences generate Deferred Tax Liabilities (DTLs), primarily arising from accelerated tax depreciation claimed under Section 32 of the Income-tax Act, 1961 exceeding straight-line book depreciation under Companies Act Schedule II. The net deferred tax charge or credit is recognized in the Statement of Profit and Loss, except for items recognized in Other Comprehensive Income (OCI) or directly in equity. The standard requires formal disclosure of an Effective Tax Rate (ETR) reconciliation explaining the variance between the accounting tax expense and the product of accounting profit multiplied by the applicable statutory tax rate.",
+  "keyStatutoryThresholds": {
+    "balanceSheetApproachMandatory": true,
+    "dtaRecognitionPrudenceStandard": "PROBABLE_FUTURE_TAXABLE_PROFIT",
+    "corporateConcessionalTaxRateSec115BAA": 0.25168,
+    "corporateStandardTaxRate": 0.30,
+    "temporaryDifferencesTrackedCount": 6,
+    "effectiveTaxRateReconciliationMandatory": true
+  },
+  "officialCitations": [
+    {
+      "authority": "Ministry of Corporate Affairs (MCA)",
+      "instrument": "Companies (Indian Accounting Standards) Rules, 2015 (G.S.R. 111(E))",
+      "subject": "Notification of Ind AS 12 Income Taxes",
+      "officialUrl": "https://www.mca.gov.in/content/mca/global/en/acts-rules/ebooks/accounting-standards.html"
+    },
+    {
+      "authority": "Institute of Chartered Accountants of India (ICAI)",
+      "instrument": "ICAI Guidance Note on Accounting for Taxes on Income under Ind AS 12",
+      "subject": "Comprehensive guidance on temporary differences, tax base derivation, and DTA recoverability assessment",
+      "officialUrl": "https://www.icai.org/post.html?post_id=14323"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Tax Audit Report Form 3CD Clause 21 / 26 Disallowance Schedule",
+    "Depreciation Comparison Schedule: Companies Act Schedule II vs Income-tax Act Section 32 WDV Block",
+    "Detailed Deferred Tax Working Paper (DTA/DTL line-by-line derivation)",
+    "Effective Tax Rate (ETR) Numerical Reconciliation Statement",
+    "Management Assessment of DTA Recoverability & Future Taxable Profit Projections"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.11.0"
+}

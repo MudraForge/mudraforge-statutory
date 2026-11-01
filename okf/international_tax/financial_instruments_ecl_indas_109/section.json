@@ -1,0 +1,62 @@
+{
+  "sectionId": "INDAS_109_IFRS_9_ECL_IMPAIRMENT",
+  "sectionCode": "INDAS-109-IFRS-9",
+  "aliases": [
+    "Ind AS 109",
+    "IFRS 9",
+    "ASC 326",
+    "CECL",
+    "expected credit loss",
+    "ECL provision",
+    "simplified approach",
+    "provision matrix",
+    "trade receivables impairment",
+    "SICR",
+    "stage 1 2 3 impairment",
+    "financial instruments"
+  ],
+  "governingStatute": "Companies (Indian Accounting Standards) Rules, 2015 read with Section 133 of Companies Act, 2013 and US GAAP FASB Accounting Standards Codification Topic 326 (Financial Instruments - Credit Losses / CECL)",
+  "statutorySection": "Ind AS 109 (Financial Instruments: Recognition, Measurement, and Impairment) converged with IFRS 9 and aligned with US GAAP ASC 326",
+  "successorStatute": "Companies Act, 2013 (Indian Accounting Standards)",
+  "successorSection": "Ind AS 109",
+  "title": "Financial Instruments: Classification, Measurement & Expected Credit Loss (ECL) Impairment",
+  "effectivePeriod": {
+    "validFrom": "2018-04-01",
+    "validTo": "OPEN_ENDED",
+    "annualReset": "Continuous credit loss matrix review, transition between Stage 1, 2, and 3, and forward-looking macroeconomic recalibration at quarterly and annual reporting dates",
+    "sunsetNotes": "Mandatory standard notified via MCA G.S.R. 365(E) effective FY 2018-19 onwards."
+  },
+  "plainTextSummary": "Under Ind AS 109 (converged with IFRS 9 and conceptually aligned with US GAAP ASC 326 CECL), financial assets are classified based on the entity's business model for managing them and their contractual cash flow characteristics into three measurement categories: Amortised Cost, Fair Value through Other Comprehensive Income (FVTOCI), and Fair Value through Profit or Loss (FVTPL). The standard enforces a forward-looking Expected Credit Loss (ECL) impairment model that replaces the incurred loss model of legacy Ind AS 39. For general financial assets, a 3-stage model applies: Stage 1 (12-month ECL for assets with no Significant Increase in Credit Risk / SICR since origination), Stage 2 (Lifetime ECL for assets experiencing SICR), and Stage 3 (Lifetime ECL for credit-impaired assets). For trade receivables, contract assets, and lease receivables without a significant financing component, Ind AS 109 mandates or permits a Simplified Approach using a Provision Matrix, where lifetime expected credit losses are computed across aging brackets using historical default rates adjusted for current and forward-looking economic forecasts. Under Indian Income Tax law, an ECL provision recognized in books under Ind AS 109 is a non-deductible contingent provision disallowed under Section 36(1)(vii) read with Section 40A(9) until actual irrecoverable write-off, creating a mandatory deferred tax asset (DTA) under Ind AS 12.",
+  "keyStatutoryThresholds": {
+    "stagingModelCategories": 3,
+    "simplifiedApproachPermitted": true,
+    "tradeReceivablesNoFinancingComponentSimplifiedMandatory": true,
+    "forwardLookingMacroAdjustmentMandatory": true,
+    "incomeTaxDeductibleOnProvision": false,
+    "incomeTaxDeductibleOnWriteOff": true,
+    "lossAllowanceBalanceSheetOffset": "CONTRA_ASSET_REDUCING_GROSS_RECEIVABLES"
+  },
+  "officialCitations": [
+    {
+      "authority": "Ministry of Corporate Affairs (MCA)",
+      "instrument": "Companies (Indian Accounting Standards) Rules, 2015 (G.S.R. 365(E))",
+      "subject": "Notification of Ind AS 109 Financial Instruments and Expected Credit Loss Framework",
+      "officialUrl": "https://www.mca.gov.in/content/mca/global/en/acts-rules/ebooks/accounting-standards.html"
+    },
+    {
+      "authority": "Institute of Chartered Accountants of India (ICAI)",
+      "instrument": "ICAI Educational Material on Indian Accounting Standard (Ind AS) 109 Financial Instruments",
+      "subject": "Detailed practical guidance on simplified provision matrix, SICR assessment, and staging criteria",
+      "officialUrl": "https://www.icai.org/post.html?post_id=14323"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Aged Trade Receivables Register segmented by billing intervals",
+    "Historical Loss Rate Computation (3-5 year observation period)",
+    "Macroeconomic Forward-Looking Calibration Note (GDP, interest rate, industry default overlay)",
+    "Credit Risk Policy & Staging Transition Criteria Documentation",
+    "Deferred Tax Asset (DTA) Reconciliation Schedule under Ind AS 12 bridging P&L provision to Section 36(1)(vii) tax add-back"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "2.11.0"
+}

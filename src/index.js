@@ -29,6 +29,15 @@ import {
     evaluateSection79LossContinuity,
     evaluateSection281TaxClearance,
     revalueForeignExchangeIndAs109,
+    calculateBusinessCombinationsIndAs103,
+    calculateImpairmentIndAs36,
+    calculateRevenueAllocationIndAs115,
+    calculateLeaseAmortizationIndAs116,
+    calculateExpectedCreditLossIndAs109,
+    calculateEsopAmortizationIndAs102,
+    calculateDeferredTaxIndAs12,
+    evaluateProvisionsAndContingenciesIndAs37,
+    calculateForeignCurrencyIndAs21,
     evaluateSection194Q,
     evaluateSection194C,
     evaluateSection194H,
@@ -107,7 +116,7 @@ export { STATUTORY_CLIENT_VERSION, DEFAULT_BASE_URL };
 /**
  * Current verified Merkle root digest for the active OKF v0.2 corpus.
  */
-export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-a94baf08cbdea064a7b1bd25c1e1311821bf75e9b0d15cc8e0648339d487c79b';
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-b17c37b2724aece2a28beaab5720a777ae27e661ac51f1436be6eff3ca5ef64b';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
 
 /**
@@ -115,6 +124,7 @@ export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
  * Prevents unauthorized bundle substitution attacks even if an attacker controls the remote endpoint.
  */
 export const PINNED_RELEASE_ROOTS = new Set([
+    'sha256-b17c37b2724aece2a28beaab5720a777ae27e661ac51f1436be6eff3ca5ef64b', // feat/okf-accounting-domain-expansion (46 Sections across 5 Domains, 52 Circulars, 47 Forms)
     'sha256-a94baf08cbdea064a7b1bd25c1e1311821bf75e9b0d15cc8e0648339d487c79b', // feat/zoho-gstr2b-ap-reconciliation (38 Sections across 5 Domains, 44 Circulars, 39 Forms)
     'sha256-df76c16ed86673426eeb87fafa1c23712830ce5314339ff17fbb2e0e1795e046', // feat/notification-07-2025-composition-rent-rcm-exclusion (38 Sections across 5 Domains, 42 Circulars)
     'sha256-f7709f6a77a3b5ae16d69baf49f6e5c69bb01e29a4f13a506eb757220bf68e03', // feat/notification-09-2024-commercial-rent-rcm (38 Sections across 5 Domains, 41 Circulars)
@@ -1882,6 +1892,69 @@ export class StatutoryClient {
     }
 
     /**
+     * Business Combinations & Purchase Price Allocation (PPA) under Ind AS 103 / IFRS 3 / ASC 805.
+     */
+    calculateBusinessCombinationsIndAs103(payload) {
+        return calculateBusinessCombinationsIndAs103(payload);
+    }
+
+    /**
+     * Asset & CGU Impairment Testing & DCF Value in Use under Ind AS 36 / IAS 36 / ASC 360.
+     */
+    calculateImpairmentIndAs36(payload) {
+        return calculateImpairmentIndAs36(payload);
+    }
+
+    /**
+     * 5-Step Revenue Recognition & Relative SSP Allocation under Ind AS 115 / IFRS 15 / ASC 606.
+     */
+    calculateRevenueAllocationIndAs115(payload) {
+        return calculateRevenueAllocationIndAs115(payload);
+    }
+
+    /**
+     * Right-of-Use Asset & Lease Liability Amortization under Ind AS 116 / IFRS 16 / ASC 842.
+     */
+    calculateLeaseAmortizationIndAs116(payload) {
+        return calculateLeaseAmortizationIndAs116(payload);
+    }
+
+    /**
+     * Expected Credit Loss (ECL) Impairment under Ind AS 109 / IFRS 9 / ASC 326.
+     */
+    calculateExpectedCreditLossIndAs109(payload) {
+        return calculateExpectedCreditLossIndAs109(payload);
+    }
+
+    /**
+     * ESOP Graded Vesting Front-Loaded Amortization under Ind AS 102 / IFRS 2 / ASC 718.
+     */
+    calculateEsopAmortizationIndAs102(payload) {
+        return calculateEsopAmortizationIndAs102(payload);
+    }
+
+    /**
+     * Balance Sheet Deferred Tax (DTA / DTL) and ETR Reconciliation under Ind AS 12 / IAS 12 / ASC 740.
+     */
+    calculateDeferredTaxIndAs12(payload) {
+        return calculateDeferredTaxIndAs12(payload);
+    }
+
+    /**
+     * Provisions, Contingent Liabilities & Tax Dispute Triangulation under Ind AS 37 / IAS 37 / ASC 450.
+     */
+    evaluateProvisionsAndContingenciesIndAs37(payload) {
+        return evaluateProvisionsAndContingenciesIndAs37(payload);
+    }
+
+    /**
+     * Foreign Currency Monetary Revaluation & FCTR Translation under Ind AS 21 / IAS 21 / ASC 830.
+     */
+    calculateForeignCurrencyIndAs21(payload) {
+        return calculateForeignCurrencyIndAs21(payload);
+    }
+
+    /**
      * Section 194Q: Deduction of tax at source on purchase of goods exceeding ₹50 Lakh.
      */
     evaluateSection194Q(payload) {
@@ -3275,6 +3348,15 @@ export {
     evaluateSection79LossContinuity,
     evaluateSection281TaxClearance,
     revalueForeignExchangeIndAs109,
+    calculateBusinessCombinationsIndAs103,
+    calculateImpairmentIndAs36,
+    calculateRevenueAllocationIndAs115,
+    calculateLeaseAmortizationIndAs116,
+    calculateExpectedCreditLossIndAs109,
+    calculateEsopAmortizationIndAs102,
+    calculateDeferredTaxIndAs12,
+    evaluateProvisionsAndContingenciesIndAs37,
+    calculateForeignCurrencyIndAs21,
     evaluateSection194Q,
     evaluateSection194C,
     evaluateSection194H,

@@ -19,7 +19,7 @@
  */
 
 // Canonical OKF v0.2 Release Merkle Roots & Versions
-export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-a94baf08cbdea064a7b1bd25c1e1311821bf75e9b0d15cc8e0648339d487c79b';
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-b17c37b2724aece2a28beaab5720a777ae27e661ac51f1436be6eff3ca5ef64b';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
 export const STATUTORY_PACKAGE_VERSION = '2.11.0';
 export const OKF_CORPUS_VERSION = '2.11.0';
@@ -121,7 +121,8 @@ export function cleanNumericAmount(val, options = {}) {
     const {
         strict = false,
         fieldName = 'amount',
-        interpretCreditAsNegative = false
+        interpretCreditAsNegative = false,
+        defaultValue = 0
     } = options;
 
     if (typeof val === 'number') {
@@ -129,16 +130,16 @@ export function cleanNumericAmount(val, options = {}) {
             if (strict) {
                 throw new MalformedNumericInputError(val, fieldName);
             }
-            return 0;
+            return defaultValue;
         }
         return Object.is(val, -0) ? 0 : val;
     }
     if (val === null || val === undefined || typeof val === 'boolean') {
-        return 0;
+        return defaultValue;
     }
     if (typeof val === 'string') {
         const trimmed = val.trim();
-        if (!trimmed) return 0;
+        if (!trimmed) return defaultValue;
 
         let isNegative = false;
         let s = trimmed;
@@ -151,7 +152,7 @@ export function cleanNumericAmount(val, options = {}) {
             if (strict) {
                 throw new MalformedNumericInputError(val, fieldName);
             }
-            return 0;
+            return defaultValue;
         }
 
         // Strip leading currency label before parenthesis or sign: "₹ (50,000.00)" or "INR -50,000"
@@ -192,13 +193,13 @@ export function cleanNumericAmount(val, options = {}) {
             if (strict) {
                 throw new MalformedNumericInputError(val, fieldName);
             }
-            return 0;
+            return defaultValue;
         }
 
         const res = isNegative ? -Math.abs(n) : n;
         return Object.is(res, -0) ? 0 : res;
     }
-    return 0;
+    return defaultValue;
 }
 
 /**
@@ -6703,6 +6704,1294 @@ export function evaluateSection194M({
         statutoryRationale: `Cumulative payments (INR ${totalCumulative.toLocaleString('en-IN')}) exceed statutory threshold of INR 50 Lakhs. Current payment of INR ${currentAmt.toLocaleString('en-IN')} taxed at ${applicableRate}% = INR ${calculatedTds.toLocaleString('en-IN')}. Net payable: INR ${netPayable.toLocaleString('en-IN')}. File Form 26QD within 30 days of month-end.`
     };
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CORPORATE FINANCE, ACCOUNTING STANDARDS & REPORTING ENGINES
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Ind AS 103 / IFRS 3 / US GAAP ASC 805: Business Combinations & Purchase Price Allocation (PPA) Calculator.
+ *
+ * Implements deterministic PPA accounting under the acquisition method:
+ * 1. Computes total consideration transferred:
+ *    - Upfront cash consideration
+ *    - Fair value of equity shares issued (sharesCount * sharePrice)
+ *    - Fair value of contingent consideration / earnouts (probability-weighted discounted payout)
+ *    - Present value of deferred cash consideration (discounted at discountRate / WACC)
+ *    - Fair value of pre-existing non-controlling equity interest (for step acquisitions)
+ * 2. Identifies and aggregates Net Identifiable Assets acquired:
+ *    - Fair value of tangible assets (PPE, working capital, inventory)
+ *    - Fair value of separately identifiable intangible assets (customer relationships, software, brand, patents, order backlog)
+ *    - Less: Fair value of liabilities assumed (current liabilities, borrowings, contingent liabilities)
+ *    - Less: Net deferred tax liability (DTL) arising on fair value adjustments:
+ *      (fairValueIntangiblesStepUp - taxBaseIntangibles) * taxRate
+ * 3. Incorporates Non-Controlling Interest (NCI):
+ *    - 'PROPORTIONATE_SHARE': nciPercentage * netIdentifiableAssets
+ *    - 'FAIR_VALUE': nciFairValue
+ * 4. Determines Goodwill or Gain on Bargain Purchase (Capital Reserve):
+ *    - Acquisition Basis = Consideration Transferred + NCI
+ *    - If Acquisition Basis > Net Identifiable Assets:
+ *        Goodwill = Acquisition Basis - Net Identifiable Assets (capitalized as indefinite-life intangible, tested under Ind AS 36)
+ *    - If Net Identifiable Assets > Acquisition Basis:
+ *        Bargain Purchase Gain = Net Identifiable Assets - Acquisition Basis (requires reassessment; recognized in OCI and accumulated in Capital Reserve)
+ * 5. Expensing of Transaction Costs:
+ *    - Legal, investment banking, due diligence, valuation fees are expensed immediately in P&L (not capitalized into Goodwill)
+ * 6. Generates balanced double-entry vouchers to exact paisa.
+ * 7. Enforces statutory invariant: isAuthorizedToDisburse: false.
+ */
+export function calculateBusinessCombinationsIndAs103(params = {}) {
+    const acquisitionId = params.acquisitionId || 'ACQ-01';
+    const acquirerName = params.acquirerName || 'Acquiring Enterprise';
+    const acquireeName = params.acquireeName || 'Acquired Business Entity';
+    const acquisitionDate = params.acquisitionDate || new Date().toISOString().split('T')[0];
+
+    // 1. Consideration Transferred
+    const rawCons = params.consideration || {};
+    const cashConsideration = roundToPaisa(cleanNumericAmount(rawCons.upfrontCashInr, { defaultValue: 0 }));
+
+    let equitySharesFairValue = 0;
+    if (rawCons.equitySharesIssued && typeof rawCons.equitySharesIssued === 'object') {
+        const count = cleanNumericAmount(rawCons.equitySharesIssued.count, { defaultValue: 0 });
+        const price = cleanNumericAmount(rawCons.equitySharesIssued.sharePriceInr, { defaultValue: 0 });
+        equitySharesFairValue = roundToPaisa(count * price);
+    } else {
+        equitySharesFairValue = roundToPaisa(cleanNumericAmount(rawCons.equitySharesFairValueInr, { defaultValue: 0 }));
+    }
+
+    const contingentConsideration = roundToPaisa(cleanNumericAmount(rawCons.contingentConsiderationFairValueInr, { defaultValue: 0 }));
+
+    let deferredConsiderationPv = 0;
+    if (rawCons.deferredCashConsideration && typeof rawCons.deferredCashConsideration === 'object') {
+        const amt = cleanNumericAmount(rawCons.deferredCashConsideration.amountInr, { defaultValue: 0 });
+        const r = cleanNumericAmount(rawCons.deferredCashConsideration.discountRate, { defaultValue: 0.10 });
+        const yrs = cleanNumericAmount(rawCons.deferredCashConsideration.payableInYears, { defaultValue: 1 });
+        deferredConsiderationPv = roundToPaisa(amt / Math.pow(1 + r, yrs));
+    } else {
+        deferredConsiderationPv = roundToPaisa(cleanNumericAmount(rawCons.deferredConsiderationPresentValueInr, { defaultValue: 0 }));
+    }
+
+    const preExistingInterest = roundToPaisa(cleanNumericAmount(rawCons.preExistingInterestFairValueInr, { defaultValue: 0 }));
+
+    const totalConsiderationTransferred = roundToPaisa(
+        cashConsideration + equitySharesFairValue + contingentConsideration + deferredConsiderationPv + preExistingInterest
+    );
+
+    // 2. Identifiable Assets Acquired
+    const rawAssets = params.identifiableAssets || {};
+    const tangibleAssets = roundToPaisa(cleanNumericAmount(rawAssets.tangibleAssetsFairValueInr, { defaultValue: 0 }));
+    const identifiableIntangibles = roundToPaisa(cleanNumericAmount(rawAssets.identifiableIntangiblesFairValueInr, { defaultValue: 0 }));
+    const otherAssets = roundToPaisa(cleanNumericAmount(rawAssets.otherAssetsFairValueInr, { defaultValue: 0 }));
+    const totalGrossAssets = roundToPaisa(tangibleAssets + identifiableIntangibles + otherAssets);
+
+    // 3. Liabilities Assumed
+    const rawLiab = params.liabilitiesAssumed || {};
+    const borrowings = roundToPaisa(cleanNumericAmount(rawLiab.borrowingsFairValueInr, { defaultValue: 0 }));
+    const workingCapitalLiab = roundToPaisa(cleanNumericAmount(rawLiab.workingCapitalLiabilitiesInr, { defaultValue: 0 }));
+    const contingentLiab = roundToPaisa(cleanNumericAmount(rawLiab.contingentLiabilitiesRecognizedInr, { defaultValue: 0 }));
+
+    // Deferred Tax on Intangibles Step-Up
+    const taxRate = cleanNumericAmount(params.taxRate, { defaultValue: 0.25168 });
+    const intangiblesTaxBase = cleanNumericAmount(params.intangiblesTaxBaseInr, { defaultValue: 0 });
+    const intangiblesStepUp = Math.max(0, identifiableIntangibles - intangiblesTaxBase);
+    const deferredTaxLiability = roundToPaisa(intangiblesStepUp * taxRate);
+
+    const totalLiabilitiesAssumed = roundToPaisa(borrowings + workingCapitalLiab + contingentLiab + deferredTaxLiability);
+    const netIdentifiableAssets = roundToPaisa(totalGrossAssets - totalLiabilitiesAssumed);
+
+    if (totalConsiderationTransferred <= 0 && netIdentifiableAssets <= 0) {
+        return {
+            status: 'INSUFFICIENT_DATA',
+            standard: 'Ind AS 103 / IFRS 3 / US GAAP ASC 805',
+            acquisitionId,
+            isAuthorizedToDisburse: false,
+            statutoryRationale: 'Consideration transferred or identifiable net assets must be greater than zero.'
+        };
+    }
+
+    // 4. Non-Controlling Interest (NCI)
+    const rawNci = params.nonControllingInterest || {};
+    const nciMethod = String(rawNci.method || 'PROPORTIONATE_SHARE').toUpperCase();
+    const nciPct = cleanNumericAmount(rawNci.percentage, { defaultValue: 0 });
+    let nciAmount = 0;
+    if (nciMethod === 'FAIR_VALUE' && rawNci.fairValueInr) {
+        nciAmount = roundToPaisa(cleanNumericAmount(rawNci.fairValueInr, { defaultValue: 0 }));
+    } else {
+        nciAmount = roundToPaisa(Math.max(0, netIdentifiableAssets * (nciPct / 100)));
+    }
+
+    // 5. Acquisition Basis & Goodwill / Capital Reserve
+    const acquisitionBasis = roundToPaisa(totalConsiderationTransferred + nciAmount);
+    const excess = roundToPaisa(acquisitionBasis - netIdentifiableAssets);
+
+    let goodwillInr = 0;
+    let bargainPurchaseGainInr = 0;
+    let disposition = '';
+    let statutoryRationale = '';
+
+    if (excess > 0) {
+        goodwillInr = excess;
+        disposition = 'GOODWILL_RECOGNIZED';
+        statutoryRationale = `Ind AS 103 PPA complete: Consideration of INR ${totalConsiderationTransferred.toLocaleString('en-IN')} plus NCI of INR ${nciAmount.toLocaleString('en-IN')} exceeds Net Identifiable Assets of INR ${netIdentifiableAssets.toLocaleString('en-IN')}. Goodwill of INR ${goodwillInr.toLocaleString('en-IN')} capitalized on balance sheet. Mandatory annual impairment test under Ind AS 36 (amortization prohibited).`;
+    } else if (excess < 0) {
+        bargainPurchaseGainInr = Math.abs(excess);
+        disposition = 'BARGAIN_PURCHASE_CAPITAL_RESERVE';
+        statutoryRationale = `Ind AS 103 PPA complete: Net Identifiable Assets of INR ${netIdentifiableAssets.toLocaleString('en-IN')} exceed Acquisition Basis of INR ${acquisitionBasis.toLocaleString('en-IN')}. Bargain purchase gain of INR ${bargainPurchaseGainInr.toLocaleString('en-IN')} identified. After mandatory reassessment per Ind AS 103 paragraph 36, recognized in OCI and accumulated in Equity as Capital Reserve.`;
+    } else {
+        disposition = 'PAR_ACQUISITION';
+        statutoryRationale = `Ind AS 103 PPA complete: Acquisition Basis exactly equals Net Identifiable Assets of INR ${netIdentifiableAssets.toLocaleString('en-IN')}. Zero goodwill or bargain purchase gain recognized.`;
+    }
+
+    // 6. Acquisition-Related Costs (Expensed immediately in P&L)
+    const transactionCosts = roundToPaisa(cleanNumericAmount(params.acquisitionRelatedCostsInr, { defaultValue: 0 }));
+
+    // 7. General Ledger Journal Entries
+    const journalEntries = [];
+    if (tangibleAssets > 0) {
+        journalEntries.push({ account: 'Property, Plant & Equipment (Fair Value)', type: 'PPE', debitInr: tangibleAssets, creditInr: 0, reference: acquisitionId });
+    }
+    if (identifiableIntangibles > 0) {
+        journalEntries.push({ account: 'Identifiable Intangible Assets (Fair Value)', type: 'INTANGIBLE', debitInr: identifiableIntangibles, creditInr: 0, reference: acquisitionId });
+    }
+    if (otherAssets > 0) {
+        journalEntries.push({ account: 'Other Net Current Assets', type: 'CURRENT_ASSET', debitInr: otherAssets, creditInr: 0, reference: acquisitionId });
+    }
+    if (goodwillInr > 0) {
+        journalEntries.push({ account: 'Goodwill on Consolidation', type: 'INTANGIBLE_GOODWILL', debitInr: goodwillInr, creditInr: 0, reference: acquisitionId });
+    }
+    if (borrowings > 0) {
+        journalEntries.push({ account: 'Borrowings Assumed (Fair Value)', type: 'NON_CURRENT_LIABILITY', debitInr: 0, creditInr: borrowings, reference: acquisitionId });
+    }
+    if (workingCapitalLiab > 0) {
+        journalEntries.push({ account: 'Working Capital Liabilities Assumed', type: 'CURRENT_LIABILITY', debitInr: 0, creditInr: workingCapitalLiab, reference: acquisitionId });
+    }
+    if (contingentLiab > 0) {
+        journalEntries.push({ account: 'Contingent Liabilities Recognized', type: 'PROVISION', debitInr: 0, creditInr: contingentLiab, reference: acquisitionId });
+    }
+    if (deferredTaxLiability > 0) {
+        journalEntries.push({ account: 'Deferred Tax Liability (Ind AS 12 / Step-Up)', type: 'DTL', debitInr: 0, creditInr: deferredTaxLiability, reference: acquisitionId });
+    }
+    if (nciAmount > 0) {
+        journalEntries.push({ account: 'Non-Controlling Interest (Equity)', type: 'EQUITY_NCI', debitInr: 0, creditInr: nciAmount, reference: acquisitionId });
+    }
+    if (bargainPurchaseGainInr > 0) {
+        journalEntries.push({ account: 'Capital Reserve (Bargain Purchase Gain in OCI)', type: 'EQUITY_CAPITAL_RESERVE', debitInr: 0, creditInr: bargainPurchaseGainInr, reference: acquisitionId });
+    }
+    if (cashConsideration > 0) {
+        journalEntries.push({ account: 'Cash / Bank Rail Settlement', type: 'CURRENT_ASSET', debitInr: 0, creditInr: cashConsideration, reference: acquisitionId });
+    }
+    if (equitySharesFairValue > 0) {
+        journalEntries.push({ account: 'Equity Share Capital & Securities Premium', type: 'EQUITY', debitInr: 0, creditInr: equitySharesFairValue, reference: acquisitionId });
+    }
+    if (contingentConsideration > 0) {
+        journalEntries.push({ account: 'Contingent Consideration Liability', type: 'FINANCIAL_LIABILITY', debitInr: 0, creditInr: contingentConsideration, reference: acquisitionId });
+    }
+    if (deferredConsiderationPv > 0) {
+        journalEntries.push({ account: 'Deferred Consideration Payable (PV)', type: 'NON_CURRENT_LIABILITY', debitInr: 0, creditInr: deferredConsiderationPv, reference: acquisitionId });
+    }
+    if (preExistingInterest > 0) {
+        journalEntries.push({ account: 'Investment in Acquiree (Pre-existing Interest De-recognized)', type: 'INVESTMENT', debitInr: 0, creditInr: preExistingInterest, reference: acquisitionId });
+    }
+
+    if (transactionCosts > 0) {
+        journalEntries.push({ account: 'Acquisition Transaction Costs (P&L Expense)', type: 'OPERATING_EXPENSE', debitInr: transactionCosts, creditInr: 0, reference: acquisitionId });
+        journalEntries.push({ account: 'Accounts Payable / Bank (Advisory Fees)', type: 'CURRENT_LIABILITY', debitInr: 0, creditInr: transactionCosts, reference: acquisitionId });
+    }
+
+    const totalDebits = roundToPaisa(journalEntries.reduce((acc, e) => acc + e.debitInr, 0));
+    const totalCredits = roundToPaisa(journalEntries.reduce((acc, e) => acc + e.creditInr, 0));
+    const isDoubleEntryBalanced = Math.abs(totalDebits - totalCredits) < 0.001;
+
+    return {
+        status: 'SUCCESS',
+        standard: 'Ind AS 103 / IFRS 3 / US GAAP ASC 805',
+        acquisitionId,
+        acquirerName,
+        acquireeName,
+        acquisitionDate,
+        considerationSummary: {
+            cashConsiderationInr: cashConsideration,
+            equitySharesFairValueInr: equitySharesFairValue,
+            contingentConsiderationFairValueInr: contingentConsideration,
+            deferredConsiderationPresentValueInr: deferredConsiderationPv,
+            preExistingInterestFairValueInr: preExistingInterest,
+            totalConsiderationTransferredInr: totalConsiderationTransferred
+        },
+        netIdentifiableAssetsSummary: {
+            tangibleAssetsFairValueInr: tangibleAssets,
+            identifiableIntangiblesFairValueInr: identifiableIntangibles,
+            otherAssetsFairValueInr: otherAssets,
+            totalGrossAssetsFairValueInr: totalGrossAssets,
+            borrowingsFairValueInr: borrowings,
+            workingCapitalLiabilitiesInr: workingCapitalLiab,
+            contingentLiabilitiesRecognizedInr: contingentLiab,
+            deferredTaxLiabilityInr: deferredTaxLiability,
+            totalLiabilitiesAssumedInr: totalLiabilitiesAssumed,
+            netIdentifiableAssetsInr: netIdentifiableAssets
+        },
+        nonControllingInterestSummary: {
+            measurementMethod: nciMethod,
+            nciPercentage: nciPct,
+            nciAmountInr: nciAmount
+        },
+        purchasePriceAllocationOutcome: {
+            acquisitionBasisInr: acquisitionBasis,
+            netIdentifiableAssetsInr: netIdentifiableAssets,
+            disposition,
+            goodwillRecognizedInr: goodwillInr,
+            gainOnBargainPurchaseCapitalReserveInr: bargainPurchaseGainInr,
+            transactionCostsExpensedInr: transactionCosts
+        },
+        journalEntries,
+        isDoubleEntryBalanced,
+        isAuthorizedToDisburse: false,
+        statutoryRationale
+    };
+}
+
+/**
+ * Ind AS 115 / IFRS 15 / US GAAP ASC 606: 5-Step Revenue Recognition & Relative SSP Allocation Calculator.
+ */
+export function calculateRevenueAllocationIndAs115(params = {}) {
+    const rawPrice = cleanNumericAmount(params.transactionPrice, { defaultValue: 0 });
+    const transactionPrice = roundToPaisa(rawPrice);
+    const obligations = Array.isArray(params.performanceObligations) ? params.performanceObligations : [];
+
+    if (transactionPrice <= 0 || obligations.length === 0) {
+        return {
+            status: 'INSUFFICIENT_DATA',
+            standard: 'Ind AS 115 / IFRS 15 / US GAAP ASC 606',
+            transactionPriceInr: transactionPrice,
+            performanceObligationsCount: obligations.length,
+            isAuthorizedToDisburse: false,
+            statutoryRationale: 'Transaction price and at least one distinct performance obligation must be specified.'
+        };
+    }
+
+    let totalSsp = 0;
+    const prepped = obligations.map((ob, idx) => {
+        const ssp = roundToPaisa(cleanNumericAmount(ob.standaloneSellingPrice, { defaultValue: 0 }));
+        totalSsp += ssp;
+        return {
+            id: ob.id || `PO-${idx + 1}`,
+            description: ob.description || `Performance Obligation ${idx + 1}`,
+            standaloneSellingPrice: ssp,
+            satisfactionPattern: ob.satisfactionPattern === 'POINT_IN_TIME' ? 'POINT_IN_TIME' : 'OVER_TIME',
+            percentageCompletion: Math.min(100, Math.max(0, cleanNumericAmount(ob.percentageCompletion, { defaultValue: 0 }))),
+            termMonths: Math.max(0, cleanNumericAmount(ob.termMonths, { defaultValue: 0 })),
+            monthsElapsed: Math.max(0, cleanNumericAmount(ob.monthsElapsed, { defaultValue: 0 })),
+            isPointInTimeSatisfied: Boolean(ob.isPointInTimeSatisfied),
+            amountBilledToDate: roundToPaisa(cleanNumericAmount(ob.amountBilledToDate, { defaultValue: 0 }))
+        };
+    });
+
+    totalSsp = roundToPaisa(totalSsp);
+    const sspDenominator = totalSsp > 0 ? totalSsp : transactionPrice;
+    const bundleDiscount = roundToPaisa(Math.max(0, totalSsp - transactionPrice));
+    const bundleDiscountPercentage = totalSsp > 0 ? Number(((bundleDiscount / totalSsp) * 100).toFixed(2)) : 0;
+
+    let allocatedSum = 0;
+    let totalRevenueRecognized = 0;
+    let totalBilled = 0;
+
+    const allocatedObligations = prepped.map((ob, idx) => {
+        let allocatedAmount = 0;
+        if (idx === prepped.length - 1) {
+            allocatedAmount = roundToPaisa(transactionPrice - allocatedSum);
+        } else {
+            const ratio = ob.standaloneSellingPrice / sspDenominator;
+            allocatedAmount = roundToPaisa(transactionPrice * ratio);
+            allocatedSum = roundToPaisa(allocatedSum + allocatedAmount);
+        }
+
+        let revenueRecognized = 0;
+        let satisfactionProgressPercent = 0;
+
+        if (ob.satisfactionPattern === 'POINT_IN_TIME') {
+            if (ob.isPointInTimeSatisfied) {
+                revenueRecognized = allocatedAmount;
+                satisfactionProgressPercent = 100;
+            }
+        } else {
+            if (ob.percentageCompletion > 0) {
+                satisfactionProgressPercent = ob.percentageCompletion;
+                revenueRecognized = roundToPaisa(allocatedAmount * (ob.percentageCompletion / 100));
+            } else if (ob.termMonths > 0) {
+                const fraction = Math.min(1, ob.monthsElapsed / ob.termMonths);
+                satisfactionProgressPercent = Number((fraction * 100).toFixed(2));
+                revenueRecognized = roundToPaisa(allocatedAmount * fraction);
+            }
+        }
+
+        const unearnedDeferredRevenue = roundToPaisa(Math.max(0, allocatedAmount - revenueRecognized));
+        totalRevenueRecognized = roundToPaisa(totalRevenueRecognized + revenueRecognized);
+        totalBilled = roundToPaisa(totalBilled + ob.amountBilledToDate);
+
+        return {
+            id: ob.id,
+            description: ob.description,
+            standaloneSellingPriceInr: ob.standaloneSellingPrice,
+            sspWeightPercentage: Number(((ob.standaloneSellingPrice / sspDenominator) * 100).toFixed(2)),
+            allocatedTransactionPriceInr: allocatedAmount,
+            satisfactionPattern: ob.satisfactionPattern,
+            satisfactionProgressPercent,
+            cumulativeRevenueRecognizedInr: revenueRecognized,
+            unearnedDeferredRevenueInr: unearnedDeferredRevenue,
+            amountBilledToDateInr: ob.amountBilledToDate
+        };
+    });
+
+    const netContractPosition = roundToPaisa(totalRevenueRecognized - totalBilled);
+    const contractAssetUnbilled = netContractPosition > 0 ? netContractPosition : 0;
+    const contractLiabilityDeferred = netContractPosition < 0 ? Math.abs(netContractPosition) : 0;
+
+    return {
+        status: 'SUCCESS',
+        standard: 'Ind AS 115 / IFRS 15 / US GAAP ASC 606',
+        contractId: params.contractId || 'CONTRACT-UNSPECIFIED',
+        totalContractTransactionPriceInr: transactionPrice,
+        totalStandaloneSellingPriceInr: totalSsp,
+        bundleDiscountInr: bundleDiscount,
+        bundleDiscountPercentage,
+        allocatedObligations,
+        totalCumulativeRevenueRecognizedInr: totalRevenueRecognized,
+        totalBilledToDateInr: totalBilled,
+        contractBalanceSummary: {
+            netContractAssetUnbilledReceivableInr: contractAssetUnbilled,
+            netContractLiabilityDeferredRevenueInr: contractLiabilityDeferred,
+            disposition: contractAssetUnbilled > 0
+                ? 'CONTRACT_ASSET_UNBILLED_RECEIVABLE'
+                : (contractLiabilityDeferred > 0 ? 'CONTRACT_LIABILITY_DEFERRED_REVENUE' : 'CONTRACT_BALANCED')
+        },
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Ind AS 115 5-Step Evaluation complete: Relative SSP allocation on total contract price INR ${transactionPrice.toLocaleString('en-IN')} across ${allocatedObligations.length} obligations. Cumulative recognized revenue: INR ${totalRevenueRecognized.toLocaleString('en-IN')} vs billed INR ${totalBilled.toLocaleString('en-IN')}. Net contract balance: ${contractAssetUnbilled > 0 ? `Contract Asset INR ${contractAssetUnbilled.toLocaleString('en-IN')}` : `Contract Liability INR ${contractLiabilityDeferred.toLocaleString('en-IN')}`}.`
+    };
+}
+
+/**
+ * Ind AS 116 / IFRS 16 / US GAAP ASC 842: Right-of-Use (ROU) Asset & Lease Liability Amortization Schedule.
+ */
+export function calculateLeaseAmortizationIndAs116(params = {}) {
+    const monthlyPayment = roundToPaisa(cleanNumericAmount(params.monthlyPaymentInr, { defaultValue: 0 }));
+    const termMonths = Math.max(0, Math.floor(cleanNumericAmount(params.leaseTermMonths, { defaultValue: 0 })));
+    const annualRate = cleanNumericAmount(params.annualDiscountRate, { defaultValue: 0.085 });
+    const isAdvance = String(params.paymentTiming || 'ARREARS').toUpperCase().trim() === 'ADVANCE';
+    const directCosts = roundToPaisa(cleanNumericAmount(params.initialDirectCostsInr, { defaultValue: 0 }));
+    const incentives = roundToPaisa(cleanNumericAmount(params.leaseIncentivesReceivedInr, { defaultValue: 0 }));
+
+    if (params.electionShortTermExemption && termMonths <= 12) {
+        return {
+            status: 'EXEMPT_SHORT_TERM',
+            standard: 'Ind AS 116 / IFRS 16 / US GAAP ASC 842',
+            isCapitalizedOnBalanceSheet: false,
+            statutoryStatus: 'SHORT_TERM_LEASE_OFF_BALANCE_SHEET',
+            leaseTermMonths: termMonths,
+            monthlyPaymentInr: monthlyPayment,
+            monthlyStraightLinePnlExpenseInr: monthlyPayment,
+            totalUndiscountedCashPaymentsInr: roundToPaisa(monthlyPayment * termMonths),
+            initialPresentValueLeaseLiabilityInr: 0,
+            initialRightOfUseAssetInr: 0,
+            isAuthorizedToDisburse: false,
+            statutoryRationale: `Short-term lease exemption elected under Ind AS 116. Lease term of ${termMonths} months is <= 12 months without purchase option. Lease payments recognized as rent expense on straight-line basis in P&L. Off-balance sheet.`
+        };
+    }
+
+    if (params.electionLowValueExemption) {
+        return {
+            status: 'EXEMPT_LOW_VALUE',
+            standard: 'Ind AS 116 / IFRS 16 / US GAAP ASC 842',
+            isCapitalizedOnBalanceSheet: false,
+            statutoryStatus: 'LOW_VALUE_LEASE_OFF_BALANCE_SHEET',
+            leaseTermMonths: termMonths,
+            monthlyPaymentInr: monthlyPayment,
+            monthlyStraightLinePnlExpenseInr: monthlyPayment,
+            totalUndiscountedCashPaymentsInr: roundToPaisa(monthlyPayment * termMonths),
+            initialPresentValueLeaseLiabilityInr: 0,
+            initialRightOfUseAssetInr: 0,
+            isAuthorizedToDisburse: false,
+            statutoryRationale: 'Low-value underlying asset exemption elected under Ind AS 116. Lease payments recognized in P&L on straight-line basis. Off-balance sheet.'
+        };
+    }
+
+    if (monthlyPayment <= 0 || termMonths <= 0 || annualRate <= 0) {
+        return {
+            status: 'INSUFFICIENT_DATA',
+            standard: 'Ind AS 116 / IFRS 16 / US GAAP ASC 842',
+            isCapitalizedOnBalanceSheet: false,
+            isAuthorizedToDisburse: false,
+            statutoryRationale: 'Monthly payment, non-zero lease term, and positive incremental borrowing rate (IBR) are mandatory.'
+        };
+    }
+
+    const monthlyRate = annualRate / 12;
+    let pvMultiplier = (1 - Math.pow(1 + monthlyRate, -termMonths)) / monthlyRate;
+    if (isAdvance) {
+        pvMultiplier = pvMultiplier * (1 + monthlyRate);
+    }
+
+    const initialLiability = roundToPaisa(monthlyPayment * pvMultiplier);
+    const initialRouAsset = roundToPaisa(initialLiability + directCosts - incentives);
+    const monthlyDepreciation = roundToPaisa(initialRouAsset / termMonths);
+
+    let runningLiability = initialLiability;
+    let year1InterestTotal = 0;
+    let year1DepreciationTotal = 0;
+    let year1CashTotal = 0;
+    const monthlySchedules = [];
+
+    const previewMonths = Math.min(12, termMonths);
+    for (let m = 1; m <= previewMonths; m++) {
+        let interestExpense = 0;
+        let principalReduction = 0;
+
+        if (isAdvance && m === 1) {
+            interestExpense = 0;
+            principalReduction = monthlyPayment;
+            runningLiability = roundToPaisa(runningLiability - principalReduction);
+        } else {
+            interestExpense = roundToPaisa(runningLiability * monthlyRate);
+            principalReduction = roundToPaisa(monthlyPayment - interestExpense);
+            runningLiability = roundToPaisa(Math.max(0, runningLiability - principalReduction));
+        }
+
+        year1InterestTotal = roundToPaisa(year1InterestTotal + interestExpense);
+        year1DepreciationTotal = roundToPaisa(year1DepreciationTotal + monthlyDepreciation);
+        year1CashTotal = roundToPaisa(year1CashTotal + monthlyPayment);
+
+        monthlySchedules.push({
+            month: m,
+            openingLiabilityInr: isAdvance ? runningLiability : roundToPaisa(runningLiability + principalReduction),
+            paymentInr: monthlyPayment,
+            interestExpenseInr: interestExpense,
+            principalReductionInr: principalReduction,
+            closingLiabilityInr: runningLiability,
+            monthlyRouDepreciationInr: monthlyDepreciation
+        });
+    }
+
+    const totalUndiscountedCash = roundToPaisa(monthlyPayment * termMonths);
+    const totalLifetimeInterest = roundToPaisa(totalUndiscountedCash - initialLiability);
+
+    return {
+        status: 'SUCCESS',
+        standard: 'Ind AS 116 / IFRS 16 / US GAAP ASC 842',
+        isCapitalizedOnBalanceSheet: true,
+        leaseTermMonths: termMonths,
+        paymentTiming: isAdvance ? 'ADVANCE' : 'ARREARS',
+        annualDiscountRate: annualRate,
+        monthlyDiscountRate: Number(monthlyRate.toFixed(6)),
+        monthlyContractualPaymentInr: monthlyPayment,
+        totalUndiscountedCashPaymentsInr: totalUndiscountedCash,
+        initialPresentValueLeaseLiabilityInr: initialLiability,
+        initialRightOfUseAssetInr: initialRouAsset,
+        monthlyStraightLineDepreciationInr: monthlyDepreciation,
+        totalLifetimeInterestExpenseInr: totalLifetimeInterest,
+        year1Summary: {
+            year1CashPaymentsInr: year1CashTotal,
+            year1InterestExpenseInr: year1InterestTotal,
+            year1DepreciationExpenseInr: year1DepreciationTotal,
+            year1TotalPnlExpenseInr: roundToPaisa(year1InterestTotal + year1DepreciationTotal),
+            year1FrontLoadedVarianceInr: roundToPaisa((year1InterestTotal + year1DepreciationTotal) - year1CashTotal)
+        },
+        first12MonthsAmortizationPreview: monthlySchedules,
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Ind AS 116 on-balance-sheet capitalization active: Present value of future lease payments discounted at ${(annualRate * 100).toFixed(2)}% IBR yields initial Lease Liability of INR ${initialLiability.toLocaleString('en-IN')} and initial ROU Asset of INR ${initialRouAsset.toLocaleString('en-IN')}. Monthly straight-line depreciation: INR ${monthlyDepreciation.toLocaleString('en-IN')}. Year 1 P&L charge: INR ${(year1InterestTotal + year1DepreciationTotal).toLocaleString('en-IN')} (Interest: INR ${year1InterestTotal.toLocaleString('en-IN')}, Depreciation: INR ${year1DepreciationTotal.toLocaleString('en-IN')}).`
+    };
+}
+
+/**
+ * Ind AS 109 / IFRS 9 / US GAAP ASC 326: Expected Credit Loss (ECL) Impairment Calculator.
+ */
+export function calculateExpectedCreditLossIndAs109(params = {}) {
+    const grossTotal = roundToPaisa(cleanNumericAmount(params.grossTradeReceivablesInr, { defaultValue: 0 }));
+    const rawBuckets = Array.isArray(params.agingBuckets) ? params.agingBuckets : [];
+    const macroFactor = cleanNumericAmount(params.macroeconomicAdjustmentFactor, { defaultValue: 1.0 });
+    const lgdPercent = cleanNumericAmount(params.lossGivenDefaultPercent, { defaultValue: 100.0 });
+    const asOfDate = params.reportingDate || new Date().toISOString().split('T')[0];
+
+    if (grossTotal <= 0 && rawBuckets.length === 0) {
+        return {
+            status: 'INSUFFICIENT_DATA',
+            standard: 'Ind AS 109 / IFRS 9 / US GAAP ASC 326',
+            isAuthorizedToDisburse: false,
+            statutoryRationale: 'Gross trade receivables or non-empty aging buckets are mandatory.'
+        };
+    }
+
+    let totalComputedGross = 0;
+    let totalLossAllowance = 0;
+    let stage1Allowance = 0;
+    let stage2Allowance = 0;
+    let stage3Allowance = 0;
+    let stage1Gross = 0;
+    let stage2Gross = 0;
+    let stage3Gross = 0;
+
+    const evaluatedBuckets = rawBuckets.map((b, idx) => {
+        const bucketGross = roundToPaisa(cleanNumericAmount(b.grossAmountInr, { defaultValue: 0 }));
+        const histRate = cleanNumericAmount(b.historicalDefaultRatePercent, { defaultValue: 0 });
+        const stage = Number(b.stage || (idx === 0 ? 1 : (idx === rawBuckets.length - 1 ? 3 : 2)));
+
+        const effectiveLossRatePercent = Number(Math.min(100, Math.max(0, histRate * macroFactor * (lgdPercent / 100))).toFixed(4));
+        const allowance = roundToPaisa(bucketGross * (effectiveLossRatePercent / 100));
+        const netCarryingAmount = roundToPaisa(bucketGross - allowance);
+
+        totalComputedGross = roundToPaisa(totalComputedGross + bucketGross);
+        totalLossAllowance = roundToPaisa(totalLossAllowance + allowance);
+
+        if (stage === 1) {
+            stage1Gross = roundToPaisa(stage1Gross + bucketGross);
+            stage1Allowance = roundToPaisa(stage1Allowance + allowance);
+        } else if (stage === 2) {
+            stage2Gross = roundToPaisa(stage2Gross + bucketGross);
+            stage2Allowance = roundToPaisa(stage2Allowance + allowance);
+        } else {
+            stage3Gross = roundToPaisa(stage3Gross + bucketGross);
+            stage3Allowance = roundToPaisa(stage3Allowance + allowance);
+        }
+
+        return {
+            bucketLabel: b.bucketLabel || `Bracket-${idx + 1}`,
+            grossAmountInr: bucketGross,
+            stage,
+            historicalDefaultRatePercent: histRate,
+            effectiveLossRatePercent,
+            lossAllowanceInr: allowance,
+            netCarryingAmountInr: netCarryingAmount
+        };
+    });
+
+    const reconciledGross = grossTotal > 0 ? grossTotal : totalComputedGross;
+    const netReceivables = roundToPaisa(reconciledGross - totalLossAllowance);
+    const overallEffectiveRate = reconciledGross > 0 ? Number(((totalLossAllowance / reconciledGross) * 100).toFixed(2)) : 0;
+
+    return {
+        status: 'SUCCESS',
+        standard: 'Ind AS 109 / IFRS 9 / US GAAP ASC 326',
+        asOfDate,
+        grossTradeReceivablesInr: reconciledGross,
+        totalExpectedCreditLossAllowanceInr: totalLossAllowance,
+        netTradeReceivablesCarryingAmountInr: netReceivables,
+        overallEffectiveLossRatePercent: overallEffectiveRate,
+        macroeconomicAdjustmentFactor: macroFactor,
+        stagingSummary: {
+            stage1: { grossInr: stage1Gross, allowanceInr: stage1Allowance, label: '12-Month ECL (Performing)' },
+            stage2: { grossInr: stage2Gross, allowanceInr: stage2Allowance, label: 'Lifetime ECL (SICR / Underperforming)' },
+            stage3: { grossInr: stage3Gross, allowanceInr: stage3Allowance, label: 'Lifetime ECL (Credit Impaired / Default)' }
+        },
+        agingBuckets: evaluatedBuckets,
+        taxTreatment: {
+            isTaxDeductibleInCurrentYear: false,
+            statutoryAddBackSection: 'Section 36(1)(vii) read with Section 40A(9) Income-tax Act, 1961',
+            taxConsequence: `ECL impairment provision of INR ${totalLossAllowance.toLocaleString('en-IN')} is not deductible for Indian corporate tax purposes until actual bad debt write-off. Recognizes a Deferred Tax Asset (DTA) under Ind AS 12.`
+        },
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Ind AS 109 Simplified Approach: Expected Credit Loss provision of INR ${totalLossAllowance.toLocaleString('en-IN')} computed on gross receivables of INR ${reconciledGross.toLocaleString('en-IN')} (overall rate: ${overallEffectiveRate}%). Net receivables on balance sheet: INR ${netReceivables.toLocaleString('en-IN')}. Accounting impairment does not authorize fund disbursement.`
+    };
+}
+
+/**
+ * Ind AS 102 / IFRS 2 / US GAAP ASC 718: ESOP Graded Vesting Amortization Calculator.
+ */
+export function calculateEsopAmortizationIndAs102(params = {}) {
+    const totalOptions = Math.max(0, Math.floor(cleanNumericAmount(params.totalOptionsGranted, { defaultValue: 0 })));
+    const fairValuePerOption = roundToPaisa(cleanNumericAmount(params.grantDateFairValuePerOptionInr, { defaultValue: 0 }));
+    const defaultTranches = [
+        { trancheNumber: 1, vestingYears: 1, allocationPercentage: 25, expectedForfeitureRate: 0 },
+        { trancheNumber: 2, vestingYears: 2, allocationPercentage: 25, expectedForfeitureRate: 0 },
+        { trancheNumber: 3, vestingYears: 3, allocationPercentage: 25, expectedForfeitureRate: 0 },
+        { trancheNumber: 4, vestingYears: 4, allocationPercentage: 25, expectedForfeitureRate: 0 }
+    ];
+    const tranches = Array.isArray(params.vestingTranches) && params.vestingTranches.length > 0 ? params.vestingTranches : defaultTranches;
+
+    if (totalOptions <= 0 || fairValuePerOption <= 0) {
+        return {
+            status: 'INSUFFICIENT_DATA',
+            standard: 'Ind AS 102 / IFRS 2 / US GAAP ASC 718',
+            isAuthorizedToDisburse: false,
+            statutoryRationale: 'Total options granted and positive grant-date fair value per option are mandatory.'
+        };
+    }
+
+    const totalGrantDateFairValue = roundToPaisa(totalOptions * fairValuePerOption);
+    let maxVestingYear = 1;
+    let totalAllocatedOptions = 0;
+    let totalAdjustedFairValue = 0;
+
+    const processedTranches = tranches.map((t, idx) => {
+        const trancheNum = t.trancheNumber || idx + 1;
+        const years = Math.max(0.5, cleanNumericAmount(t.vestingYears, { defaultValue: idx + 1 }));
+        if (years > maxVestingYear) maxVestingYear = Math.ceil(years);
+
+        const allocPct = cleanNumericAmount(t.allocationPercentage, { defaultValue: 100 / tranches.length });
+        const forfeitRate = cleanNumericAmount(t.expectedForfeitureRate, { defaultValue: 0 });
+
+        const nominalOptions = Math.floor(totalOptions * (allocPct / 100));
+        const effectiveOptions = Math.floor(nominalOptions * (1 - forfeitRate / 100));
+        const trancheFairValue = roundToPaisa(effectiveOptions * fairValuePerOption);
+        const annualAmortization = roundToPaisa(trancheFairValue / years);
+
+        totalAllocatedOptions += effectiveOptions;
+        totalAdjustedFairValue = roundToPaisa(totalAdjustedFairValue + trancheFairValue);
+
+        return {
+            trancheNumber: trancheNum,
+            vestingYears: years,
+            allocationPercentage: allocPct,
+            expectedForfeitureRatePercent: forfeitRate,
+            effectiveOptionsGranted: effectiveOptions,
+            trancheGrantDateFairValueInr: trancheFairValue,
+            annualAmortizationExpenseInr: annualAmortization
+        };
+    });
+
+    const yearlyExpenseProfile = [];
+    let cumulativeExpense = 0;
+    for (let yr = 1; yr <= maxVestingYear; yr++) {
+        let yearExpense = 0;
+        for (const pt of processedTranches) {
+            if (yr <= Math.ceil(pt.vestingYears)) {
+                yearExpense = roundToPaisa(yearExpense + pt.annualAmortizationExpenseInr);
+            }
+        }
+        cumulativeExpense = roundToPaisa(cumulativeExpense + yearExpense);
+        yearlyExpenseProfile.push({
+            year: yr,
+            pnlCompensationExpenseInr: yearExpense,
+            cumulativeExpenseRecognizedInr: cumulativeExpense,
+            closingShareBasedPaymentReserveInr: cumulativeExpense
+        });
+    }
+
+    const year1Expense = yearlyExpenseProfile.length > 0 ? yearlyExpenseProfile[0].pnlCompensationExpenseInr : 0;
+    const flatStraightLineAverage = roundToPaisa(totalAdjustedFairValue / maxVestingYear);
+    const isFrontLoaded = year1Expense > flatStraightLineAverage;
+
+    return {
+        status: 'SUCCESS',
+        standard: 'Ind AS 102 / IFRS 2 / US GAAP ASC 718',
+        schemeName: params.schemeName || 'SCHEME-DEFAULT-ESOP',
+        totalOptionsGranted: totalOptions,
+        effectiveVestingOptions: totalAllocatedOptions,
+        grantDateFairValuePerOptionInr: fairValuePerOption,
+        totalNominalGrantDateFairValueInr: totalGrantDateFairValue,
+        totalNetFairValueToExpenseInr: totalAdjustedFairValue,
+        maxVestingYears: maxVestingYear,
+        isGradedVestingFrontLoaded: isFrontLoaded,
+        year1ExpenseComparison: {
+            year1GradedVestingExpenseInr: year1Expense,
+            hypotheticalFlatAverageInr: flatStraightLineAverage,
+            frontLoadingAccelerationInr: roundToPaisa(year1Expense - flatStraightLineAverage)
+        },
+        vestingTranches: processedTranches,
+        yearlyExpenseProfile,
+        taxTreatment: {
+            statutoryDeductionSection: 'Section 37(1) Income-tax Act, 1961 (Biocon Special Bench Principle)',
+            perquisiteTaxSection: 'Section 17(2)(vi) read with Rule 3(8) Income-tax Rules, 1962',
+            deductibilitySummary: `Company is eligible to claim ESOP discount as an allowable business deduction under Section 37(1) spread over the vesting period. Upon exercise, employee is subject to salary TDS under Section 192 on perquisite value (FMV on exercise date minus exercise price).`
+        },
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Ind AS 102 Graded Vesting: Total ESOP fair value INR ${totalAdjustedFairValue.toLocaleString('en-IN')} across ${processedTranches.length} tranches. Mandatory separate-tranche accounting produces Year 1 front-loaded expense of INR ${year1Expense.toLocaleString('en-IN')} (vs flat average INR ${flatStraightLineAverage.toLocaleString('en-IN')}). Share-based compensation does not authorize cash disbursement.`
+    };
+}
+
+/**
+ * Ind AS 12 / IAS 12 / US GAAP ASC 740: Income Taxes & Deferred Tax (DTA / DTL) Calculator.
+ */
+export function calculateDeferredTaxIndAs12(params = {}) {
+    const bookProfit = roundToPaisa(cleanNumericAmount(params.accountingProfitBeforeTaxInr, { defaultValue: 0 }));
+    const taxRatePercent = cleanNumericAmount(params.enactedTaxRatePercent, { defaultValue: 25.168 });
+    const taxRate = taxRatePercent / 100;
+    const diffs = params.temporaryDifferences || {};
+    const permanentDiffs = roundToPaisa(cleanNumericAmount(params.permanentDifferencesInr, { defaultValue: 0 }));
+    const openingNetDta = roundToPaisa(cleanNumericAmount(params.openingNetDtaInr, { defaultValue: 0 }));
+    const fy = params.financialYear || '2025-26';
+
+    if (taxRate <= 0) {
+        return {
+            status: 'INSUFFICIENT_DATA',
+            standard: 'Ind AS 12 / IAS 12 / US GAAP ASC 740',
+            isAuthorizedToDisburse: false,
+            statutoryRationale: 'Positive enacted tax rate is mandatory.'
+        };
+    }
+
+    const msme43bH = roundToPaisa(cleanNumericAmount(diffs.msmeDisallowanceSec43bHInr, { defaultValue: 0 }));
+    const statutory43B = roundToPaisa(cleanNumericAmount(diffs.statutoryDuesUnpaidSec43BInr, { defaultValue: 0 }));
+    const ecl109 = roundToPaisa(cleanNumericAmount(diffs.eclLossAllowanceIndAs109Inr, { defaultValue: 0 }));
+    const lease116 = roundToPaisa(cleanNumericAmount(diffs.leaseLiabilityNetIndAs116Inr, { defaultValue: 0 }));
+    const esop102 = roundToPaisa(cleanNumericAmount(diffs.esopReserveUnvestedIndAs102Inr, { defaultValue: 0 }));
+    const otherDeductible = roundToPaisa(cleanNumericAmount(diffs.otherDeductibleDifferencesInr, { defaultValue: 0 }));
+
+    const totalDeductibleDifferences = roundToPaisa(msme43bH + statutory43B + ecl109 + lease116 + esop102 + otherDeductible);
+    const grossDta = roundToPaisa(totalDeductibleDifferences * taxRate);
+
+    const accelDep32 = roundToPaisa(cleanNumericAmount(diffs.acceleratedTaxDepreciationSec32Inr, { defaultValue: 0 }));
+    const otherTaxable = roundToPaisa(cleanNumericAmount(diffs.otherTaxableDifferencesInr, { defaultValue: 0 }));
+
+    const totalTaxableDifferences = roundToPaisa(accelDep32 + otherTaxable);
+    const grossDtl = roundToPaisa(totalTaxableDifferences * taxRate);
+
+    const netDeferredTaxBalance = roundToPaisa(grossDta - grossDtl);
+    const closingNetDta = netDeferredTaxBalance > 0 ? netDeferredTaxBalance : 0;
+    const closingNetDtl = netDeferredTaxBalance < 0 ? Math.abs(netDeferredTaxBalance) : 0;
+
+    const taxableProfit = roundToPaisa(Math.max(0, bookProfit + totalDeductibleDifferences - totalTaxableDifferences + permanentDiffs));
+    const currentTaxExpense = roundToPaisa(taxableProfit * taxRate);
+
+    const deferredTaxPnlCharge = roundToPaisa(openingNetDta - netDeferredTaxBalance);
+    const totalTaxExpense = roundToPaisa(currentTaxExpense + deferredTaxPnlCharge);
+
+    const theoreticalTaxOnBookProfit = roundToPaisa(bookProfit * taxRate);
+    const taxEffectPermanent = roundToPaisa(permanentDiffs * taxRate);
+    const effectiveTaxRatePercent = bookProfit > 0 ? Number(((totalTaxExpense / bookProfit) * 100).toFixed(2)) : 0;
+
+    return {
+        status: 'SUCCESS',
+        standard: 'Ind AS 12 / IAS 12 / US GAAP ASC 740',
+        financialYear: fy,
+        accountingProfitBeforeTaxInr: bookProfit,
+        enactedCorporateTaxRatePercent: taxRatePercent,
+        taxableProfitForIncomeTaxInr: taxableProfit,
+        currentTaxLiabilityInr: currentTaxExpense,
+        temporaryDifferencesSummary: {
+            totalDeductibleDifferencesInr: totalDeductibleDifferences,
+            totalTaxableDifferencesInr: totalTaxableDifferences,
+            netTemporaryDifferenceInr: roundToPaisa(totalDeductibleDifferences - totalTaxableDifferences),
+            breakdown: {
+                msmeDisallowanceSec43bHInr: msme43bH,
+                statutoryDuesSec43BInr: statutory43B,
+                eclLossAllowanceIndAs109Inr: ecl109,
+                leaseNetIndAs116Inr: lease116,
+                esopReserveIndAs102Inr: esop102,
+                acceleratedTaxDepreciationSec32Inr: accelDep32
+            }
+        },
+        balanceSheetPosition: {
+            grossDeferredTaxAssetInr: grossDta,
+            grossDeferredTaxLiabilityInr: grossDtl,
+            netDeferredTaxAssetBalanceSheetInr: closingNetDta,
+            netDeferredTaxLiabilityBalanceSheetInr: closingNetDtl,
+            disposition: closingNetDta > 0 ? 'NET_DEFERRED_TAX_ASSET' : (closingNetDtl > 0 ? 'NET_DEFERRED_TAX_LIABILITY' : 'BALANCED')
+        },
+        statementOfProfitAndLossTaxExpense: {
+            currentTaxExpenseInr: currentTaxExpense,
+            deferredTaxExpenseOrCreditInr: deferredTaxPnlCharge,
+            totalTaxExpenseInr: totalTaxExpense
+        },
+        effectiveTaxRateReconciliation: {
+            theoreticalTaxExpenseAtStatutoryRateInr: theoreticalTaxOnBookProfit,
+            taxEffectOfPermanentDifferencesInr: taxEffectPermanent,
+            reconciledTotalTaxExpenseInr: totalTaxExpense,
+            effectiveTaxRatePercent,
+            statutoryTaxRatePercent: taxRatePercent,
+            rateVariancePercent: Number((effectiveTaxRatePercent - taxRatePercent).toFixed(2))
+        },
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Ind AS 12 Balance Sheet Method: Current Tax of INR ${currentTaxExpense.toLocaleString('en-IN')} (Taxable Profit: INR ${taxableProfit.toLocaleString('en-IN')}). Closing Net ${closingNetDta > 0 ? `DTA of INR ${closingNetDta.toLocaleString('en-IN')}` : `DTL of INR ${closingNetDtl.toLocaleString('en-IN')}`}. Total P&L Tax Expense: INR ${totalTaxExpense.toLocaleString('en-IN')} (ETR: ${effectiveTaxRatePercent}% vs statutory ${taxRatePercent}%). Tax calculations do not authorize payment disbursement.`
+    };
+}
+
+/**
+ * Ind AS 37 / IAS 37 / US GAAP ASC 450: Provisions, Contingent Liabilities & Contingent Assets Evaluator.
+ */
+export function evaluateProvisionsAndContingenciesIndAs37(params = {}) {
+    const rawItems = Array.isArray(params.exposureItems) ? params.exposureItems : [];
+    const asOfDate = params.reportingDate || new Date().toISOString().split('T')[0];
+
+    if (rawItems.length === 0) {
+        return {
+            status: 'INSUFFICIENT_DATA',
+            standard: 'Ind AS 37 / IAS 37 / US GAAP ASC 450',
+            isAuthorizedToDisburse: false,
+            statutoryRationale: 'At least one exposure item must be provided for evaluation.'
+        };
+    }
+
+    let totalProvisionsAccrued = 0;
+    let totalContingentLiabilities = 0;
+    let totalRemoteExposures = 0;
+    let totalReimbursements = 0;
+
+    const classifiedItems = rawItems.map((item, idx) => {
+        const claimId = item.claimId || `EXP-${idx + 1}`;
+        const desc = item.description || `Exposure item ${idx + 1}`;
+        const claimedAmt = roundToPaisa(cleanNumericAmount(item.claimedAmountInr, { defaultValue: 0 }));
+        const estimateAmt = roundToPaisa(cleanNumericAmount(item.bestEstimateAmountInr, { defaultValue: claimedAmt }));
+        const prob = cleanNumericAmount(item.outflowProbabilityPercent, { defaultValue: 0 });
+        const measurable = item.isReliablyMeasurable !== false;
+        const reimb = roundToPaisa(cleanNumericAmount(item.expectedReimbursementInr, { defaultValue: 0 }));
+        const disputeType = item.disputeType || 'STATUTORY_TAX_DISPUTE';
+
+        let classification = '';
+        let accountingTreatment = '';
+        let provisionAmount = 0;
+        let contingentAmount = 0;
+        let remoteAmount = 0;
+
+        if (prob > 50 && measurable) {
+            classification = 'PROVISION_RECOGNIZED_ON_BALANCE_SHEET';
+            provisionAmount = Math.max(0, roundToPaisa(estimateAmt - reimb));
+            accountingTreatment = 'Recognize accrued liability on balance sheet and charge expense to profit or loss.';
+            totalProvisionsAccrued = roundToPaisa(totalProvisionsAccrued + provisionAmount);
+            totalReimbursements = roundToPaisa(totalReimbursements + reimb);
+        } else if (prob >= 5 || (prob > 50 && !measurable)) {
+            classification = 'CONTINGENT_LIABILITY_DISCLOSED_IN_NOTES';
+            contingentAmount = estimateAmt;
+            accountingTreatment = 'Do not recognize liability on balance sheet. Disclose in Schedule III Notes to Accounts.';
+            totalContingentLiabilities = roundToPaisa(totalContingentLiabilities + contingentAmount);
+        } else {
+            classification = 'REMOTE_NO_DISCLOSURE_REQUIRED';
+            remoteAmount = estimateAmt;
+            accountingTreatment = 'Outflow probability is remote (< 5%). Neither recognition nor disclosure required.';
+            totalRemoteExposures = roundToPaisa(totalRemoteExposures + remoteAmount);
+        }
+
+        return {
+            claimId,
+            description: desc,
+            disputeType,
+            claimedAmountInr: claimedAmt,
+            bestEstimateAmountInr: estimateAmt,
+            outflowProbabilityPercent: prob,
+            isReliablyMeasurable: measurable,
+            classification,
+            accountingTreatment,
+            provisionRecognizedInr: provisionAmount,
+            contingentLiabilityDisclosedInr: contingentAmount,
+            remoteAmountInr: remoteAmount,
+            expectedReimbursementInr: reimb
+        };
+    });
+
+    return {
+        status: 'SUCCESS',
+        standard: 'Ind AS 37 / IAS 37 / US GAAP ASC 450',
+        asOfDate,
+        totalItemsEvaluated: classifiedItems.length,
+        summary: {
+            totalProvisionsAccruedOnBalanceSheetInr: totalProvisionsAccrued,
+            totalContingentLiabilitiesDisclosedInNotesInr: totalContingentLiabilities,
+            totalRemoteExposuresNoDisclosureInr: totalRemoteExposures,
+            totalExpectedReimbursementsInr: totalReimbursements
+        },
+        classifiedExposures: classifiedItems,
+        scheduleThreeDisclosureNote: `Contingent Liabilities and Commitments (to the extent not provided for): The company has contingent liabilities of INR ${totalContingentLiabilities.toLocaleString('en-IN')} in respect of disputed statutory demands and claims under appeal where adverse outflow is possible (5%-50%) but not probable. Balance sheet provisions of INR ${totalProvisionsAccrued.toLocaleString('en-IN')} have been recognized where outflow is probable (> 50%).`,
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Ind AS 37 Evaluation complete: ${classifiedItems.length} exposures evaluated. Balance Sheet Provisions accrued: INR ${totalProvisionsAccrued.toLocaleString('en-IN')}; Footnote Contingent Liabilities: INR ${totalContingentLiabilities.toLocaleString('en-IN')}; Remote exclusions: INR ${totalRemoteExposures.toLocaleString('en-IN')}. Evaluation of legal claims does not authorize payment disbursement.`
+    };
+}
+
+/**
+ * Ind AS 21 / IAS 21 / US GAAP ASC 830: Foreign Currency Monetary Revaluation & FCTR Translation Calculator.
+ */
+export function calculateForeignCurrencyIndAs21(params = {}) {
+    const asOfDate = params.asOfDate || new Date().toISOString().split('T')[0];
+    const functionalCurrency = params.functionalCurrency || 'INR';
+    const rawItems = Array.isArray(params.items) ? params.items : [];
+    const foreignOps = Array.isArray(params.foreignOperations) ? params.foreignOperations : [];
+
+    if (rawItems.length === 0 && foreignOps.length === 0) {
+        return {
+            status: 'INSUFFICIENT_DATA',
+            standard: 'Ind AS 21 / IAS 21 / US GAAP ASC 830',
+            asOfDate,
+            itemsCount: 0,
+            isAuthorizedToDisburse: false,
+            statutoryRationale: 'At least one foreign currency item or foreign operation package must be provided for evaluation.'
+        };
+    }
+
+    let totalOriginalBookValueInr = 0;
+    let totalClosingBookValueInr = 0;
+    let totalUnrealizedGainInr = 0;
+    let totalUnrealizedLossInr = 0;
+    const journalEntries = [];
+
+    const revaluedItems = rawItems.map((item, idx) => {
+        const id = item.id || `FX-ITEM-${idx + 1}`;
+        const description = item.description || `Foreign Currency Exposure ${idx + 1}`;
+        const itemType = String(item.itemType || 'MONETARY_ASSET').toUpperCase().trim();
+        const foreignCurrency = item.foreignCurrency || 'USD';
+        const foreignAmount = cleanNumericAmount(item.foreignAmount, { defaultValue: 0 });
+        const bookingRate = cleanNumericAmount(item.bookingRate, { defaultValue: 1 });
+        const closingRate = cleanNumericAmount(item.closingRate, { defaultValue: bookingRate });
+
+        const originalBookValueInr = roundToPaisa(foreignAmount * bookingRate);
+        totalOriginalBookValueInr = roundToPaisa(totalOriginalBookValueInr + originalBookValueInr);
+
+        let closingBookValueInr = originalBookValueInr;
+        let unrealizedGainLossInr = 0;
+        let treatment = '';
+        let glImpact = 'NONE';
+
+        if (itemType === 'NON_MONETARY_HISTORICAL') {
+            closingBookValueInr = originalBookValueInr;
+            unrealizedGainLossInr = 0;
+            treatment = 'Carried at historical exchange rate under Ind AS 21.23(b). No closing revaluation recognized.';
+        } else if (itemType === 'MONETARY_ASSET') {
+            closingBookValueInr = roundToPaisa(foreignAmount * closingRate);
+            unrealizedGainLossInr = roundToPaisa(closingBookValueInr - originalBookValueInr);
+
+            if (unrealizedGainLossInr > 0) {
+                treatment = 'Unrealized foreign exchange gain credited to Statement of Profit & Loss.';
+                glImpact = 'CREDIT_PL_GAIN';
+                totalUnrealizedGainInr = roundToPaisa(totalUnrealizedGainInr + unrealizedGainLossInr);
+                journalEntries.push({
+                    account: `Foreign Trade Receivables (${foreignCurrency})`,
+                    type: 'CURRENT_ASSET',
+                    debitInr: unrealizedGainLossInr,
+                    creditInr: 0,
+                    reference: id
+                });
+                journalEntries.push({
+                    account: 'Foreign Exchange Fluctuation Gain (P&L)',
+                    type: 'OTHER_INCOME',
+                    debitInr: 0,
+                    creditInr: unrealizedGainLossInr,
+                    reference: id
+                });
+            } else if (unrealizedGainLossInr < 0) {
+                const lossAmt = Math.abs(unrealizedGainLossInr);
+                treatment = 'Unrealized foreign exchange loss debited to Statement of Profit & Loss.';
+                glImpact = 'DEBIT_PL_LOSS';
+                totalUnrealizedLossInr = roundToPaisa(totalUnrealizedLossInr + lossAmt);
+                journalEntries.push({
+                    account: 'Foreign Exchange Fluctuation Loss (P&L)',
+                    type: 'FINANCE_EXPENSE',
+                    debitInr: lossAmt,
+                    creditInr: 0,
+                    reference: id
+                });
+                journalEntries.push({
+                    account: `Foreign Trade Receivables (${foreignCurrency})`,
+                    type: 'CURRENT_ASSET',
+                    debitInr: 0,
+                    creditInr: lossAmt,
+                    reference: id
+                });
+            } else {
+                treatment = 'No foreign exchange variance detected at reporting date.';
+            }
+        } else if (itemType === 'MONETARY_LIABILITY') {
+            closingBookValueInr = roundToPaisa(foreignAmount * closingRate);
+            unrealizedGainLossInr = roundToPaisa(originalBookValueInr - closingBookValueInr);
+
+            if (unrealizedGainLossInr > 0) {
+                treatment = 'Unrealized foreign exchange gain (liability reduction) credited to P&L.';
+                glImpact = 'CREDIT_PL_GAIN';
+                totalUnrealizedGainInr = roundToPaisa(totalUnrealizedGainInr + unrealizedGainLossInr);
+                journalEntries.push({
+                    account: `Foreign Trade Payables (${foreignCurrency})`,
+                    type: 'CURRENT_LIABILITY',
+                    debitInr: unrealizedGainLossInr,
+                    creditInr: 0,
+                    reference: id
+                });
+                journalEntries.push({
+                    account: 'Foreign Exchange Fluctuation Gain (P&L)',
+                    type: 'OTHER_INCOME',
+                    debitInr: 0,
+                    creditInr: unrealizedGainLossInr,
+                    reference: id
+                });
+            } else if (unrealizedGainLossInr < 0) {
+                const lossAmt = Math.abs(unrealizedGainLossInr);
+                treatment = 'Unrealized foreign exchange loss (liability expansion) debited to P&L.';
+                glImpact = 'DEBIT_PL_LOSS';
+                totalUnrealizedLossInr = roundToPaisa(totalUnrealizedLossInr + lossAmt);
+                journalEntries.push({
+                    account: 'Foreign Exchange Fluctuation Loss (P&L)',
+                    type: 'FINANCE_EXPENSE',
+                    debitInr: lossAmt,
+                    creditInr: 0,
+                    reference: id
+                });
+                journalEntries.push({
+                    account: `Foreign Trade Payables (${foreignCurrency})`,
+                    type: 'CURRENT_LIABILITY',
+                    debitInr: 0,
+                    creditInr: lossAmt,
+                    reference: id
+                });
+            } else {
+                treatment = 'No foreign exchange variance detected at reporting date.';
+            }
+        }
+
+        totalClosingBookValueInr = roundToPaisa(totalClosingBookValueInr + closingBookValueInr);
+
+        return {
+            id,
+            description,
+            itemType,
+            foreignCurrency,
+            foreignAmount,
+            bookingRate,
+            closingRate,
+            originalBookValueInr,
+            closingBookValueInr,
+            unrealizedGainLossInr,
+            treatment,
+            glImpact
+        };
+    });
+
+    const netUnrealizedPnLInr = roundToPaisa(totalUnrealizedGainInr - totalUnrealizedLossInr);
+
+    let totalFctrReserveInr = 0;
+    const translatedOperations = foreignOps.map((op, idx) => {
+        const entityName = op.entityName || `Foreign Subsidiary ${idx + 1}`;
+        const closingRate = cleanNumericAmount(op.closingRate, { defaultValue: 1 });
+        const averageRate = cleanNumericAmount(op.averageRate, { defaultValue: closingRate });
+        const assetsForeign = cleanNumericAmount(op.totalAssetsForeign, { defaultValue: 0 });
+        const liabilitiesForeign = cleanNumericAmount(op.totalLiabilitiesForeign, { defaultValue: 0 });
+        const netIncomeForeign = cleanNumericAmount(op.netIncomeForeign, { defaultValue: 0 });
+        const shareCapitalInr = cleanNumericAmount(op.shareCapitalInr, { defaultValue: 0 });
+        const openingRetainedEarningsInr = cleanNumericAmount(op.openingRetainedEarningsInr, { defaultValue: 0 });
+
+        const assetsInr = roundToPaisa(assetsForeign * closingRate);
+        const liabilitiesInr = roundToPaisa(liabilitiesForeign * closingRate);
+        const netAssetsClosingInr = roundToPaisa(assetsInr - liabilitiesInr);
+        const netIncomeAverageInr = roundToPaisa(netIncomeForeign * averageRate);
+        const totalEquityPreFctrInr = roundToPaisa(shareCapitalInr + openingRetainedEarningsInr + netIncomeAverageInr);
+
+        const fctrInr = roundToPaisa(netAssetsClosingInr - totalEquityPreFctrInr);
+        totalFctrReserveInr = roundToPaisa(totalFctrReserveInr + fctrInr);
+
+        return {
+            entityName,
+            closingRate,
+            averageRate,
+            totalAssetsInr: assetsInr,
+            totalLiabilitiesInr: liabilitiesInr,
+            netAssetsClosingInr,
+            netIncomeInr: netIncomeAverageInr,
+            fctrBalanceInr: fctrInr,
+            treatment: 'Translation difference routed to Foreign Currency Translation Reserve (FCTR) in Other Comprehensive Income (OCI) under Ind AS 21.39.'
+        };
+    });
+
+    const totalDebits = roundToPaisa(journalEntries.reduce((acc, e) => acc + e.debitInr, 0));
+    const totalCredits = roundToPaisa(journalEntries.reduce((acc, e) => acc + e.creditInr, 0));
+    const isDoubleEntryBalanced = Math.abs(totalDebits - totalCredits) < 0.001;
+
+    return {
+        status: 'SUCCESS',
+        standard: 'Ind AS 21 / IAS 21 / US GAAP ASC 830',
+        asOfDate,
+        functionalCurrency,
+        totalItemsEvaluated: revaluedItems.length,
+        foreignOperationsCount: translatedOperations.length,
+        summary: {
+            totalOriginalBookValueInr,
+            totalClosingBookValueInr,
+            totalUnrealizedGainInr,
+            totalUnrealizedLossInr,
+            netUnrealizedPnLInr,
+            totalFctrReserveInr,
+            isDoubleEntryBalanced,
+            totalDebitsInr: totalDebits,
+            totalCreditsInr: totalCredits
+        },
+        revaluedItems,
+        translatedForeignOperations: translatedOperations,
+        journalEntries,
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Ind AS 21 evaluation completed: ${revaluedItems.length} monetary/non-monetary exposures revalued. Net unrealized P&L variance: INR ${netUnrealizedPnLInr.toLocaleString('en-IN')}; Total FCTR in OCI: INR ${totalFctrReserveInr.toLocaleString('en-IN')}. General Ledger vouchers balanced at INR ${totalDebits.toLocaleString('en-IN')}. Foreign currency revaluation does not authorize payment disbursement.`
+    };
+}
+
+/**
+ * Ind AS 36 / IAS 36 / US GAAP ASC 360 & 350: Impairment of Assets & Cash-Generating Units (CGU).
+ */
+export function calculateImpairmentIndAs36(params = {}) {
+    const asOfDate = params.asOfDate || new Date().toISOString().split('T')[0];
+    const cguId = params.cguId || 'CGU-01';
+    const cguName = params.cguName || 'Corporate Cash-Generating Unit';
+
+    const rawAmounts = params.carryingAmounts || {};
+    const goodwill = roundToPaisa(cleanNumericAmount(rawAmounts.goodwill, { defaultValue: 0 }));
+    const ppe = roundToPaisa(cleanNumericAmount(rawAmounts.propertyPlantEquipment, { defaultValue: 0 }));
+    const intangibles = roundToPaisa(cleanNumericAmount(rawAmounts.intangibleAssets, { defaultValue: 0 }));
+    const otherNonCurrent = roundToPaisa(cleanNumericAmount(rawAmounts.otherNonCurrentAssets, { defaultValue: 0 }));
+
+    const totalCarryingAmount = roundToPaisa(goodwill + ppe + intangibles + otherNonCurrent);
+
+    if (totalCarryingAmount <= 0) {
+        return {
+            status: 'INSUFFICIENT_DATA',
+            standard: 'Ind AS 36 / IAS 36 / US GAAP ASC 360',
+            cguId,
+            totalCarryingAmountInr: 0,
+            isAuthorizedToDisburse: false,
+            statutoryRationale: 'Carrying amounts must be greater than zero for impairment evaluation.'
+        };
+    }
+
+    const rad = params.recoverableAmountDetermination || {};
+    const fvlcod = roundToPaisa(cleanNumericAmount(rad.fairValueLessCostsOfDisposal, { defaultValue: 0 }));
+
+    let valueInUse = 0;
+    let discountRate = 0;
+    const discountedCashFlows = [];
+
+    if (rad.valueInUse && typeof rad.valueInUse === 'object') {
+        discountRate = cleanNumericAmount(rad.valueInUse.preTaxDiscountRatePercent, { defaultValue: 10 }) / 100;
+        const cashFlows = Array.isArray(rad.valueInUse.projectedCashFlows) ? rad.valueInUse.projectedCashFlows : [];
+
+        let pvSum = 0;
+        cashFlows.forEach((cfRaw, idx) => {
+            const year = idx + 1;
+            const cf = cleanNumericAmount(cfRaw, { defaultValue: 0 });
+            const discountFactor = 1 / Math.pow(1 + discountRate, year);
+            const presentValue = roundToPaisa(cf * discountFactor);
+            pvSum = roundToPaisa(pvSum + presentValue);
+            discountedCashFlows.push({ year, cashFlow: cf, discountFactor: Number(discountFactor.toFixed(4)), presentValue });
+        });
+
+        let terminalPv = 0;
+        if (rad.valueInUse.terminalValue) {
+            const tv = cleanNumericAmount(rad.valueInUse.terminalValue, { defaultValue: 0 });
+            const finalYear = cashFlows.length || 1;
+            const tvDiscountFactor = 1 / Math.pow(1 + discountRate, finalYear);
+            terminalPv = roundToPaisa(tv * tvDiscountFactor);
+        } else if (rad.valueInUse.terminalGrowthRatePercent && cashFlows.length > 0) {
+            const g = cleanNumericAmount(rad.valueInUse.terminalGrowthRatePercent, { defaultValue: 2 }) / 100;
+            const finalCf = cleanNumericAmount(cashFlows[cashFlows.length - 1], { defaultValue: 0 });
+            if (discountRate > g) {
+                const tv = (finalCf * (1 + g)) / (discountRate - g);
+                const finalYear = cashFlows.length;
+                const tvDiscountFactor = 1 / Math.pow(1 + discountRate, finalYear);
+                terminalPv = roundToPaisa(tv * tvDiscountFactor);
+            }
+        }
+
+        valueInUse = roundToPaisa(pvSum + terminalPv);
+    }
+
+    const recoverableAmount = Math.max(fvlcod, valueInUse);
+    const recoverableMethod = fvlcod >= valueInUse ? 'FAIR_VALUE_LESS_COSTS_OF_DISPOSAL' : 'VALUE_IN_USE';
+
+    let impairmentRequired = false;
+    let totalImpairmentLoss = 0;
+    let postImpairmentCarryingAmount = totalCarryingAmount;
+    let goodwillImpairment = 0;
+    let ppeImpairment = 0;
+    let intangiblesImpairment = 0;
+    let otherImpairment = 0;
+    const journalEntries = [];
+
+    if (recoverableAmount < totalCarryingAmount) {
+        impairmentRequired = true;
+        totalImpairmentLoss = roundToPaisa(totalCarryingAmount - recoverableAmount);
+        postImpairmentCarryingAmount = recoverableAmount;
+
+        let remainingLoss = totalImpairmentLoss;
+        if (goodwill > 0) {
+            goodwillImpairment = Math.min(goodwill, remainingLoss);
+            remainingLoss = roundToPaisa(remainingLoss - goodwillImpairment);
+            journalEntries.push({
+                account: 'Accumulated Impairment - Goodwill',
+                type: 'INTANGIBLE_ASSET_CONTRA',
+                debitInr: 0,
+                creditInr: goodwillImpairment,
+                rule: 'Ind AS 36.104(a) Goodwill Priority Write-Down'
+            });
+        }
+
+        const floors = params.assetFloors || {};
+        const ppeFloor = cleanNumericAmount(floors.propertyPlantEquipment, { defaultValue: 0 });
+        const intFloor = cleanNumericAmount(floors.intangibleAssets, { defaultValue: 0 });
+        const otherFloor = cleanNumericAmount(floors.otherNonCurrentAssets, { defaultValue: 0 });
+
+        const ppeMaxWriteDown = Math.max(0, ppe - ppeFloor);
+        const intMaxWriteDown = Math.max(0, intangibles - intFloor);
+        const otherMaxWriteDown = Math.max(0, otherNonCurrent - otherFloor);
+        const totalEligibleBase = ppeMaxWriteDown + intMaxWriteDown + otherMaxWriteDown;
+
+        if (remainingLoss > 0 && totalEligibleBase > 0) {
+            const ppeRatio = ppeMaxWriteDown / totalEligibleBase;
+            const intRatio = intMaxWriteDown / totalEligibleBase;
+
+            ppeImpairment = roundToPaisa(Math.min(ppeMaxWriteDown, remainingLoss * ppeRatio));
+            intangiblesImpairment = roundToPaisa(Math.min(intMaxWriteDown, remainingLoss * intRatio));
+            otherImpairment = roundToPaisa(remainingLoss - ppeImpairment - intangiblesImpairment);
+
+            if (ppeImpairment > 0) {
+                journalEntries.push({
+                    account: 'Accumulated Impairment - Property, Plant & Equipment',
+                    type: 'PPE_CONTRA',
+                    debitInr: 0,
+                    creditInr: ppeImpairment,
+                    rule: 'Ind AS 36.104(b) Pro-rata PPE Allocation'
+                });
+            }
+            if (intangiblesImpairment > 0) {
+                journalEntries.push({
+                    account: 'Accumulated Impairment - Intangible Assets',
+                    type: 'INTANGIBLE_CONTRA',
+                    debitInr: 0,
+                    creditInr: intangiblesImpairment,
+                    rule: 'Ind AS 36.104(b) Pro-rata Intangibles Allocation'
+                });
+            }
+            if (otherImpairment > 0) {
+                journalEntries.push({
+                    account: 'Accumulated Impairment - Other Non-Current Assets',
+                    type: 'NON_CURRENT_ASSET_CONTRA',
+                    debitInr: 0,
+                    creditInr: otherImpairment,
+                    rule: 'Ind AS 36.104(b) Pro-rata Other Assets Allocation'
+                });
+            }
+        }
+
+        journalEntries.unshift({
+            account: 'Impairment Loss on Assets (Statement of Profit & Loss)',
+            type: 'OPERATING_EXPENSE',
+            debitInr: totalImpairmentLoss,
+            creditInr: 0,
+            rule: 'Ind AS 36.60 Recognition in Profit or Loss'
+        });
+    }
+
+    const totalDebits = roundToPaisa(journalEntries.reduce((acc, e) => acc + e.debitInr, 0));
+    const totalCredits = roundToPaisa(journalEntries.reduce((acc, e) => acc + e.creditInr, 0));
+    const isDoubleEntryBalanced = Math.abs(totalDebits - totalCredits) < 0.001;
+
+    return {
+        status: 'SUCCESS',
+        standard: 'Ind AS 36 / IAS 36 / US GAAP ASC 360',
+        asOfDate,
+        cguId,
+        cguName,
+        valuation: {
+            totalCarryingAmountInr: totalCarryingAmount,
+            fairValueLessCostsOfDisposalInr: fvlcod,
+            valueInUseInr: valueInUse,
+            recoverableAmountInr: recoverableAmount,
+            recoverableMethod,
+            headroomInr: Math.max(0, recoverableAmount - totalCarryingAmount),
+            impairmentRequired,
+            totalImpairmentLossInr: totalImpairmentLoss,
+            postImpairmentCarryingAmountInr: postImpairmentCarryingAmount
+        },
+        assetBreakdown: {
+            goodwill: { initialCarryingInr: goodwill, impairmentInr: goodwillImpairment, closingCarryingInr: roundToPaisa(goodwill - goodwillImpairment) },
+            propertyPlantEquipment: { initialCarryingInr: ppe, impairmentInr: ppeImpairment, closingCarryingInr: roundToPaisa(ppe - ppeImpairment) },
+            intangibleAssets: { initialCarryingInr: intangibles, impairmentInr: intangiblesImpairment, closingCarryingInr: roundToPaisa(intangibles - intangiblesImpairment) },
+            otherNonCurrentAssets: { initialCarryingInr: otherNonCurrent, impairmentInr: otherImpairment, closingCarryingInr: roundToPaisa(otherNonCurrent - otherImpairment) }
+        },
+        discountedCashFlowsSchedule: discountedCashFlows,
+        journalEntries,
+        isDoubleEntryBalanced,
+        isAuthorizedToDisburse: false,
+        statutoryRationale: impairmentRequired
+            ? `Ind AS 36 Impairment Test: CGU "${cguName}" carrying value INR ${totalCarryingAmount.toLocaleString('en-IN')} exceeds recoverable amount INR ${recoverableAmount.toLocaleString('en-IN')} (${recoverableMethod}). Impairment loss of INR ${totalImpairmentLoss.toLocaleString('en-IN')} recognized in P&L. Goodwill reduced by INR ${goodwillImpairment.toLocaleString('en-IN')}; non-current assets reduced pro-rata by INR ${(totalImpairmentLoss - goodwillImpairment).toLocaleString('en-IN')}. Impairment assessment does not authorize payment disbursement.`
+            : `Ind AS 36 Impairment Test: CGU "${cguName}" carrying value INR ${totalCarryingAmount.toLocaleString('en-IN')} is fully supported by recoverable amount INR ${recoverableAmount.toLocaleString('en-IN')} (${recoverableMethod}) with headroom of INR ${(recoverableAmount - totalCarryingAmount).toLocaleString('en-IN')}. No impairment recognized. Impairment assessment does not authorize payment disbursement.`
+    };
+}
+
 
 // ===========================================================================
 // COMMERCIAL TIER BOUNDARY SPECIFICATION (OKF v0.2 / ENTERPRISE BOUNDARY)

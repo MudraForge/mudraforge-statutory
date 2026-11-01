@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ind AS 37 / ASC 450 Provisions and Contingent Liabilities Register",
+  "description": "Evaluates statutory tax disputes, legal claims, and warranty obligations across the probability hierarchy for balance sheet provision accrual vs footnote disclosure.",
+  "type": "object",
+  "required": [
+    "reportingDate",
+    "exposureItems"
+  ],
+  "properties": {
+    "reportingDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Financial reporting date YYYY-MM-DD"
+    },
+    "exposureItems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["claimId", "description", "claimedAmountInr", "outflowProbabilityPercent", "isReliablyMeasurable"],
+        "properties": {
+          "claimId": { "type": "string", "description": "e.g., 'GST-SCN-FY24-01'" },
+          "description": { "type": "string" },
+          "disputeType": {
+            "type": "string",
+            "enum": ["STATUTORY_TAX_GST", "STATUTORY_TAX_INCOME_TAX", "CUSTOMS", "COMMERCIAL_LITIGATION", "WARRANTY_OBLIGATION", "ONEROUS_CONTRACT"]
+          },
+          "claimedAmountInr": { "type": "number", "minimum": 0 },
+          "bestEstimateAmountInr": { "type": "number", "minimum": 0 },
+          "outflowProbabilityPercent": { "type": "number", "minimum": 0, "maximum": 100 },
+          "isReliablyMeasurable": { "type": "boolean" },
+          "expectedReimbursementInr": { "type": "number", "minimum": 0, "default": 0 },
+          "counselOpinionReference": { "type": "string" }
+        }
+      }
+    }
+  }
+}

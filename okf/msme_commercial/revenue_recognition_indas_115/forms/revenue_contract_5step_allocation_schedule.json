@@ -1,0 +1,54 @@
+{
+  "formId": "INDAS_115_REVENUE_5STEP_ALLOCATION_SCHEDULE",
+  "title": "Ind AS 115 / ASC 606 5-Step Contract Allocation & Performance Obligation Schedule",
+  "governingStandard": "Ind AS 115 read with IFRS 15 and US GAAP ASC 606",
+  "authority": "Ministry of Corporate Affairs (MCA) & Financial Accounting Standards Board (FASB)",
+  "version": "2.11.0",
+  "schema": {
+    "contractMetadata": {
+      "contractId": { "type": "string", "required": true },
+      "customerName": { "type": "string", "required": true },
+      "customerGstinOrEin": { "type": "string", "required": true },
+      "contractStartDate": { "type": "string", "format": "date", "required": true },
+      "contractEndDate": { "type": "string", "format": "date", "required": true },
+      "currency": { "type": "string", "default": "INR" }
+    },
+    "transactionPrice": {
+      "fixedConsideration": { "type": "number", "required": true },
+      "variableConsideration": { "type": "number", "default": 0 },
+      "variableConstraintApplied": { "type": "boolean", "default": true },
+      "totalTransactionPrice": { "type": "number", "required": true }
+    },
+    "performanceObligations": {
+      "type": "array",
+      "items": {
+        "obligationId": { "type": "string", "required": true },
+        "description": { "type": "string", "required": true },
+        "isDistinct": { "type": "boolean", "required": true },
+        "standaloneSellingPrice": { "type": "number", "required": true },
+        "sspWeightPercentage": { "type": "number", "required": true },
+        "allocatedTransactionPrice": { "type": "number", "required": true },
+        "satisfactionTiming": {
+          "type": "string",
+          "enum": ["OVER_TIME", "POINT_IN_TIME"],
+          "required": true
+        },
+        "overTimeMeasurementMethod": {
+          "type": "string",
+          "enum": ["INPUT_METHOD_COST_INCURRED", "OUTPUT_METHOD_MILESTONES", "STRAIGHT_LINE_TENURE", "N_A"]
+        },
+        "cumulativeRevenueRecognized": { "type": "number", "default": 0 },
+        "cumulativeBilledAmount": { "type": "number", "default": 0 },
+        "contractAssetBalance": { "type": "number", "default": 0 },
+        "contractLiabilityBalance": { "type": "number", "default": 0 }
+      }
+    },
+    "statutoryAttestation": {
+      "isAuthorizedToDisburse": { "type": "boolean", "const": false },
+      "dualReportingConformity": {
+        "indAs115Conformant": { "type": "boolean", "required": true },
+        "usGaapAsc606Conformant": { "type": "boolean", "required": true }
+      }
+    }
+  }
+}

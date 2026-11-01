@@ -7,6 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.12.0] - 2026-11-01
+
+### Added
+- **Corporate Finance, Accounting & Reporting Knowledge Expansion (8 New OKF Provisions & 9 Calculators)**:
+  - *Ind AS 103 / IFRS 3 / ASC 805 Business Combinations & Purchase Price Allocation (PPA)* (`corporate_ma_restructuring/business_combinations_indas_103`):
+    - Full purchase price allocation (PPA), net identifiable assets measurement at fair value, deferred tax liability (DTL) derivation on acquired intangibles, contingent consideration recognition at acquisition-date fair value.
+    - Deterministic Goodwill vs. Capital Reserve (bargain purchase) derivation with balanced double-entry vouchers.
+    - Pure calculator `calculateBusinessCombinationsIndAs103(params)`.
+  - *Ind AS 36 / IAS 36 / ASC 360 Impairment of Assets & Cash-Generating Units (CGUs)* (`corporate_ma_restructuring/impairment_of_assets_indas_36`):
+    - Recoverable amount derivation comparing Fair Value Less Costs of Disposal (FVLCD) vs. Value in Use (VIU) via Discounted Cash Flow (DCF).
+    - Sequential impairment loss allocation: Goodwill reduced to zero first, then remaining impairment apportioned pro-rata across tangible/intangible assets without breaching statutory individual asset floors (FVLCD, VIU, or zero).
+    - Pure calculator `calculateImpairmentIndAs36(params)`.
+  - *Ind AS 102 / IFRS 2 / ASC 718 Share-Based Payment (ESOP) Graded Vesting Amortization* (`corporate_ma_restructuring/share_based_payments_indas_102`):
+    - Graded vesting separate tranche mechanics (front-loaded expense profile per ICAI/MCA guidance), forfeiture rate revisions, and true-up adjustments.
+    - Indian tax deductibility analysis under the Supreme Court *Biocon Ltd.* landmark doctrine (Section 37(1) general business deduction vs. capital transaction).
+    - Pure calculator `calculateEsopAmortizationIndAs102(params)`.
+  - *Ind AS 12 / IAS 12 / ASC 740 Income Taxes & Deferred Tax Accounting* (`direct_tax/income_taxes_deferred_tax_indas_12`):
+    - Balance sheet liability method computing temporary differences between accounting carrying amounts and tax bases (e.g., Section 43B(h) MSME disallowances, Ind AS 109 ECL allowances, Section 32 accelerated depreciation).
+    - Numerical Effective Tax Rate (ETR) reconciliation across statutory rate, permanent differences, and prior period adjustments.
+    - Pure calculator `calculateDeferredTaxIndAs12(params)`.
+  - *Ind AS 115 / IFRS 15 / ASC 606 Revenue from Contracts with Customers* (`msme_commercial/revenue_recognition_indas_115`):
+    - 5-step revenue recognition framework: identifying enforceable contracts, distinct performance obligations, transaction price determination (including variable consideration constraints), relative Standalone Selling Price (SSP) allocation, and satisfaction timing (Point-in-Time vs. Over-Time using input/output methods).
+    - Contract Asset (unbilled revenue) vs. Contract Liability (unearned revenue) balance sheet derivation.
+    - Pure calculator `calculateRevenueAllocationIndAs115(params)`.
+  - *Ind AS 116 / IFRS 16 / ASC 842 Leases & Right-of-Use (ROU) Asset Accounting* (`msme_commercial/lease_accounting_indas_116`):
+    - Incremental Borrowing Rate (IBR) discounting for initial lease liability and ROU asset capitalization (including lease prepayments, initial direct costs, and dismantling/restoration asset retirement obligations).
+    - Subsequent amortization tracking front-loaded Year 1 P&L expenses (depreciation + finance charge) versus straight-line operating lease rent.
+    - Short-term (<12 months) and low-value (<$5,000 / ₹4,00,000) practical expedients evaluation.
+    - Pure calculator `calculateLeaseAmortizationIndAs116(params)`.
+  - *Ind AS 37 / IAS 37 / ASC 450 Provisions, Contingent Liabilities & Contingent Assets* (`msme_commercial/provisions_contingencies_indas_37`):
+    - Present obligation from past obligating events (legal or constructive), probable outflow (>50% probability threshold requiring balance sheet provisioning), possible obligation (5% to 50% threshold requiring footnote disclosure in notes to accounts), and remote likelihood (<5% threshold requiring zero disclosure).
+    - Best estimate valuation (expected value probabilistic weighting vs. single most likely outcome) and discounting for long-term decommissioning/restoration provisions.
+    - Pure calculator `evaluateProvisionsAndContingenciesIndAs37(params)`.
+  - *Ind AS 109 / IFRS 9 / ASC 326 Financial Instruments — Expected Credit Loss (ECL)* (`international_tax/financial_instruments_ecl_indas_109`):
+    - 3-stage forward-looking impairment model: Stage 1 (12-month ECL for performing loans/receivables), Stage 2 (Lifetime ECL upon Significant Increase in Credit Risk - SICR / 30+ DPD), and Stage 3 (Lifetime ECL for credit-impaired assets / 90+ DPD).
+    - Provision matrix simplification for trade receivables under Ind AS 109 paragraph 5.5.15 with forward-looking macroeconomic stress adjustments (GDP growth, interest rate shifts).
+    - Tax add-back mapping under Section 36(1)(vii) / Section 36(1)(viia) and deferred tax asset recognition under Ind AS 12.
+    - Pure calculator `calculateExpectedCreditLossIndAs109(params)`.
+  - *Ind AS 21 / IAS 21 / ASC 830 The Effects of Changes in Foreign Exchange Rates* (`international_tax/foreign_currency_indas_21`):
+    - Monetary vs. non-monetary asset/liability distinction, closing rate revaluation, transactional gain/loss P&L routing, and foreign operations functional-to-presentation currency translation reserve (OCI Foreign Currency Translation Reserve - FCTR).
+    - Pure calculator `calculateForeignCurrencyIndAs21(params)`.
+  - *StatutoryClient Parity & Invariant Envelope*:
+    - All 9 accounting and reporting calculators bound to `StatutoryClient.prototype`.
+    - Strict `isAuthorizedToDisburse: false` invariant enforced across every engine output.
+    - Comprehensive TypeScript type definitions in `types/index.d.ts`.
+- **Open Knowledge Format (OKF v0.2) Corpus Growth**:
+  - Sections expanded from 38 to 46 sections across 5 canonical domains.
+  - Authoritative circulars expanded from 44 to 52 instruments with strict YAML frontmatter.
+  - Compliance forms and registers expanded from 39 to 47 templates.
+  - Deep canonical citation links expanded from 154 to 180 verified endpoints (100% link integrity, zero broken links).
+  - Test suites expanded from 155 to 165 comprehensive test suites with 100% pass rate.
+
 ## [2.11.0] - 2026-10-30
 
 ### Added

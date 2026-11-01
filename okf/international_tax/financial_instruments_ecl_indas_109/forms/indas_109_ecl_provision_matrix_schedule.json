@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ind AS 109 / IFRS 9 Expected Credit Loss (ECL) Provision Matrix Schedule",
+  "description": "Calculates lifetime expected credit loss allowance on trade receivables under the simplified approach using aging brackets and forward-looking default rates.",
+  "type": "object",
+  "required": [
+    "reportingDate",
+    "grossReceivablesInr",
+    "agingBrackets"
+  ],
+  "properties": {
+    "reportingDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Financial reporting date YYYY-MM-DD"
+    },
+    "grossReceivablesInr": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Total gross trade receivables before loss allowance"
+    },
+    "macroeconomicAdjustmentFactor": {
+      "type": "number",
+      "default": 1.0,
+      "description": "Forward-looking economic adjustment overlay (e.g. 1.05 for 5% stress)"
+    },
+    "agingBrackets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["bracketName", "grossAmountInr", "historicalLossRatePercent"],
+        "properties": {
+          "bracketName": {
+            "type": "string",
+            "enum": ["CURRENT_NOT_DUE", "DAYS_1_30", "DAYS_31_60", "DAYS_61_90", "DAYS_91_180", "DAYS_OVER_180"]
+          },
+          "grossAmountInr": { "type": "number", "minimum": 0 },
+          "historicalLossRatePercent": { "type": "number", "minimum": 0, "maximum": 100 }
+        }
+      }
+    }
+  }
+}

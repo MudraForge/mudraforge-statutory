@@ -1,0 +1,55 @@
+{
+  "formId": "INDAS_116_ROU_ASSET_AND_LIABILITY_SCHEDULE",
+  "title": "Ind AS 116 / IFRS 16 / ASC 842 Right-of-Use Asset and Lease Liability Amortization Schedule",
+  "governingStandard": "Ind AS 116 read with IFRS 16 and US GAAP ASC 842",
+  "authority": "Ministry of Corporate Affairs (MCA) & Financial Accounting Standards Board (FASB)",
+  "version": "2.11.0",
+  "schema": {
+    "leaseContractMetadata": {
+      "leaseId": { "type": "string", "required": true },
+      "lessorName": { "type": "string", "required": true },
+      "lessorGstinOrTaxId": { "type": "string", "required": true },
+      "assetDescription": { "type": "string", "required": true },
+      "commencementDate": { "type": "string", "format": "date", "required": true },
+      "leaseTermMonths": { "type": "integer", "minimum": 1, "required": true },
+      "currency": { "type": "string", "default": "INR" }
+    },
+    "discountRateParameters": {
+      "rateType": {
+        "type": "string",
+        "enum": ["RATE_IMPLICIT_IN_LEASE", "LESSEE_INCREMENTAL_BORROWING_RATE"],
+        "default": "LESSEE_INCREMENTAL_BORROWING_RATE"
+      },
+      "annualDiscountRatePercentage": { "type": "number", "minimum": 0, "required": true },
+      "monthlyDiscountRatePercentage": { "type": "number", "minimum": 0, "required": true }
+    },
+    "initialMeasurement": {
+      "monthlyPaymentAmount": { "type": "number", "required": true },
+      "paymentTiming": { "type": "string", "enum": ["ADVANCE", "ARREARS"], "default": "ARREARS" },
+      "initialPresentValueLeaseLiability": { "type": "number", "required": true },
+      "initialPrepayments": { "type": "number", "default": 0 },
+      "initialDirectCosts": { "type": "number", "default": 0 },
+      "restorationProvision": { "type": "number", "default": 0 },
+      "leaseIncentivesReceived": { "type": "number", "default": 0 },
+      "initialRightOfUseAsset": { "type": "number", "required": true }
+    },
+    "subsequentScheduleSummary": {
+      "totalCashLeasePayments": { "type": "number", "required": true },
+      "totalInterestExpensePnl": { "type": "number", "required": true },
+      "totalDepreciationExpensePnl": { "type": "number", "required": true },
+      "monthlyStraightLineDepreciation": { "type": "number", "required": true },
+      "frontLoadedExpenseVariance": { "type": "number", "description": "Variance between Year 1 P&L charge and straight-line cash rent" }
+    },
+    "statutoryAttestation": {
+      "isAuthorizedToDisburse": { "type": "boolean", "const": false },
+      "exemptionApplied": {
+        "isShortTermExempt": { "type": "boolean", "default": false },
+        "isLowValueExempt": { "type": "boolean", "default": false }
+      },
+      "dualReportingConformity": {
+        "indAs116Conformant": { "type": "boolean", "required": true },
+        "usGaapAsc842Conformant": { "type": "boolean", "required": true }
+      }
+    }
+  }
+}

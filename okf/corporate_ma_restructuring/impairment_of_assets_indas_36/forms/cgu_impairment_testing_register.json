@@ -1,0 +1,53 @@
+{
+  "formId": "INDAS_36_CGU_IMPAIRMENT_TESTING_REGISTER",
+  "title": "Ind AS 36 / IAS 36 Cash-Generating Unit (CGU) Impairment Testing & Goodwill Allocation Register",
+  "governingStandard": "Ind AS 36 read with IAS 36 and US GAAP ASC 360/350",
+  "authority": "Ministry of Corporate Affairs (MCA) & ICAI",
+  "version": "2.11.0",
+  "schema": {
+    "reportingEntity": {
+      "corporateIdentityNumber": { "type": "string", "required": true },
+      "companyName": { "type": "string", "required": true },
+      "evaluationDate": { "type": "string", "format": "date", "required": true }
+    },
+    "cguDetails": {
+      "cguId": { "type": "string", "required": true },
+      "cguName": { "type": "string", "required": true },
+      "operatingSegment": { "type": "string", "required": true },
+      "initialCarryingAmounts": {
+        "goodwill": { "type": "number", "required": true },
+        "propertyPlantEquipment": { "type": "number", "required": true },
+        "intangibleAssets": { "type": "number", "required": true },
+        "otherNonCurrentAssets": { "type": "number", "default": 0 },
+        "totalCarryingAmount": { "type": "number", "required": true }
+      }
+    },
+    "recoverableAmountDetermination": {
+      "fairValueLessCostsOfDisposal": { "type": "number", "default": 0 },
+      "valueInUse": {
+        "preTaxDiscountRatePercent": { "type": "number", "required": true },
+        "projectedCashFlowsFiveYears": {
+          "type": "array",
+          "items": { "type": "number" },
+          "required": true
+        },
+        "terminalValue": { "type": "number", "default": 0 },
+        "computedValueInUse": { "type": "number", "required": true }
+      },
+      "determinedRecoverableAmount": { "type": "number", "required": true },
+      "recoverableMethod": {
+        "type": "string",
+        "enum": ["FAIR_VALUE_LESS_COSTS_OF_DISPOSAL", "VALUE_IN_USE"],
+        "required": true
+      }
+    },
+    "impairmentAllocation": {
+      "impairmentLossRecognized": { "type": "boolean", "required": true },
+      "totalImpairmentLossInr": { "type": "number", "required": true },
+      "goodwillWriteDownInr": { "type": "number", "required": true },
+      "ppeWriteDownInr": { "type": "number", "required": true },
+      "intangiblesWriteDownInr": { "type": "number", "required": true },
+      "closingCarryingAmountCguInr": { "type": "number", "required": true }
+    }
+  }
+}

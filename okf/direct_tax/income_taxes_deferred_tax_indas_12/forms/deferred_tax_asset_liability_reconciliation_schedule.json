@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ind AS 12 / ASC 740 Deferred Tax Asset & Liability Reconciliation Schedule",
+  "description": "Calculates temporary differences, closing DTA and DTL balances, P&L tax expense, and Effective Tax Rate (ETR) reconciliation.",
+  "type": "object",
+  "required": [
+    "financialYear",
+    "accountingProfitBeforeTaxInr",
+    "enactedTaxRatePercent",
+    "temporaryDifferences"
+  ],
+  "properties": {
+    "financialYear": {
+      "type": "string",
+      "pattern": "^20[0-9]{2}-[0-9]{2}$",
+      "description": "e.g., '2025-26'"
+    },
+    "accountingProfitBeforeTaxInr": {
+      "type": "number",
+      "description": "Profit before tax per Statement of Profit and Loss"
+    },
+    "enactedTaxRatePercent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 50,
+      "default": 25.168,
+      "description": "Applicable statutory corporate tax rate including surcharge and cess (e.g. 25.168% for Sec 115BAA)"
+    },
+    "temporaryDifferences": {
+      "type": "object",
+      "properties": {
+        "msmeDisallowanceSec43bHInr": { "type": "number", "minimum": 0, "default": 0 },
+        "statutoryDuesUnpaidSec43BInr": { "type": "number", "minimum": 0, "default": 0 },
+        "eclLossAllowanceIndAs109Inr": { "type": "number", "minimum": 0, "default": 0 },
+        "leaseLiabilityNetIndAs116Inr": { "type": "number", "minimum": 0, "default": 0 },
+        "esopReserveUnvestedIndAs102Inr": { "type": "number", "minimum": 0, "default": 0 },
+        "acceleratedTaxDepreciationSec32Inr": { "type": "number", "minimum": 0, "default": 0 }
+      }
+    },
+    "permanentDifferencesInr": {
+      "type": "number",
+      "default": 0,
+      "description": "Permanent non-deductible expenses (e.g., penalties, CSR expenditure u/s 37(1))"
+    }
+  }
+}
