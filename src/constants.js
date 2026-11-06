@@ -6,5 +6,5 @@
  * @license MIT
  */
 
-export const STATUTORY_CLIENT_VERSION = '2.12.0';
+export const STATUTORY_CLIENT_VERSION = '2.12.1';
 export const DEFAULT_BASE_URL = 'https://api.mudraforge.in';

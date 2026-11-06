@@ -7,22 +7,24 @@
     "section 393",
     "sec393",
     "sec 393",
+    "393(1)(table 1)(sl 8)(ii)",
     "393(1)(table 8)(ii)",
+    "ITA2025_SEC393_TABLE1_SL8_II",
     "goods tds 2025",
     "purchase of goods 2025"
   ],
   "governingStatute": "Income-tax Act, 2025 (Act No. 1 of 2025)",
-  "statutorySection": "Section 393(1), Table 8, Item (ii)",
+  "statutorySection": "Section 393(1), Table 1, Sl. No. 8(ii)",
   "predecessorStatute": "Income-tax Act, 1961",
   "predecessorSection": "Section 194Q",
-  "title": "Deduction of tax at source on payment of a certain sum for purchase of goods",
+  "title": "Deduction of tax at source on payment of a certain sum for purchase of goods (Table 1, Sl. No. 8(ii))",
   "effectivePeriod": {
     "validFrom": "2026-04-01",
     "validTo": "OPEN_ENDED",
     "annualReset": "Every April 1 (Cumulative Purchases Reset Annually)",
     "sunsetNotes": "In force from 1 April 2026 as statutory successor to Section 194Q of the Income-tax Act, 1961."
   },
-  "plainTextSummary": "Under Section 393(1) Table 8 Item (ii) of the Income-tax Act, 2025 (effective 1 April 2026), any buyer whose total sales, gross receipts, or turnover from business exceeds ₹10 Crore in the preceding financial year, responsible for paying any sum to a resident seller for purchase of goods exceeding ₹50 Lakhs in the current financial year, must deduct 0.1% TDS on the amount exceeding ₹50 Lakhs at the time of credit to seller account or payment, whichever is earlier. Penalty rate under Section 397(2) Proviso is 5% if PAN is not furnished or is inoperative.",
+  "plainTextSummary": "Under Section 393(1), Table 1, Sl. No. 8(ii) of the Income-tax Act, 2025 (effective 1 April 2026), any buyer whose total sales, gross receipts, or turnover from business exceeds ₹10 Crore in the preceding financial year, responsible for paying any sum to a resident seller for purchase of goods exceeding ₹50 Lakhs in the current financial year, must deduct 0.1% TDS on the amount exceeding ₹50 Lakhs at the time of credit to seller account or payment, whichever is earlier. Penalty rate under Section 397(2) Proviso is 5% if PAN is not furnished or is inoperative.",
   "keyStatutoryThresholds": {
     "buyerPriorYearTurnoverCr": 10,
     "annualPurchaseThresholdInr": 5000000,
@@ -33,7 +35,7 @@
   "officialCitations": [
     {
       "authority": "Parliament of India / Ministry of Finance",
-      "instrument": "Income-tax Act, 2025 Section 393(1), Table 8, Item (ii)",
+      "instrument": "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 8(ii)",
       "subject": "TDS on purchase of goods exceeding ₹50 Lakhs",
       "officialUrl": "https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx"
     },

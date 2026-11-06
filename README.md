@@ -232,7 +232,7 @@ The OKF substrate currently indexes and enforces ground truth across five major 
 - **Section 194J**: Fees for Technical Services (2% FTS) vs. Professional Fees (10%), enforcing standard 20% non-PAN penalty rate under Section 206AA(1)(iii) / Section 397(2)(a).
 - **Section 194I**: Rent withholding (2% plant & machinery, 10% land & building) exceeding ₹2.4 Lakhs annual threshold.
 - **Section 194H**: Commission and brokerage withholding (2% amended rate w.e.f. 1 October 2024) exceeding ₹15,000 threshold.
-- **Dual-Act Forward Mapping**: Complete cross-compilation bridge from the legacy *Income-tax Act, 1961* to the *Income-tax Act, 2025* (which took effect 1 April 2026), mapping historical provisions seamlessly (e.g., Section 194Q $\rightarrow$ Section 393(1), Table 8, Item (ii)).
+- **Dual-Act Forward Mapping**: Complete cross-compilation bridge from the legacy *Income-tax Act, 1961* to the *Income-tax Act, 2025* (which took effect 1 April 2026), mapping historical provisions seamlessly (e.g., Section 194Q $\rightarrow$ Section 393(1), Table 1, Sl. No. 8(ii)).
 
 ### 2. Indirect Tax (Goods & Services Tax - GST)
 - **CGST Section 8**: Composite and mixed supplies—naturally bundled supplies taxed at the principal supply rate under Section 8(a); unbundled supplies billed for a single price taxed at the highest rate under Section 8(b).

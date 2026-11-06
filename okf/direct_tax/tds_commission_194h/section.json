@@ -13,17 +13,18 @@
   "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
   "statutorySection": "Section 194H",
   "successorStatute": "Income-tax Act, 2025",
-  "successorSection": "Section 393(1), Table 4, Item (i)",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 1(ii)",
   "title": "Deduction of tax at source on commission or brokerage",
   "effectivePeriod": {
     "validFrom": "2001-06-01",
     "validTo": "2026-03-31",
     "annualReset": "Every April 1 (Cumulative Commission Resets Annually)",
-    "sunsetNotes": "Transitions to Section 393(1) Table 4 Item (i) of the Income-tax Act, 2025 effective 1 April 2026."
+    "sunsetNotes": "Transitions to Section 393(1), Table 1, Sl. No. 1(ii) of the Income-tax Act, 2025 effective 1 April 2026, where the statutory threshold increases to ₹20,000 per financial year for specified payers."
   },
-  "plainTextSummary": "Any person responsible for paying any income by way of commission or brokerage to a resident is required to deduct tax at source. Statutory Rate: 2% effective 1 October 2024 as amended by Finance (No. 2) Act, 2024 (prior to 1 October 2024, the rate was 5%). Threshold: Tax is deductible only if the aggregate amount of commission or brokerage credited or paid during the financial year exceeds ₹15,000. Statutory Exclusions: Does not apply to insurance commission (covered under Section 194D) or underwriting commission. Non-PAN penalty rate under Section 206AA is 20%. Under CBDT Circular 23/2017, where GST is separately stated, TDS applies on commission excluding GST.",
+  "plainTextSummary": "Any person responsible for paying any income by way of commission or brokerage to a resident is required to deduct tax at source. Statutory Rate: 2% effective 1 October 2024 as amended by Finance (No. 2) Act, 2024 (prior to 1 October 2024, the rate was 5%). Threshold: Under Section 194H of the 1961 Act, tax is deductible only if the aggregate amount of commission or brokerage credited or paid during the financial year exceeds ₹15,000. Under Section 393(1), Table 1, Sl. No. 1(ii) of the 2025 Act (w.e.f. 1 April 2026), the threshold increases to ₹20,000. Statutory Exclusions: Does not apply to insurance commission (covered under Section 194D / Section 393(1), Table 1, Sl. No. 1(i)) or underwriting commission. Non-PAN penalty rate under Section 206AA is 20%. Under CBDT Circular 23/2017, where GST is separately stated, TDS applies on commission excluding GST.",
   "keyStatutoryThresholds": {
     "annualAggregateThresholdInr": 15000,
+    "successorAct2025ThresholdInr": 20000,
     "standardRatePercent": 2,
     "preOct2024RatePercent": 5,
     "rateChangeEffectiveDate": "2024-10-01",
@@ -40,7 +41,7 @@
     },
     {
       "authority": "Parliament of India / Ministry of Finance",
-      "instrument": "Income-tax Act, 2025 Section 393(1), Table 4, Item (i)",
+      "instrument": "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 1(ii)",
       "subject": "TDS on commission and brokerage under new Direct Tax Code",
       "officialUrl": "https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx"
     },

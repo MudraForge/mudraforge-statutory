@@ -38,6 +38,7 @@ import {
     calculateDeferredTaxIndAs12,
     evaluateProvisionsAndContingenciesIndAs37,
     calculateForeignCurrencyIndAs21,
+    resolveMissingPanPenaltyFloor,
     evaluateSection194Q,
     evaluateSection194C,
     evaluateSection194H,
@@ -124,6 +125,7 @@ export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
  * Prevents unauthorized bundle substitution attacks even if an attacker controls the remote endpoint.
  */
 export const PINNED_RELEASE_ROOTS = new Set([
+    'sha256-318004673a779499e82fd7316c7a6728f3bcdaf449bb4a557b6bd685b899dee3', // fix/public-okf-table1-sl-nos-and-temporal-thresholds (Section 393 Table 1 Sl Nos & 2025 Act thresholds)
     'sha256-b17c37b2724aece2a28beaab5720a777ae27e661ac51f1436be6eff3ca5ef64b', // feat/okf-accounting-domain-expansion (46 Sections across 5 Domains, 52 Circulars, 47 Forms)
     'sha256-a94baf08cbdea064a7b1bd25c1e1311821bf75e9b0d15cc8e0648339d487c79b', // feat/zoho-gstr2b-ap-reconciliation (38 Sections across 5 Domains, 44 Circulars, 39 Forms)
     'sha256-df76c16ed86673426eeb87fafa1c23712830ce5314339ff17fbb2e0e1795e046', // feat/notification-07-2025-composition-rent-rcm-exclusion (38 Sections across 5 Domains, 42 Circulars)
@@ -2557,7 +2559,7 @@ export const STATUTORY_CROSSWALK_CATALOG = [
         successor: {
             act: 'Income-tax Act, 2025 (Act No. 1 of 2025)',
             sectionCode: '393',
-            statutorySection: 'Section 393(1), Table 8, Item (ii)',
+            statutorySection: 'Section 393(1), Table 1, Sl. No. 8(ii)',
             title: 'Deduction of tax at source on payment of a certain sum for purchase of goods',
             effectiveDate: '2026-04-01',
             threshold: 'Buyer turnover > ₹10 Cr in preceding FY; annual purchases > ₹50 Lakhs in current FY',
@@ -2572,10 +2574,10 @@ export const STATUTORY_CROSSWALK_CATALOG = [
             subsidiary: 'General Clauses Act, 1897 Section 6 (Effect of Repeal)',
             legalPrinciple: 'Tax withholding liability crystallizes on the earlier of credit to payee account in books or payment disbursement. If the trigger event occurred on or before 31 March 2026, the 1961 Act governs the deduction, remittance, and compliance obligations, notwithstanding subsequent settlement.'
         },
-        aliases: ['194q', 'sec194q', 'section 194q', '393', 'sec393', 'section 393', '393(1)', '393(1)(table 8)(ii)', 'goods tds', 'purchase of goods']
+        aliases: ['194q', 'sec194q', 'section 194q', '393', 'sec393', 'section 393', '393(1)', '393(1)(table 1)(sl 8)(ii)', '393(1)(table 8)(ii)', 'ita2025_sec393_table1_sl8_ii', 'goods tds', 'purchase of goods']
     },
     {
-        id: 'CROSSWALK_194J_393_TABLE6_III',
+        id: 'CROSSWALK_194J_393_TABLE1_SL6_III',
         domain: 'direct_tax',
         predecessor: {
             act: 'Income-tax Act, 1961 (Act No. 43 of 1961)',
@@ -2591,10 +2593,10 @@ export const STATUTORY_CROSSWALK_CATALOG = [
         successor: {
             act: 'Income-tax Act, 2025 (Act No. 1 of 2025)',
             sectionCode: '393',
-            statutorySection: 'Section 393(1), Table 6, Item (iii)',
+            statutorySection: 'Section 393(1), Table 1, Sl. No. 6(iii)',
             title: 'Deduction of tax at source on fees for professional or technical services',
             effectiveDate: '2026-04-01',
-            threshold: '₹30,000 aggregate in financial year per category',
+            threshold: '₹50,000 aggregate in financial year per category',
             standardRate: '2.0% (FTS) / 10.0% (Professional)',
             penaltyRate: '20.0% (Section 397(2))',
             challan: 'Challan under Income-tax Act, 2025',
@@ -2606,10 +2608,10 @@ export const STATUTORY_CROSSWALK_CATALOG = [
             subsidiary: 'General Clauses Act, 1897 Section 6 (Effect of Repeal)',
             legalPrinciple: 'Liability crystallizes on earlier of credit or payment. Pre-April 1, 2026 events are saved and governed under the 1961 Act.'
         },
-        aliases: ['194j', 'sec194j', 'section 194j', '393(1)(table 6)', 'technical services tds', 'professional fees tds', 'fts']
+        aliases: ['194j', 'sec194j', 'section 194j', '393(1)(table 1)(sl 6)(iii)', '393(1)(table 6)', 'ita2025_sec393_table1_sl6_iii', 'technical services tds', 'professional fees tds', 'fts']
     },
     {
-        id: 'CROSSWALK_194C_393_TABLE3_I',
+        id: 'CROSSWALK_194C_393_TABLE1_SL6_I',
         domain: 'direct_tax',
         predecessor: {
             act: 'Income-tax Act, 1961 (Act No. 43 of 1961)',
@@ -2625,7 +2627,7 @@ export const STATUTORY_CROSSWALK_CATALOG = [
         successor: {
             act: 'Income-tax Act, 2025 (Act No. 1 of 2025)',
             sectionCode: '393',
-            statutorySection: 'Section 393(1), Table 3, Item (i)',
+            statutorySection: 'Section 393(1), Table 1, Sl. No. 6(i)',
             title: 'Deduction of tax at source on payments to contractors',
             effectiveDate: '2026-04-01',
             threshold: 'Single contract > ₹30,000 or aggregate > ₹1,00,000 in FY',
@@ -2640,17 +2642,17 @@ export const STATUTORY_CROSSWALK_CATALOG = [
             subsidiary: 'General Clauses Act, 1897 Section 6 (Effect of Repeal)',
             legalPrinciple: 'Liability crystallizes on earlier of credit or payment. Pre-April 1, 2026 events are saved and governed under the 1961 Act.'
         },
-        aliases: ['194c', 'sec194c', 'section 194c', '393(1)(table 3)', 'contractor tds', 'subcontractor tds']
+        aliases: ['194c', 'sec194c', 'section 194c', '393(1)(table 1)(sl 6)(i)', '393(1)(table 3)', 'contractor tds', 'subcontractor tds']
     },
     {
-        id: 'CROSSWALK_194I_393_TABLE5_I',
+        id: 'CROSSWALK_194I_393_TABLE1_SL2',
         domain: 'direct_tax',
         predecessor: {
             act: 'Income-tax Act, 1961 (Act No. 43 of 1961)',
             sectionCode: '194I',
             statutorySection: 'Section 194I',
             title: 'Deduction of tax at source on rent',
-            threshold: '₹2,40,000 aggregate in financial year',
+            threshold: '₹50,000 per month (or part of month)',
             standardRate: '2.0% (Plant & Machinery) / 10.0% (Land & Building)',
             penaltyRate: '20.0% (Section 206AA)',
             challan: 'ITNS 281',
@@ -2659,7 +2661,7 @@ export const STATUTORY_CROSSWALK_CATALOG = [
         successor: {
             act: 'Income-tax Act, 2025 (Act No. 1 of 2025)',
             sectionCode: '393',
-            statutorySection: 'Section 393(1), Table 5, Item (i)',
+            statutorySection: 'Section 393(1), Table 1, Sl. No. 2',
             title: 'Deduction of tax at source on rent',
             effectiveDate: '2026-04-01',
             threshold: '₹2,40,000 aggregate in financial year',
@@ -2674,10 +2676,10 @@ export const STATUTORY_CROSSWALK_CATALOG = [
             subsidiary: 'General Clauses Act, 1897 Section 6 (Effect of Repeal)',
             legalPrinciple: 'Liability crystallizes on earlier of credit or payment. Pre-April 1, 2026 events are saved and governed under the 1961 Act.'
         },
-        aliases: ['194i', 'sec194i', 'section 194i', '393(1)(table 5)', 'rent tds']
+        aliases: ['194i', 'sec194i', 'section 194i', '393(1)(table 1)(sl 2)', '393(1)(table 5)', 'rent tds']
     },
     {
-        id: 'CROSSWALK_194H_393_TABLE4_I',
+        id: 'CROSSWALK_194H_393_TABLE1_SL1_II',
         domain: 'direct_tax',
         predecessor: {
             act: 'Income-tax Act, 1961 (Act No. 43 of 1961)',
@@ -2693,10 +2695,10 @@ export const STATUTORY_CROSSWALK_CATALOG = [
         successor: {
             act: 'Income-tax Act, 2025 (Act No. 1 of 2025)',
             sectionCode: '393',
-            statutorySection: 'Section 393(1), Table 4, Item (i)',
+            statutorySection: 'Section 393(1), Table 1, Sl. No. 1(ii)',
             title: 'Deduction of tax at source on commission or brokerage',
             effectiveDate: '2026-04-01',
-            threshold: '₹15,000 aggregate in financial year',
+            threshold: '₹20,000 aggregate in financial year',
             standardRate: '2.0%',
             penaltyRate: '20.0% (Section 397(2))',
             challan: 'Challan under Income-tax Act, 2025',
@@ -2708,10 +2710,10 @@ export const STATUTORY_CROSSWALK_CATALOG = [
             subsidiary: 'General Clauses Act, 1897 Section 6 (Effect of Repeal)',
             legalPrinciple: 'Liability crystallizes on earlier of credit or payment. Pre-April 1, 2026 events are saved and governed under the 1961 Act.'
         },
-        aliases: ['194h', 'sec194h', 'section 194h', '393(1)(table 4)', 'commission tds', 'brokerage tds']
+        aliases: ['194h', 'sec194h', 'section 194h', '393(1)(table 1)(sl 1)(ii)', '393(1)(table 4)', 'commission tds', 'brokerage tds']
     },
     {
-        id: 'CROSSWALK_194R_393_TABLE8_12',
+        id: 'CROSSWALK_194R_393_TABLE1_SL8_IV',
         domain: 'direct_tax',
         predecessor: {
             act: 'Income-tax Act, 1961 (Act No. 43 of 1961)',
@@ -2727,7 +2729,7 @@ export const STATUTORY_CROSSWALK_CATALOG = [
         successor: {
             act: 'Income-tax Act, 2025 (Act No. 1 of 2025)',
             sectionCode: '393',
-            statutorySection: 'Section 393(1), Table 8, Item 12',
+            statutorySection: 'Section 393(1), Table 1, Sl. No. 8(iv)',
             title: 'Deduction of tax at source on benefit or perquisite in respect of business or profession',
             effectiveDate: '2026-04-01',
             threshold: '₹20,000 aggregate value in financial year',
@@ -2742,7 +2744,7 @@ export const STATUTORY_CROSSWALK_CATALOG = [
             subsidiary: 'General Clauses Act, 1897 Section 6 (Effect of Repeal)',
             legalPrinciple: 'Liability crystallizes on earlier of credit or payment. Pre-April 1, 2026 events are saved and governed under the 1961 Act.'
         },
-        aliases: ['194r', 'sec194r', 'section 194r', 'perquisites tds', 'business benefits tds']
+        aliases: ['194r', 'sec194r', 'section 194r', '393(1)(table 1)(sl 8)(iv)', 'perquisites tds', 'business benefits tds']
     },
     {
         id: 'CROSSWALK_195_393_2',
@@ -3270,7 +3272,7 @@ export const STATUTORY_AMENDMENTS_CHANGELOG = [
         statute: 'Income-tax Act, 2025 (Act No. 1 of 2025)',
         legalAuthority: 'Parliament of India / Income-tax Act, 2025',
         previousValue: 'Income-tax Act, 1961 (Scattered Chapter XVII-B sections: 194C, 194J, 194Q, 194I, 194H, 194R, 195)',
-        amendedValue: 'Income-tax Act, 2025 Section 393 Tables (Table 3: Contractors, Table 4: Commission, Table 5: Rent, Table 6: Professional/FTS, Table 8: Goods/Perquisites)',
+        amendedValue: 'Income-tax Act, 2025 Section 393 Table 1 (Sl No 1: Commission, Sl No 2: Rent, Sl No 5: Interest, Sl No 6: Contractors/FTS, Sl No 8: Goods/Perquisites)',
         changeSummary: 'The Income-tax Act, 2025 consolidates and restructures direct tax withholding into unified schedules under Section 393, repealing the 1961 Act subject to Section 536 savings.',
         statutoryImpact: 'Withholding liabilities on or after 1 April 2026 are governed by 2025 Act section references and procedural compliance.',
         aliases: ['393', 'income tax act 2025', '2025 act']
@@ -3357,6 +3359,7 @@ export {
     calculateDeferredTaxIndAs12,
     evaluateProvisionsAndContingenciesIndAs37,
     calculateForeignCurrencyIndAs21,
+    resolveMissingPanPenaltyFloor,
     evaluateSection194Q,
     evaluateSection194C,
     evaluateSection194H,

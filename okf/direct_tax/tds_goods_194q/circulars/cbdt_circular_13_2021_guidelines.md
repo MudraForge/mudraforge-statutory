@@ -7,7 +7,7 @@ statutory_section: Section 194Q
 valid_from: 2021-07-01
 valid_to: 2026-03-31
 temporal_status: TRANSITIONED_TO_ACT_2025
-sunset_notes: Governed transactions under Income-tax Act, 1961 until 31 March 2026. Substantive guidelines (excess over ₹50L calculation, advance payment netting, and non-resident PE exclusion) continue under Section 393(1) Table 8(ii) of the Income-tax Act, 2025 effective 1 April 2026.
+sunset_notes: Governed transactions under Income-tax Act, 1961 until 31 March 2026. Substantive guidelines (excess over ₹50L calculation, advance payment netting, and non-resident PE exclusion) continue under Section 393(1), Table 1, Sl. No. 8(ii) of the Income-tax Act, 2025 effective 1 April 2026.
 subject: Threshold calculation, advance payment netting, and non-resident exemption
 official_url: https://www.incometaxindia.gov.in/w/circular-no.-13/2021-guidelines-under-section-194q-of-the-income-tax-act-1961
 ---
@@ -17,7 +17,7 @@ official_url: https://www.incometaxindia.gov.in/w/circular-no.-13/2021-guideline
 > **Valid To**: 31 March 2026 (Income-tax Act, 1961)  
 > **Temporal Status**: TRANSITIONED_TO_ACT_2025  
 > **Annual Reset**: Every April 1 (Cumulative ₹50L purchase threshold resets annually)  
-> **Successor Act Transition**: Governed Section 194Q until 31 March 2026; substantive guidance transitions to Section 393(1), Table 8, Item (ii) of Income-tax Act, 2025 on 1 April 2026.  
+> **Successor Act Transition**: Governed Section 194Q until 31 March 2026; substantive guidance transitions to Section 393(1), Table 1, Sl. No. 8(ii) of Income-tax Act, 2025 on 1 April 2026.  
 > **Statutory Notice**: This document is a structured machine-readable distillation of CBDT Circular No. 13 of 2021 for automated compliance reasoning, citing primary statutory authority.
 
 # CBDT Circular No. 13 of 2021: Statutory Clarifications on Section 194Q

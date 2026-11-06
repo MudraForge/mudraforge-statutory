@@ -3,7 +3,7 @@
 > **Format Reference**: Inspired by Google's *Data Cards Playbook* and the OpenSSF Project Quality Standards.  
 > **Target Package**: `@mudraforge/statutory` v2.12.0  
 > **Evaluation Mode**: Machine-audited against primary sources, official gazettes, and test fixtures.  
-> **Generated Timestamp**: 2026-11-01T17:05:27.972Z
+> **Generated Timestamp**: 2026-11-06T18:36:37.873Z
 
 ---
 
@@ -11,7 +11,7 @@
 
 | Dimension | Metric | Denominator / Baseline | Coverage Rate | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **Primary Source Citations** | 123 resolvable gazette URLs | 123 total citations declared | **100.0%** | VERIFIED |
+| **Primary Source Citations** | 125 resolvable gazette URLs | 125 total citations declared | **100.0%** | VERIFIED |
 | **Temporal Validity Bounds** | 46 sections with explicit dates | 46 total bundled sections | **100.0%** | VERIFIED |
 | **Dual-Act 2025 Transition Bridges** | 16 direct tax provisions mapped | 17 direct tax provisions | **94.1%** | VERIFIED |
 | **Attached Administrative Circulars** | 52 official circulars | 46 provisions across active domains | **100% Attached** | VERIFIED |
@@ -59,18 +59,18 @@
 | **206AB** | Special provision for deduction of tax at source for non-filers of income-tax return (Omitted effective 1 April 2025) | Income-tax Act, 1961 (Act No. 43 of 1961) | `2021-07-01` to `2025-03-31` | `SUNSET_SUPERSEDED` | 1 | 1 | 0 | Finance Act, 2025 (Statutory Omission) (Section 206AB Omitted) |
 | **43B** | Statutory Disallowance on Certain Deductions to be Only on Actual Payment (Section 43B) and Employee Welfare Deductions (Section 36(1)(va)) | Income-tax Act, 1961 (Act No. 43 of 1961) | `1984-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 47 (Deductions on actual payment basis) and Section 35(1)(xvi)) |
 | **206C(1H)** | Collection of tax at source by seller on receipt of consideration for sale of goods (Omitted effective 1 April 2025) | Income-tax Act, 1961 | `2020-10-01` to `2025-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 0 | Finance Act, 2025 (Statutory Sunset) (Section 206C(1H) Omitted) |
-| **194H** | Deduction of tax at source on commission or brokerage | Income-tax Act, 1961 (Act No. 43 of 1961) | `2001-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 4, Item (i)) |
-| **194C** | Deduction of tax at source on payments to contractors and sub-contractors | Income-tax Act, 1961 (Act No. 43 of 1961) | `1972-04-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 2 | Income-tax Act, 2025 (Section 393(1), Table 3, Item (i)) |
-| **194O** | Payment of certain sums by e-commerce operator to e-commerce participant | Income-tax Act, 1961 (Act No. 43 of 1961) | `2020-10-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 8, Item (i)) |
-| **194Q** | Deduction of tax at source on payment of a certain sum for purchase of goods | Income-tax Act, 1961 (Act No. 43 of 1961) | `2021-07-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 2 | 2 | Income-tax Act, 2025 (Section 393(1), Table 8, Item (ii)) |
-| **393** | Deduction of tax at source on payment of a certain sum for purchase of goods | Income-tax Act, 2025 (Act No. 1 of 2025) | `2026-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 0 | 0 | N/A |
-| **194M** | Payment of Certain Sums by Certain Individuals or Hindu Undivided Family (Section 194M) | Income-tax Act, 1961 (Act No. 43 of 1961) | `2019-09-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 5, Item (m)) |
-| **194A** | Deduction of tax at source on payment of interest other than interest on securities | Income-tax Act, 1961 (Act No. 43 of 1961) | `1967-04-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 2 | Income-tax Act, 2025 (Section 393(1), Table 4, Item (i)) |
-| **194R** | Deduction of tax at source on benefit or perquisite in respect of business or profession | Income-tax Act, 1961 (Act No. 43 of 1961) | `2022-07-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 8, Item 12) |
-| **194-IA** | Payment on Transfer of Certain Immovable Property Other than Agricultural Land (Section 194-IA) | Income-tax Act, 1961 (Act No. 43 of 1961) | `2013-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1) Table 4 Item (q)) |
-| **194I** | Deduction of tax at source on payment of rent | Income-tax Act, 1961 (Act No. 43 of 1961) | `1994-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 5, Item (i)) |
-| **194-IB** | Payment of Rent by Certain Individuals or Hindu Undivided Family (Section 194-IB) | Income-tax Act, 1961 (Act No. 43 of 1961) | `2017-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 5, Item (ib)) |
-| **194J** | Fees for professional or technical services, royalty, and non-compete fees | Income-tax Act, 1961 | `1995-07-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 6, Item (iii)) |
+| **194H** | Deduction of tax at source on commission or brokerage | Income-tax Act, 1961 (Act No. 43 of 1961) | `2001-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 1, Sl. No. 1(ii)) |
+| **194C** | Deduction of tax at source on payments to contractors and sub-contractors | Income-tax Act, 1961 (Act No. 43 of 1961) | `1972-04-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 2 | Income-tax Act, 2025 (Section 393(1), Table 1, Sl. No. 6(i)) |
+| **194O** | Payment of certain sums by e-commerce operator to e-commerce participant | Income-tax Act, 1961 (Act No. 43 of 1961) | `2020-10-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 1, Sl. No. 8(i)) |
+| **194Q** | Deduction of tax at source on payment of a certain sum for purchase of goods | Income-tax Act, 1961 (Act No. 43 of 1961) | `2021-07-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 2 | 2 | Income-tax Act, 2025 (Section 393(1), Table 1, Sl. No. 8(ii)) |
+| **393** | Deduction of tax at source on payment of a certain sum for purchase of goods (Table 1, Sl. No. 8(ii)) | Income-tax Act, 2025 (Act No. 1 of 2025) | `2026-04-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 0 | 0 | N/A |
+| **194M** | Payment of Certain Sums by Certain Individuals or Hindu Undivided Family (Section 194M) | Income-tax Act, 1961 (Act No. 43 of 1961) | `2019-09-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 1, Sl. No. 6(i) / 6(iii) / 1(ii)) |
+| **194A** | Deduction of tax at source on payment of interest other than interest on securities | Income-tax Act, 1961 (Act No. 43 of 1961) | `1967-04-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 2 | Income-tax Act, 2025 (Section 393(1), Table 1, Sl. No. 5(ii) and 5(iii)) |
+| **194R** | Deduction of tax at source on benefit or perquisite in respect of business or profession | Income-tax Act, 1961 (Act No. 43 of 1961) | `2022-07-01` to `OPEN_ENDED` | `ACTIVE` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 1, Sl. No. 8(iv)) |
+| **194-IA** | Payment on Transfer of Certain Immovable Property Other than Agricultural Land (Section 194-IA) | Income-tax Act, 1961 (Act No. 43 of 1961) | `2013-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 1, Sl. No. 3(i)) |
+| **194I** | Deduction of tax at source on payment of rent | Income-tax Act, 1961 (Act No. 43 of 1961) | `1994-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 1, Sl. No. 2) |
+| **194-IB** | Payment of Rent by Certain Individuals or Hindu Undivided Family (Section 194-IB) | Income-tax Act, 1961 (Act No. 43 of 1961) | `2017-06-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 2 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 1, Sl. No. 2(iii)) |
+| **194J** | Fees for professional or technical services, royalty, and non-compete fees | Income-tax Act, 1961 | `1995-07-01` to `2026-03-31` | `SUNSET_SUPERSEDED` | 3 | 1 | 1 | Income-tax Act, 2025 (Section 393(1), Table 1, Sl. No. 6(iii)) |
 | **17(5)** | Apportionment of credit and blocked input tax credits | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | CGST Act, 2017 (In force) (Section 17(5)(b)(i) & (b)(iii)) |
 | **RULE-42-43** | Apportionment of input tax credit on inputs, input services and capital goods, and reversal of common credit attributable to exempt or non-business supplies | Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017) | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 2 | 2 | Central Goods and Services Tax Act, 2017 (Section 17(1) and Section 17(2) read with Rule 42 and Rule 43 (as amended)) |
 | **8** | Tax liability on composite and mixed supplies and classification of bundled goods and services contracts | Central Goods and Services Tax Act, 2017 | `2017-07-01` to `OPEN_ENDED` | `ACTIVE` | 3 | 1 | 1 | N/A |

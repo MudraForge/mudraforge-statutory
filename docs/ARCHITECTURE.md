@@ -143,7 +143,7 @@ The journey of an accounts payable transaction from incoming PDF invoice to gene
   3. *Temporal State Machine Evaluation*:
      - Verifies `transactionDate >= section.effectiveFrom`.
      - Evaluates `section.sunsetDate`. If $\text{transactionDate} \ge \text{sunsetDate}$ (as with Section 206C(1H) on 1 April 2025), transitions status to `SUNSET_SUPERSEDED` and halts execution.
-     - Evaluates `section.successorAct2025Mapping`. If $\text{transactionDate} \ge \text{2026-04-01}$, cross-compiles citation to the *Income-tax Act, 2025* codification (e.g. Section 194Q $\rightarrow$ Section 393(1), Table 8, Item (ii)).
+     - Evaluates `section.successorAct2025Mapping`. If $\text{transactionDate} \ge \text{2026-04-01}$, cross-compiles citation to the *Income-tax Act, 2025* codification (e.g. Section 194Q $\rightarrow$ Section 393(1), Table 1, Sl. No. 8(ii)).
 - **Outbound Payload**: Immutable `StatutoryRuleSnapshot` containing thresholds, rates, circular provisos, and successor mapping.
 - **Failure Modes & Degradation Handling**:
   - `ERR_SECTION_NOT_FOUND`: Specified statutory provision not indexed in active OKF manifest.
@@ -276,7 +276,7 @@ Large Language Models (LLMs) are stochastic token predictors. In corporate accou
    *Example*: **Section 206C(1H)** was omitted by the Finance Act, 2025 effective 1 April 2025. Standard model weights continue citing and enforcing sunset sections long after their legal expiration date because pre-training data lacks temporal enforcement boundaries.
 
 3. **Dual-Act Legislative Transition**:
-   India transitioned to the **Income-tax Act, 2025** (which took effect 1 April 2026), replacing familiar 1961 section numbers with new codifications (e.g., Section 194Q transitions to Section 393(1), Table 8, Item (ii)). Agents without a dual-act mapping layer hallucinate cross-statutory citations.
+   India transitioned to the **Income-tax Act, 2025** (which took effect 1 April 2026), replacing familiar 1961 section numbers with new codifications (e.g., Section 194Q transitions to Section 393(1), Table 1, Sl. No. 8(ii)). Agents without a dual-act mapping layer hallucinate cross-statutory citations.
 
 4. **The Failure of Messy Web Searches (Web RAG)**:
    When autonomous agents attempt to retrieve tax laws using automated search queries, they ingest conflicting third-party summaries: outdated SEO-optimized accounting blogs from 2018–2022, promotional vendor writeups, and unstructured discussion forums. These sources consistently miss crucial statutory provisos—such as CBDT Circular 13/2021 unbundling GST from TDS, or Ministry of MSME OM 2/1(5)/2021 excluding wholesale/retail traders. Web RAG introduces high latency, burns thousands of context tokens, and injects contradictory noise into agent reasoning.
@@ -459,9 +459,9 @@ When an autonomous agent (Antigravity, Cursor, Claude Code) receives a complianc
 
 ### Dual-Act Legislative Migration Matrix
 The OKF embeds a cross-compilation matrix forward-mapping the *Income-tax Act, 1961* to the *Income-tax Act, 2025*:
-- `194Q` $\rightarrow$ Section 393(1), Table 8, Item (ii)
-- `194J` $\rightarrow$ Section 393(1), Table 8, Item (iii)
-- `194C` $\rightarrow$ Section 393(1), Table 8, Item (i)
+- `194Q` $\rightarrow$ Section 393(1), Table 1, Sl. No. 8(ii)
+- `194J` $\rightarrow$ Section 393(1), Table 1, Sl. No. 6(iii)
+- `194C` $\rightarrow$ Section 393(1), Table 1, Sl. No. 8(i)
 
 Transactions dated before 1 April 2026 resolve under the 1961 Act; transactions on or after 1 April 2026 automatically compile under the 2025 Act codification.
 
@@ -477,7 +477,7 @@ Currently, the substrate indexes and provides deterministic ground truth across 
 - **Section 194Q**: 0.1% TDS on purchase of goods exceeding ₹50 Lakhs cumulative annual threshold (calculating strictly on the excess over ₹50L).
 - **Section 206C(1H)**: TCS on sale of goods, with automated temporal interception of its **1 April 2025 sunset** under the Finance Act, 2025.
 - **Section 194J**: Fees for Technical Services (2% FTS) vs. Professional Fees (10%), enforcing standard 20% non-PAN penalty rates under Section 206AA(1)(iii) / Section 397(2)(a).
-- **Dual-Act Forward Mapping**: Complete cross-compilation matrix from *Income-tax Act, 1961* to the *Income-tax Act, 2025* (which took effect 1 April 2026), mapping sections seamlessly (e.g., Section 194Q → Section 393(1), Table 8, Item (ii)).
+- **Dual-Act Forward Mapping**: Complete cross-compilation matrix from *Income-tax Act, 1961* to the *Income-tax Act, 2025* (which took effect 1 April 2026), mapping sections seamlessly (e.g., Section 194Q → Section 393(1), Table 1, Sl. No. 8(ii)).
 
 ### 2. Indirect Tax & Procurement Compliance (GST)
 - **CGST Section 17(5)**: Comprehensive statutory negative list for Blocked Input Tax Credit (ITC)—including motor vehicles, corporate food & beverages, personal consumption, club memberships, and statutory exceptions/provisos.

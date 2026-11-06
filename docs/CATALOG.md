@@ -1,8 +1,8 @@
 # Statutory Knowledge Catalog
 
 > **Institutional Reference Index**  
-> Package: `@mudraforge/statutory` | Version: `2.11.0` | Standard: `OKF v0.2`  
-> Compiled Snapshot: `2026-10-29` (Continuously expanded with new gazettes and provisions)  
+> Package: `@mudraforge/statutory` | Version: `2.12.0` | Standard: `OKF v0.2`  
+> Compiled Snapshot: `2026-11-06` (Continuously expanded with new gazettes and provisions)  
 > Epistemic Baseline: Union Budget 2025-26, Finance Act, 2025, and official executive gazettes.
 
 This catalog is deterministically generated from the machine-readable Open Knowledge Format (`section.json`, executive circulars, and return schemas) bundled within this repository.
@@ -13,10 +13,14 @@ This catalog is deterministically generated from the machine-readable Open Knowl
 
 | Domain | Section | Governing Statute | Validity Period | Temporal Status | Key Statutory Threshold | Primary Form / Schedule |
 |---|---|---|---|---|---|---|
+| `corporate_ma_restructuring` | [**INDAS-103-IFRS-3**](#indas-103-ifrs-3) | Companies | 2015-04-01 &rarr; In Force | `Active` | General Provision | `purchase_price_allocation_schedule` |
+| `corporate_ma_restructuring` | [**INDAS-36-IAS-36**](#indas-36-ias-36) | Companies | 2015-04-01 &rarr; In Force | `Active` | General Provision | `cgu_impairment_testing_register` |
 | `corporate_ma_restructuring` | [**ITA-SEC-79**](#ita-sec-79) | Income-tax Act, 1961 | 1962-04-01 &rarr; In Force | `Active` | General Provision | `section_79_shareholding_continuity_schedule` |
+| `corporate_ma_restructuring` | [**INDAS-102-ASC-718**](#indas-102-asc-718) | Companies | 2015-04-01 &rarr; In Force | `Active` | General Provision | `esop_graded_vesting_amortization_schedule` |
 | `corporate_ma_restructuring` | [**50B**](#50b) | Income-tax Act, 1961 | 2000-04-01 &rarr; In Force | `Active` | General Provision | `form_3cea_chartered_accountant_report` |
 | `corporate_ma_restructuring` | [**281**](#281) | Income-tax Act, 1961 | 1962-04-01 &rarr; In Force | `Active` | General Provision | `form_281_tax_clearance_application` |
 | `direct_tax` | [**115BAA-115JB**](#115baa-115jb) | Income-tax Act, 1961 | 2019-04-01 &rarr; In Force | `Active` | General Provision | `form_10ic_concessional_tax_election` |
+| `direct_tax` | [**INDAS-12-ASC-740**](#indas-12-asc-740) | Companies | 2015-04-01 &rarr; In Force | `Active` | General Provision | `deferred_tax_asset_liability_reconciliation_schedule` |
 | `direct_tax` | [**206AB**](#206ab) | Income-tax Act, 1961 | 2021-07-01 &rarr; 2025-03-31 | **Sunset** (2025-03-31) | General Provision | N/A |
 | `direct_tax` | [**43B**](#43b) | Income-tax Act, 1961 | 1984-04-01 &rarr; In Force | `Active` | General Provision | `tax_audit_form_3cd_clause_26_schedule` |
 | `direct_tax` | [**206C(1H)**](#206c-1h-) | Income-tax Act, 1961 | 2020-10-01 &rarr; 2025-03-31 | **Sunset** (2025-03-31) | Seller > ₹10Cr; Receipts > ₹50L | N/A |
@@ -44,19 +48,23 @@ This catalog is deterministically generated from the machine-readable Open Knowl
 | `indirect_tax_gst` | [**RULE-37-37A**](#rule-37-37a) | Central Goods and Services Tax Act, 2017 | 2017-07-01 &rarr; In Force | `Active` | General Provision | `gstr_3b_table_4b_reversal` |
 | `indirect_tax_gst` | [**9(3)**](#9-3-) | Central Goods and Services Tax Act, 2017 read with Notification No. 13/2017-Central Tax | 2017-07-01 &rarr; In Force | `Active` | General Provision | `rcm_self_invoice_payment_voucher` |
 | `international_tax` | [**195**](#195) | Income-tax Act, 1961 read with Double Taxation Avoidance Agreements | 1962-04-01 &rarr; In Force | `Active` | General Provision | `form_15ca_15cb_compliance_checklist` |
+| `international_tax` | [**INDAS-109-IFRS-9**](#indas-109-ifrs-9) | Companies | 2018-04-01 &rarr; In Force | `Active` | General Provision | `indas_109_ecl_provision_matrix_schedule` |
 | `international_tax` | [**INDAS-21-109-FX**](#indas-21-109-fx) | Companies | 2016-04-01 &rarr; In Force | `Active` | General Provision | `indas_109_cash_flow_hedge_reserve_schedule` |
 | `international_tax` | [**IRC-901-904**](#irc-901-904) | Internal Revenue Code of 1986 | 2021-01-01 &rarr; In Force | `Active` | General Provision | `form_67_statement_of_foreign_tax` |
 | `international_tax` | [**ITA-SEC-92C-RULE-10CA**](#ita-sec-92c-rule-10ca) | Income-tax Act, 1961 | 2014-04-01 &rarr; In Force | `Active` | General Provision | `form_3ceb_transfer_pricing_report` |
 | `msme_commercial` | [**MSMED-15-16**](#msmed-15-16) | Micro, Small and Medium Enterprises Development Act, 2006 read with Income-tax Act, 1961 Section 43B | 2006-10-02 &rarr; In Force | `Active` | 15 Days (Oral) / 45 Days (Written) | `schedule_iii_msme_disclosure` |
 | `msme_commercial` | [**MSMED-SEC-7**](#msmed-sec-7) | Micro, Small and Medium Enterprises Development Act, 2006 read with Ministry of MSME Notification S.O. 2119 | 2020-07-01 &rarr; In Force | `Active` | General Provision | `udyam_composite_calculation_worksheet` |
+| `msme_commercial` | [**INDAS-116-ASC-842**](#indas-116-asc-842) | Companies | 2019-04-01 &rarr; In Force | `Active` | General Provision | `lease_rou_asset_and_liability_schedule` |
 | `msme_commercial` | [**MCA-MSME-1**](#mca-msme-1) | Companies Act, 2013 read with Specified Companies | 2019-01-22 &rarr; In Force | `Active` | General Provision | `form_msme_1_half_yearly_return` |
+| `msme_commercial` | [**INDAS-37-ASC-450**](#indas-37-asc-450) | Companies | 2015-04-01 &rarr; In Force | `Active` | General Provision | `provisions_and_contingent_liabilities_register` |
+| `msme_commercial` | [**INDAS-115-ASC-606**](#indas-115-asc-606) | Companies | 2018-04-01 &rarr; In Force | `Active` | General Provision | `revenue_contract_5step_allocation_schedule` |
 | `msme_commercial` | [**MSMED-SEC-22**](#msmed-sec-22) | Micro, Small and Medium Enterprises Development Act, 2006 read with Companies Act, 2013 Schedule III | 2006-10-02 &rarr; In Force | `Active` | General Provision | `schedule_iii_msme_aging_table` |
 
 ---
 
 ## Coverage, Freshness & Verification Registry
 
-The table below records the provenance baseline, verification standard, and operational boundaries for core bundled provisions. For the complete provision-by-provision quality registry covering all 38 provisions across all 5 domains (snapshot compiled on 2026-10-29; continuously updated as new statutory amendments and circulars take effect), see [**CORPUS_QUALITY.md**](./CORPUS_QUALITY.md).
+The table below records the provenance baseline, verification standard, and operational boundaries for core bundled provisions. For the complete provision-by-provision quality registry covering all 46 provisions across all 5 domains (snapshot compiled on 2026-11-06; continuously updated as new statutory amendments and circulars take effect), see [**CORPUS_QUALITY.md**](./CORPUS_QUALITY.md).
 
 | Section Code | Subject Domain | Jurisdiction | Epistemic Baseline | Bundled Status | Verification Standard | Known Coverage Limitations |
 |---|---|---|---|---|---|---|
@@ -72,6 +80,79 @@ The table below records the provenance baseline, verification standard, and oper
 ## Detailed Domain Specifications
 
 ### Corporate M&A, Restructuring & Successor Liability (Income-tax & CGST)
+
+<a id="indas-103-ifrs-3"></a>
+
+#### Section INDAS-103-IFRS-3: Business Combinations & Purchase Price Allocation (Acquisition Method, Identifiable Net Assets, Goodwill vs Capital Reserve, and Contingent Consideration)
+
+- **Governing Statute**: Companies (Indian Accounting Standards) Rules, 2015 read with Section 133 of Companies Act, 2013, IFRS 3, and US GAAP FASB ASC Topic 805
+- **Successor Provision**: Companies Act, 2013 (Indian Accounting Standards) &mdash; Ind AS 103
+- **Temporal Validity**: `2015-04-01` to `OPEN_ENDED`
+- **Legislative Sunset / Transition**: Mandatory accounting standard notified via MCA G.S.R. 111(E) effective FY 2015-16 onwards.
+- **Machine-Readable Source**: [`okf/corporate_ma_restructuring/business_combinations_indas_103/section.json`](../okf/corporate_ma_restructuring/business_combinations_indas_103/section.json)
+
+**Statutory Summary**:
+> Under Ind AS 103 (converged with IFRS 3 and aligned with US GAAP ASC Topic 805), an entity accounts for each business combination by applying the acquisition method. The acquisition method requires: (1) identifying the acquirer; (2) determining the acquisition date (the date on which the acquirer obtains control of the acquiree); (3) recognizing and measuring the identifiable assets acquired, the liabilities assumed, and any non-controlling interest (NCI) in the acquiree at their acquisition-date fair values; and (4) recognizing and measuring goodwill or a gain from a bargain purchase. Identifiable assets include separately recognized intangible assets (such as customer relationships, brand names, software, and patents) regardless of whether they were recognized by the acquiree prior to acquisition, with corresponding deferred tax liabilities recognized under Ind AS 12 for the fair value step-up. Consideration transferred is measured at acquisition-date fair value, including cash, fair value of equity instruments issued, and the fair value of contingent consideration (earnouts). Non-controlling interest is measured either at fair value or at the NCI's proportionate share of the acquiree's identifiable net assets. If the aggregate of consideration transferred, NCI, and pre-existing equity interest exceeds the net acquisition-date fair value of identifiable assets and liabilities, the excess is recognized as Goodwill (tested annually for impairment under Ind AS 36; amortization is prohibited). Conversely, if the net identifiable assets exceed the acquisition basis, the excess represents a Bargain Purchase Gain; after a mandatory reassessment of all acquired assets and liabilities, the gain is recognized directly in Other Comprehensive Income (OCI) and accumulated in Equity as Capital Reserve. Acquisition-related costs (such as finder's fees, legal, accounting, valuation, and advisory fees) are expensed in the periods in which the costs are incurred and must not be capitalized into goodwill.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "measurementPeriodMaxMonths": 12,
+  "acquisitionCostsExpensedImmediately": true,
+  "goodwillAmortizationProhibited": true,
+  "annualGoodwillTestingMandatory": true,
+  "bargainPurchaseReassessmentMandatory": true,
+  "contingentConsiderationFairValueAtAcquisition": true
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Ministry of Corporate Affairs (MCA)** — [Companies (Indian Accounting Standards) Rules, 2015 (G.S.R. 111(E))](https://www.mca.gov.in/content/mca/global/en/acts-rules/ebooks/accounting-standards.html): *Notification of Ind AS 103 (Business Combinations)*
+- **Institute of Chartered Accountants of India (ICAI)** — [ICAI Educational Material on Indian Accounting Standard (Ind AS) 103](https://www.icai.org/post.html?post_id=14323): *Practical guidance on identifying the acquirer, purchase price allocation, intangible asset valuation, and deferred tax accounting*
+
+**Executive Circulars Bundled**:
+- [`mca_notification_indas_103_business_combinations.md`](../okf/corporate_ma_restructuring/business_combinations_indas_103/circulars/mca_notification_indas_103_business_combinations.md)
+
+**Compliance Return Schemas & Templates**:
+- [`purchase_price_allocation_schedule.json`](../okf/corporate_ma_restructuring/business_combinations_indas_103/forms/purchase_price_allocation_schedule.json)
+
+---
+
+<a id="indas-36-ias-36"></a>
+
+#### Section INDAS-36-IAS-36: Impairment of Assets & Cash-Generating Units (Recoverable Amount Determination, Goodwill Priority Allocation, and Reversal Boundaries)
+
+- **Governing Statute**: Companies (Indian Accounting Standards) Rules, 2015 read with Section 133 of Companies Act, 2013, IAS 36, and US GAAP FASB ASC Topic 360 & 350
+- **Successor Provision**: Companies Act, 2013 (Indian Accounting Standards) &mdash; Ind AS 36
+- **Temporal Validity**: `2015-04-01` to `OPEN_ENDED`
+- **Legislative Sunset / Transition**: Mandatory standard notified via MCA G.S.R. 111(E) effective FY 2015-16 onwards.
+- **Machine-Readable Source**: [`okf/corporate_ma_restructuring/impairment_of_assets_indas_36/section.json`](../okf/corporate_ma_restructuring/impairment_of_assets_indas_36/section.json)
+
+**Statutory Summary**:
+> Under Ind AS 36 (converged with IAS 36 and aligned with US GAAP ASC 360 & 350), an entity ensures that its assets are carried at no more than their recoverable amount. An asset is impaired when its carrying amount exceeds its recoverable amount. The recoverable amount of an asset or a cash-generating unit (CGU) is the higher of: (1) its fair value less costs of disposal (the price that would be received to sell an asset in an orderly transaction between market participants less incremental direct costs); and (2) its value in use (the present value of the future cash flows expected to be derived from an asset or CGU using a pre-tax discount rate reflecting current market assessments of the time value of money and risks specific to the asset). If the recoverable amount is less than the carrying amount, the carrying amount of the asset or CGU is reduced to its recoverable amount and the difference is recognized immediately as an impairment loss in Profit and Loss. For a CGU, the impairment loss is allocated first to reduce the carrying amount of any goodwill allocated to the unit, and then pro-rata to the other assets of the unit based on their relative carrying amounts (subject to asset floor constraints where no asset is reduced below the highest of fair value less costs of disposal, value in use, or zero). Goodwill impairment cannot be reversed under any circumstances; impairment losses for other assets are assessed annually and reversed if estimates have changed, capped at depreciated historical cost.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "annualGoodwillTestingMandatory": true,
+  "recoverableAmountRule": "HIGHER_OF_FVLCOD_AND_VIU",
+  "goodwillFirstLossAllocationMandatory": true,
+  "goodwillImpairmentReversalForbidden": true,
+  "otherAssetsReversalCappedAtHistoricalDepreciatedCost": true
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Ministry of Corporate Affairs (MCA)** — [Companies (Indian Accounting Standards) Rules, 2015 (G.S.R. 111(E))](https://www.mca.gov.in/content/mca/global/en/acts-rules/ebooks/accounting-standards.html): *Notification of Ind AS 36 (Impairment of Assets)*
+- **Institute of Chartered Accountants of India (ICAI)** — [ICAI Educational Material on Indian Accounting Standard (Ind AS) 36](https://www.icai.org/post.html?post_id=14323): *Guidance on CGU identification, value in use discounting, terminal value growth rates, and impairment disclosures*
+
+**Executive Circulars Bundled**:
+- [`mca_notification_indas_36_impairment.md`](../okf/corporate_ma_restructuring/impairment_of_assets_indas_36/circulars/mca_notification_indas_36_impairment.md)
+
+**Compliance Return Schemas & Templates**:
+- [`cgu_impairment_testing_register.json`](../okf/corporate_ma_restructuring/impairment_of_assets_indas_36/forms/cgu_impairment_testing_register.json)
+
+---
 
 <a id="ita-sec-79"></a>
 
@@ -108,6 +189,43 @@ The table below records the provenance baseline, verification standard, and oper
 
 **Compliance Return Schemas & Templates**:
 - [`section_79_shareholding_continuity_schedule.json`](../okf/corporate_ma_restructuring/loss_carryforward_sec79/forms/section_79_shareholding_continuity_schedule.json)
+
+---
+
+<a id="indas-102-asc-718"></a>
+
+#### Section INDAS-102-ASC-718: Share-Based Payments & Employee Stock Options (ESOP Grant-Date Fair Value & Graded Vesting Amortization)
+
+- **Governing Statute**: Companies (Indian Accounting Standards) Rules, 2015 read with Section 133 of Companies Act, 2013, ICAI Guidance Note on Accounting for Employee Share-based Payments, and US GAAP FASB ASC Topic 718 (Stock Compensation)
+- **Successor Provision**: Companies Act, 2013 (Indian Accounting Standards) &mdash; Ind AS 102
+- **Temporal Validity**: `2015-04-01` to `OPEN_ENDED`
+- **Legislative Sunset / Transition**: Mandatory standard notified via MCA G.S.R. 111(E) effective FY 2015-16 onwards.
+- **Machine-Readable Source**: [`okf/corporate_ma_restructuring/share_based_payments_indas_102/section.json`](../okf/corporate_ma_restructuring/share_based_payments_indas_102/section.json)
+
+**Statutory Summary**:
+> Under Ind AS 102 (converged with IFRS 2 and aligned with US GAAP ASC 718), equity-settled share-based payment transactions (such as Employee Stock Option Plans / ESOPs) must be measured at the grant-date fair value of the equity instruments granted, typically determined using an option pricing model such as Black-Scholes-Merton (BSM) or a binomial lattice model. For equity-settled awards, the fair value is fixed at grant date and is not subsequently remeasured for changes in stock price. Where awards vest in tranches over multiple years (graded vesting, e.g. 25% each year over 4 years), Ind AS 102 mandates that each tranche must be treated as a separate award with its own distinct service period, resulting in front-loaded compensation expense in profit or loss rather than a single straight-line average over the total 4 years. For cross-border structures (e.g. US Delaware Parent issuing options to employees of its Indian operating subsidiary), the transaction is accounted for in the subsidiary as an equity contribution from the parent credit to Share-Based Payment Reserve and a debit to Employee Benefit Expense, subject to intercompany recharge agreements. Under Indian Income Tax law, the employee is subject to salary TDS under Section 192 read with Section 17(2)(vi) and Rule 3(8) on the exercise date based on Fair Market Value (FMV) determined by a SEBI-registered Category-I Merchant Banker minus exercise price; meanwhile, the company is entitled to claim ESOP discount as an allowable business deduction under Section 37(1) across the vesting period pursuant to the Supreme Court affirmation of the Special Bench ruling in CIT v. Biocon Ltd.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "valuationModelMandatory": "OPTION_PRICING_MODEL_BLACK_SCHOLES_OR_BINOMIAL",
+  "grantDateFairValueFixedForEquitySettled": true,
+  "gradedVestingSeparateTrancheAccountingMandatory": true,
+  "taxDeductibleUnderSection37_1BioconDoctrine": true,
+  "perquisiteTaxUnderSection17_2_viOnExercise": true,
+  "valuationAuthorityForTaxPerquisite": "SEBI_REGISTERED_CAT_I_MERCHANT_BANKER"
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Ministry of Corporate Affairs (MCA)** — [Companies (Indian Accounting Standards) Rules, 2015 (G.S.R. 111(E))](https://www.mca.gov.in/content/mca/global/en/acts-rules/ebooks/accounting-standards.html): *Notification of Ind AS 102 Share-based Payment*
+- **Institute of Chartered Accountants of India (ICAI)** — [ICAI Guidance Note on Accounting for Employee Share-based Payments](https://www.icai.org/post.html?post_id=14323): *Technical implementation on option pricing models, graded vesting, and group share-based payment arrangements*
+
+**Executive Circulars Bundled**:
+- [`icai_guidance_share_based_payments.md`](../okf/corporate_ma_restructuring/share_based_payments_indas_102/circulars/icai_guidance_share_based_payments.md)
+
+**Compliance Return Schemas & Templates**:
+- [`esop_graded_vesting_amortization_schedule.json`](../okf/corporate_ma_restructuring/share_based_payments_indas_102/forms/esop_graded_vesting_amortization_schedule.json)
 
 ---
 
@@ -244,6 +362,43 @@ The table below records the provenance baseline, verification standard, and oper
 
 ---
 
+<a id="indas-12-asc-740"></a>
+
+#### Section INDAS-12-ASC-740: Income Taxes & Deferred Tax Accounting (Balance Sheet Temporary Differences & Effective Tax Rate Reconciliation)
+
+- **Governing Statute**: Companies (Indian Accounting Standards) Rules, 2015 read with Section 133 of Companies Act, 2013, Income-tax Act, 1961, and US GAAP FASB ASC Topic 740 (Income Taxes)
+- **Successor Provision**: Companies Act, 2013 (Indian Accounting Standards) &mdash; Ind AS 12
+- **Temporal Validity**: `2015-04-01` to `OPEN_ENDED`
+- **Legislative Sunset / Transition**: Mandatory standard notified via MCA G.S.R. 111(E) effective FY 2015-16 onwards.
+- **Machine-Readable Source**: [`okf/direct_tax/income_taxes_deferred_tax_indas_12/section.json`](../okf/direct_tax/income_taxes_deferred_tax_indas_12/section.json)
+
+**Statutory Summary**:
+> Under Ind AS 12 (converged with IAS 12 and aligned with US GAAP ASC 740), income taxes comprise current tax and deferred tax. Current tax represents the amount of income taxes payable or recoverable in respect of the taxable profit or tax loss for the period, calculated using enacted tax rates (e.g. 25.168% under Section 115BAA or 30% plus surcharge and cess). Deferred tax is accounted for using the balance sheet liability method, measuring temporary differences between the carrying amounts of assets and liabilities in the financial statements and their corresponding tax bases. Deductible temporary differences generate Deferred Tax Assets (DTAs), such as statutory disallowances for delayed MSME payments under Section 43B(h), unpaid employee benefits under Section 43B, Expected Credit Loss provisions under Ind AS 109 disallowed under Section 36(1)(vii), and lease liabilities under Ind AS 116. DTAs are recognized only to the extent that it is probable that future taxable profit will be available against which the deductible temporary differences can be utilized. Taxable temporary differences generate Deferred Tax Liabilities (DTLs), primarily arising from accelerated tax depreciation claimed under Section 32 of the Income-tax Act, 1961 exceeding straight-line book depreciation under Companies Act Schedule II. The net deferred tax charge or credit is recognized in the Statement of Profit and Loss, except for items recognized in Other Comprehensive Income (OCI) or directly in equity. The standard requires formal disclosure of an Effective Tax Rate (ETR) reconciliation explaining the variance between the accounting tax expense and the product of accounting profit multiplied by the applicable statutory tax rate.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "balanceSheetApproachMandatory": true,
+  "dtaRecognitionPrudenceStandard": "PROBABLE_FUTURE_TAXABLE_PROFIT",
+  "corporateConcessionalTaxRateSec115BAA": 0.25168,
+  "corporateStandardTaxRate": 0.3,
+  "temporaryDifferencesTrackedCount": 6,
+  "effectiveTaxRateReconciliationMandatory": true
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Ministry of Corporate Affairs (MCA)** — [Companies (Indian Accounting Standards) Rules, 2015 (G.S.R. 111(E))](https://www.mca.gov.in/content/mca/global/en/acts-rules/ebooks/accounting-standards.html): *Notification of Ind AS 12 Income Taxes*
+- **Institute of Chartered Accountants of India (ICAI)** — [ICAI Guidance Note on Accounting for Taxes on Income under Ind AS 12](https://www.icai.org/post.html?post_id=14323): *Comprehensive guidance on temporary differences, tax base derivation, and DTA recoverability assessment*
+
+**Executive Circulars Bundled**:
+- [`mca_notification_indas_12_income_taxes.md`](../okf/direct_tax/income_taxes_deferred_tax_indas_12/circulars/mca_notification_indas_12_income_taxes.md)
+
+**Compliance Return Schemas & Templates**:
+- [`deferred_tax_asset_liability_reconciliation_schedule.json`](../okf/direct_tax/income_taxes_deferred_tax_indas_12/forms/deferred_tax_asset_liability_reconciliation_schedule.json)
+
+---
+
 <a id="206ab"></a>
 
 #### Section 206AB: Special provision for deduction of tax at source for non-filers of income-tax return (Omitted effective 1 April 2025)
@@ -370,18 +525,19 @@ The table below records the provenance baseline, verification standard, and oper
 #### Section 194H: Deduction of tax at source on commission or brokerage
 
 - **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
-- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 4, Item (i)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 1, Sl. No. 1(ii)
 - **Temporal Validity**: `2001-06-01` to `2026-03-31`
-- **Legislative Sunset / Transition**: Transitions to Section 393(1) Table 4 Item (i) of the Income-tax Act, 2025 effective 1 April 2026.
+- **Legislative Sunset / Transition**: Transitions to Section 393(1), Table 1, Sl. No. 1(ii) of the Income-tax Act, 2025 effective 1 April 2026, where the statutory threshold increases to ₹20,000 per financial year for specified payers.
 - **Machine-Readable Source**: [`okf/direct_tax/tds_commission_194h/section.json`](../okf/direct_tax/tds_commission_194h/section.json)
 
 **Statutory Summary**:
-> Any person responsible for paying any income by way of commission or brokerage to a resident is required to deduct tax at source. Statutory Rate: 2% effective 1 October 2024 as amended by Finance (No. 2) Act, 2024 (prior to 1 October 2024, the rate was 5%). Threshold: Tax is deductible only if the aggregate amount of commission or brokerage credited or paid during the financial year exceeds ₹15,000. Statutory Exclusions: Does not apply to insurance commission (covered under Section 194D) or underwriting commission. Non-PAN penalty rate under Section 206AA is 20%. Under CBDT Circular 23/2017, where GST is separately stated, TDS applies on commission excluding GST.
+> Any person responsible for paying any income by way of commission or brokerage to a resident is required to deduct tax at source. Statutory Rate: 2% effective 1 October 2024 as amended by Finance (No. 2) Act, 2024 (prior to 1 October 2024, the rate was 5%). Threshold: Under Section 194H of the 1961 Act, tax is deductible only if the aggregate amount of commission or brokerage credited or paid during the financial year exceeds ₹15,000. Under Section 393(1), Table 1, Sl. No. 1(ii) of the 2025 Act (w.e.f. 1 April 2026), the threshold increases to ₹20,000. Statutory Exclusions: Does not apply to insurance commission (covered under Section 194D / Section 393(1), Table 1, Sl. No. 1(i)) or underwriting commission. Non-PAN penalty rate under Section 206AA is 20%. Under CBDT Circular 23/2017, where GST is separately stated, TDS applies on commission excluding GST.
 
 **Key Deterministic Thresholds**:
 ```json
 {
   "annualAggregateThresholdInr": 15000,
+  "successorAct2025ThresholdInr": 20000,
   "standardRatePercent": 2,
   "preOct2024RatePercent": 5,
   "rateChangeEffectiveDate": "2024-10-01",
@@ -393,7 +549,7 @@ The table below records the provenance baseline, verification standard, and oper
 
 **Official Citations & Trust Anchors**:
 - **Parliament of India / Ministry of Finance** — [Finance (No. 2) Act, 2024 (Act No. 15 of 2024) amending Section 194H](https://www.incometaxindia.gov.in/pages/acts/finance-acts.aspx): *Reduction of TDS rate on commission and brokerage from 5% to 2% w.e.f. 1 October 2024*
-- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 4, Item (i)](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *TDS on commission and brokerage under new Direct Tax Code*
+- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 1(ii)](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *TDS on commission and brokerage under new Direct Tax Code*
 - **Central Board of Direct Taxes (CBDT)** — [Circular No. 23 of 2017](https://www.incometaxindia.gov.in/w/circular-no.-23/2017-modification-of-circular-no.1-of-2014-in-view-of-substitution-of-service-tax-by-goods-and-services-tax-gst-): *Exclusion of GST component from value of commission for tax deduction at source*
 
 **Executive Circulars Bundled**:
@@ -409,9 +565,9 @@ The table below records the provenance baseline, verification standard, and oper
 #### Section 194C: Deduction of tax at source on payments to contractors and sub-contractors
 
 - **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
-- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 3, Item (i)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 1, Sl. No. 6(i)
 - **Temporal Validity**: `1972-04-01` to `2026-03-31`
-- **Legislative Sunset / Transition**: Transitions to Section 393(1) Table 3 Item (i) of the Income-tax Act, 2025 effective 1 April 2026.
+- **Legislative Sunset / Transition**: Transitions to Section 393(1), Table 1, Sl. No. 6(i) of the Income-tax Act, 2025 effective 1 April 2026.
 - **Machine-Readable Source**: [`okf/direct_tax/tds_contractor_194c/section.json`](../okf/direct_tax/tds_contractor_194c/section.json)
 
 **Statutory Summary**:
@@ -434,7 +590,7 @@ The table below records the provenance baseline, verification standard, and oper
 
 **Official Citations & Trust Anchors**:
 - **Ministry of Law & Justice / CBDT** — [Section 194C, Income-tax Act, 1961](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *Payments to contractors and sub-contractors*
-- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 3, Item (i)](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *TDS on contractor payments under new Direct Tax Code*
+- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 6(i)](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *TDS on contractor payments under new Direct Tax Code*
 - **Central Board of Direct Taxes (CBDT)** — [Circular No. 23 of 2017](https://www.incometaxindia.gov.in/w/circular-no.-23/2017-modification-of-circular-no.1-of-2014-in-view-of-substitution-of-service-tax-by-goods-and-services-tax-gst-): *Exclusion of GST component from value of contract for tax deduction at source*
 
 **Executive Circulars Bundled**:
@@ -451,9 +607,9 @@ The table below records the provenance baseline, verification standard, and oper
 #### Section 194O: Payment of certain sums by e-commerce operator to e-commerce participant
 
 - **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
-- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 8, Item (i)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 1, Sl. No. 8(i)
 - **Temporal Validity**: `2020-10-01` to `2026-03-31`
-- **Legislative Sunset / Transition**: Rate reduced from 1% to 0.1% w.e.f. 1 October 2024 by Finance (No. 2) Act, 2024. Transitions to Section 393(1) Table 8 Item (i) of the Income-tax Act, 2025 effective 1 April 2026.
+- **Legislative Sunset / Transition**: Rate reduced from 1% to 0.1% w.e.f. 1 October 2024 by Finance (No. 2) Act, 2024. Transitions to Section 393(1), Table 1, Sl. No. 8(i) of the Income-tax Act, 2025 effective 1 April 2026.
 - **Machine-Readable Source**: [`okf/direct_tax/tds_ecommerce_194o/section.json`](../okf/direct_tax/tds_ecommerce_194o/section.json)
 
 **Statutory Summary**:
@@ -474,7 +630,7 @@ The table below records the provenance baseline, verification standard, and oper
 
 **Official Citations & Trust Anchors**:
 - **Ministry of Law & Justice / CBDT** — [Section 194O, Income-tax Act, 1961](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *Deduction of tax at source on payments by e-commerce operators*
-- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 8, Item (i)](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *TDS on e-commerce operators under new Direct Tax Code*
+- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 8(i)](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *TDS on e-commerce operators under new Direct Tax Code*
 - **Central Board of Direct Taxes (CBDT)** — [Circular No. 20 of 2020 (Dated 29 September 2020)](https://www.incometaxindia.gov.in/pages/communications/circulars.aspx?year=2020): *Guidelines under Section 194O and Section 206C(1H) - Precedence and gross amount computation*
 
 **Executive Circulars Bundled**:
@@ -490,13 +646,13 @@ The table below records the provenance baseline, verification standard, and oper
 #### Section 194Q: Deduction of tax at source on payment of a certain sum for purchase of goods
 
 - **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
-- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 8, Item (ii)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 1, Sl. No. 8(ii)
 - **Temporal Validity**: `2021-07-01` to `2026-03-31`
-- **Legislative Sunset / Transition**: Transitions to Section 393(1) Table 8(ii) of the Income-tax Act, 2025 effective 1 April 2026.
+- **Legislative Sunset / Transition**: Transitions to Section 393(1), Table 1, Sl. No. 8(ii) of the Income-tax Act, 2025 effective 1 April 2026.
 - **Machine-Readable Source**: [`okf/direct_tax/tds_goods_194q/section.json`](../okf/direct_tax/tds_goods_194q/section.json)
 
 **Statutory Summary**:
-> Any buyer whose total sales, gross receipts, or turnover from business exceeds ₹10 Crore in the preceding financial year, responsible for paying any sum to a resident seller for purchase of goods exceeding ₹50 Lakhs in the current financial year, must deduct 0.1% TDS on the amount exceeding ₹50 Lakhs at the time of credit to seller account or payment, whichever is earlier.
+> Any buyer whose total sales, gross receipts, or turnover from business exceeds ₹10 Crore in the preceding financial year, responsible for paying any sum to a resident seller for purchase of goods exceeding ₹50 Lakhs in the current financial year, must deduct 0.1% TDS on the amount exceeding ₹50 Lakhs at the time of credit to seller account or payment, whichever is earlier. Under the Income-tax Act, 2025 (w.e.f. 1 April 2026), this provision continues under Section 393(1), Table 1, Sl. No. 8(ii).
 
 **Key Deterministic Thresholds**:
 ```json
@@ -510,6 +666,7 @@ The table below records the provenance baseline, verification standard, and oper
 ```
 
 **Official Citations & Trust Anchors**:
+- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 8(ii)](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *TDS on purchase of goods under new Direct Tax Code*
 - **Central Board of Direct Taxes (CBDT)** — [Circular No. 13 of 2021 (Dated 30 June 2021)](https://www.incometaxindia.gov.in/w/circular-no.-13/2021-guidelines-under-section-194q-of-the-income-tax-act-1961): *Guidelines under section 194Q of the Income-tax Act, 1961 - Threshold calculation & advance netting*
 - **Central Board of Direct Taxes (CBDT)** — [Circular No. 23 of 2017](https://www.incometaxindia.gov.in/w/circular-no.-23/2017-modification-of-circular-no.1-of-2014-in-view-of-substitution-of-service-tax-by-goods-and-services-tax-gst-): *Exclusion of separately stated GST from basic taxable amount for TDS purposes*
 
@@ -525,7 +682,7 @@ The table below records the provenance baseline, verification standard, and oper
 
 <a id="393"></a>
 
-#### Section 393: Deduction of tax at source on payment of a certain sum for purchase of goods
+#### Section 393: Deduction of tax at source on payment of a certain sum for purchase of goods (Table 1, Sl. No. 8(ii))
 
 - **Governing Statute**: Income-tax Act, 2025 (Act No. 1 of 2025)
 - **Successor Provision**: undefined &mdash; undefined
@@ -534,7 +691,7 @@ The table below records the provenance baseline, verification standard, and oper
 - **Machine-Readable Source**: [`okf/direct_tax/tds_goods_393/section.json`](../okf/direct_tax/tds_goods_393/section.json)
 
 **Statutory Summary**:
-> Under Section 393(1) Table 8 Item (ii) of the Income-tax Act, 2025 (effective 1 April 2026), any buyer whose total sales, gross receipts, or turnover from business exceeds ₹10 Crore in the preceding financial year, responsible for paying any sum to a resident seller for purchase of goods exceeding ₹50 Lakhs in the current financial year, must deduct 0.1% TDS on the amount exceeding ₹50 Lakhs at the time of credit to seller account or payment, whichever is earlier. Penalty rate under Section 397(2) Proviso is 5% if PAN is not furnished or is inoperative.
+> Under Section 393(1), Table 1, Sl. No. 8(ii) of the Income-tax Act, 2025 (effective 1 April 2026), any buyer whose total sales, gross receipts, or turnover from business exceeds ₹10 Crore in the preceding financial year, responsible for paying any sum to a resident seller for purchase of goods exceeding ₹50 Lakhs in the current financial year, must deduct 0.1% TDS on the amount exceeding ₹50 Lakhs at the time of credit to seller account or payment, whichever is earlier. Penalty rate under Section 397(2) Proviso is 5% if PAN is not furnished or is inoperative.
 
 **Key Deterministic Thresholds**:
 ```json
@@ -548,7 +705,7 @@ The table below records the provenance baseline, verification standard, and oper
 ```
 
 **Official Citations & Trust Anchors**:
-- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 8, Item (ii)](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *TDS on purchase of goods exceeding ₹50 Lakhs*
+- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 8(ii)](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *TDS on purchase of goods exceeding ₹50 Lakhs*
 - **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 397(2)](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *Higher withholding rate (5%) for failure to furnish PAN*
 - **Central Board of Direct Taxes (CBDT)** — [Circular No. 13 of 2021 (Principles saved under Section 536(2) transitional savings)](https://www.incometaxindia.gov.in/w/circular-no.-13/2021-guidelines-under-section-194q-of-the-income-tax-act-1961): *Threshold calculation & advance netting guidelines saved under 2025 Act*
 
@@ -559,9 +716,9 @@ The table below records the provenance baseline, verification standard, and oper
 #### Section 194M: Payment of Certain Sums by Certain Individuals or Hindu Undivided Family (Section 194M)
 
 - **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
-- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 5, Item (m)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 1, Sl. No. 6(i) / 6(iii) / 1(ii)
 - **Temporal Validity**: `2019-09-01` to `2026-03-31`
-- **Legislative Sunset / Transition**: Transitions to Section 393(1) of the Income-tax Act, 2025 effective 1 April 2026.
+- **Legislative Sunset / Transition**: Transitions to Section 393(1), Table 1 of the Income-tax Act, 2025 effective 1 April 2026.
 - **Machine-Readable Source**: [`okf/direct_tax/tds_individual_contract_194m/section.json`](../okf/direct_tax/tds_individual_contract_194m/section.json)
 
 **Statutory Summary**:
@@ -596,20 +753,23 @@ The table below records the provenance baseline, verification standard, and oper
 #### Section 194A: Deduction of tax at source on payment of interest other than interest on securities
 
 - **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
-- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 4, Item (i)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 1, Sl. No. 5(ii) and 5(iii)
 - **Temporal Validity**: `1967-04-01` to `2026-03-31`
-- **Legislative Sunset / Transition**: Transitions to Section 393(1) Table 4 Item (i) of the Income-tax Act, 2025 effective 1 April 2026.
+- **Legislative Sunset / Transition**: Transitions to Section 393(1), Table 1, Sl. No. 5(ii) (Banking/Co-operative/Post Office: ₹50,000 for regular persons, ₹1,00,000 for senior citizens) and Sl. No. 5(iii) (Other interest: ₹10,000) of the Income-tax Act, 2025 effective 1 April 2026.
 - **Machine-Readable Source**: [`okf/direct_tax/tds_interest_194a/section.json`](../okf/direct_tax/tds_interest_194a/section.json)
 
 **Statutory Summary**:
-> Any person (other than an individual or HUF not liable to audit under Section 44AB in the preceding FY) responsible for paying any income by way of interest other than 'Interest on securities' to a resident payee must deduct 10% tax at source. Statutory Annual Thresholds: (a) ₹40,000 where payer is a banking company, co-operative bank, or post office (₹50,000 if payee is a resident Senior Citizen u/s 80TTB); (b) ₹5,000 for all other payers (e.g. corporate borrowers, vendor trade delayed interest, inter-corporate deposits, NBFC interest). Under Section 206AA, if payee PAN is missing or inoperative, tax is deductible at 20%. Section 194A(3) provides specific exemptions for interest paid to banks, financial corporations, and interest paid by a firm to its partners. Notice: Penal interest paid under Section 16 of the MSMED Act to Micro & Small enterprises is subject to 194A withholding if exceeding ₹5,000, and is non-deductible (statutory add-back to taxable income) under Section 23 of the MSMED Act.
+> Any person (other than an individual or HUF not liable to audit under Section 44AB in the preceding FY) responsible for paying any income by way of interest other than 'Interest on securities' to a resident payee must deduct 10% tax at source. Under the 1961 Act, Statutory Annual Thresholds are: (a) ₹40,000 where payer is a banking company, co-operative bank, or post office (₹50,000 if payee is a resident Senior Citizen u/s 80TTB); (b) ₹5,000 for all other payers (e.g. corporate borrowers, vendor trade delayed interest, inter-corporate deposits, NBFC interest). Under Section 393(1) of the 2025 Act (w.e.f. 1 April 2026), thresholds increase to ₹50,000 for banks (₹1,00,000 for senior citizens) under Table 1, Sl. No. 5(ii), and ₹10,000 for other payers under Table 1, Sl. No. 5(iii). Under Section 206AA, if payee PAN is missing or inoperative, tax is deductible at 20%. Section 194A(3) provides specific exemptions for interest paid to banks, financial corporations, and interest paid by a firm to its partners. Notice: Penal interest paid under Section 16 of the MSMED Act to Micro & Small enterprises is subject to 194A withholding if exceeding ₹5,000, and is non-deductible (statutory add-back to taxable income) under Section 23 of the MSMED Act.
 
 **Key Deterministic Thresholds**:
 ```json
 {
   "commercialPayerAnnualThresholdInr": 5000,
+  "successorAct2025CommercialThresholdInr": 10000,
   "bankCooperativePayerAnnualThresholdInr": 40000,
+  "successorAct2025BankThresholdInr": 50000,
   "seniorCitizenBankPayerThresholdInr": 50000,
+  "successorAct2025SeniorCitizenThresholdInr": 100000,
   "standardDeductionRatePercent": 10,
   "nonCompliantPanPenaltyRatePercent": 20,
   "msmeSection16Interaction": "MSME Section 16 delayed payment penal interest is subject to Section 194A withholding if exceeding ₹5,000 in a FY, and must be permanently added back to taxable income under Section 23 of the MSMED Act."
@@ -618,7 +778,7 @@ The table below records the provenance baseline, verification standard, and oper
 
 **Official Citations & Trust Anchors**:
 - **Ministry of Law & Justice / CBDT** — [Section 194A, Income-tax Act, 1961](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *Deduction of tax at source on interest other than interest on securities*
-- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 4, Item (i)](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *TDS on interest other than interest on securities under new Direct Tax Code*
+- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 5(ii) and 5(iii)](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *TDS on interest other than interest on securities under new Direct Tax Code*
 - **Central Board of Direct Taxes (CBDT)** — [Circular No. 03 of 2010 (Dated 02 March 2010)](https://www.incometaxindia.gov.in/pages/communications/circulars.aspx?year=2010): *Instruction on TDS deduction on interest payments*
 
 **Executive Circulars Bundled**:
@@ -635,7 +795,7 @@ The table below records the provenance baseline, verification standard, and oper
 #### Section 194R: Deduction of tax at source on benefit or perquisite in respect of business or profession
 
 - **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
-- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 8, Item 12
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 1, Sl. No. 8(iv)
 - **Temporal Validity**: `2022-07-01` to `OPEN_ENDED`
 - **Machine-Readable Source**: [`okf/direct_tax/tds_perquisites_194r/section.json`](../okf/direct_tax/tds_perquisites_194r/section.json)
 
@@ -670,13 +830,13 @@ The table below records the provenance baseline, verification standard, and oper
 #### Section 194-IA: Payment on Transfer of Certain Immovable Property Other than Agricultural Land (Section 194-IA)
 
 - **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
-- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1) Table 4 Item (q)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 1, Sl. No. 3(i)
 - **Temporal Validity**: `2013-06-01` to `2026-03-31`
-- **Legislative Sunset / Transition**: Section 194-IA introduced by Finance Act, 2013 w.e.f. 1-6-2013. Amended by Finance Act, 2019 (expanding consideration to club fees, car parking, maintenance) and Finance Act, 2022 (mandating TDS on higher of consideration or Stamp Duty Value w.e.f. 1-4-2022). Continues under Income-tax Act, 1961 until 31 March 2026, transitioning to Section 393(1) Table 4 Item (q) of Income-tax Act, 2025 w.e.f. 1 April 2026.
+- **Legislative Sunset / Transition**: Section 194-IA introduced by Finance Act, 2013 w.e.f. 1-6-2013. Amended by Finance Act, 2019 (expanding consideration to club fees, car parking, maintenance) and Finance Act, 2022 (mandating TDS on higher of consideration or Stamp Duty Value w.e.f. 1-4-2022). Continues under Income-tax Act, 1961 until 31 March 2026, transitioning to Section 393(1), Table 1, Sl. No. 3(i) of Income-tax Act, 2025 w.e.f. 1 April 2026.
 - **Machine-Readable Source**: [`okf/direct_tax/tds_property_194ia/section.json`](../okf/direct_tax/tds_property_194ia/section.json)
 
 **Statutory Summary**:
-> Section 194-IA of the Income-tax Act, 1961 requires any transferee (buyer) responsible for paying to a resident transferor (seller) any sum by way of consideration for the transfer of any immovable property (other than agricultural land) to deduct income tax at source at the rate of 1.0%. Under the Finance Act, 2022 amendment w.e.f. 1 April 2022, tax is deductible on the gross consideration or the Stamp Duty Value (SDV) adopted by the stamp valuation authority, whichever is higher. No deduction is required where both the consideration and the stamp duty value are less than INR 50,00,000. If either the consideration or the stamp duty value reaches or exceeds INR 50,00,000, TDS is applicable on the higher amount. By virtue of the Explanation to Section 194-IA inserted by Finance Act, 2019, 'consideration for transfer of any immovable property' includes all charges of the nature of club membership fee, car parking fee, electricity or water facility fee, maintenance fee, advance fee, or any other charges of similar nature, which are incidental to the transfer of the immovable property. Unlike standard corporate TDS which requires a Tax Deduction Account Number (TAN), deduction under Section 194-IA is PAN-based: the transferee is not required to obtain a TAN and furnishes the challan-cum-statement in Form 26QB online using the buyer's and seller's PANs within 30 days from the end of the month in which deduction was made. The buyer must subsequently issue TDS certificate Form 16B to the seller within 15 days of Form 26QB filing. Where the seller fails to furnish a valid PAN or has an inoperative PAN, the mandatory penalty withholding floor is 20% under Section 206AA. Under the Income-tax Act, 2025 (effective 1 April 2026), Section 194-IA transitions to Section 393(1) Table 4 Item (q).
+> Section 194-IA of the Income-tax Act, 1961 requires any transferee (buyer) responsible for paying to a resident transferor (seller) any sum by way of consideration for the transfer of any immovable property (other than agricultural land) to deduct income tax at source at the rate of 1.0%. Under the Finance Act, 2022 amendment w.e.f. 1 April 2022, tax is deductible on the gross consideration or the Stamp Duty Value (SDV) adopted by the stamp valuation authority, whichever is higher. No deduction is required where both the consideration and the stamp duty value are less than INR 50,00,000. If either the consideration or the stamp duty value reaches or exceeds INR 50,00,000, TDS is applicable on the higher amount. By virtue of the Explanation to Section 194-IA inserted by Finance Act, 2019, 'consideration for transfer of any immovable property' includes all charges of the nature of club membership fee, car parking fee, electricity or water facility fee, maintenance fee, advance fee, or any other charges of similar nature, which are incidental to the transfer of the immovable property. Unlike standard corporate TDS which requires a Tax Deduction Account Number (TAN), deduction under Section 194-IA is PAN-based: the transferee is not required to obtain a TAN and furnishes the challan-cum-statement in Form 26QB online using the buyer's and seller's PANs within 30 days from the end of the month in which deduction was made. The buyer must subsequently issue TDS certificate Form 16B to the seller within 15 days of Form 26QB filing. Where the seller fails to furnish a valid PAN or has an inoperative PAN, the mandatory penalty withholding floor is 20% under Section 206AA. Under the Income-tax Act, 2025 (effective 1 April 2026), Section 194-IA transitions to Section 393(1), Table 1, Sl. No. 3(i).
 
 **Key Deterministic Thresholds**:
 ```json
@@ -718,18 +878,19 @@ The table below records the provenance baseline, verification standard, and oper
 #### Section 194I: Deduction of tax at source on payment of rent
 
 - **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
-- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 5, Item (i)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 1, Sl. No. 2
 - **Temporal Validity**: `1994-06-01` to `2026-03-31`
-- **Legislative Sunset / Transition**: Transitions to Section 393(1) Table 5 Item (i) of the Income-tax Act, 2025 effective 1 April 2026.
+- **Legislative Sunset / Transition**: Transitions to Section 393(1), Table 1, Sl. No. 2 of the Income-tax Act, 2025 effective 1 April 2026, transitioning from an annual aggregate threshold of ₹2,40,000 to ₹50,000 per month (or part thereof) across rent categories.
 - **Machine-Readable Source**: [`okf/direct_tax/tds_rent_194i/section.json`](../okf/direct_tax/tds_rent_194i/section.json)
 
 **Statutory Summary**:
-> Any person (other than an individual or a HUF not subject to tax audit) paying any income by way of rent to a resident is required to deduct tax at source. Statutory Rates: (a) 2% for the use of any machinery, plant, or equipment; (b) 10% for the use of any land, building (including factory building), land appurtenant to a building, furniture, or fittings. Threshold: Tax is deductible only if the aggregate amount of rent credited or paid during the financial year exceeds ₹2,40,000. Non-PAN / Inoperative PAN penalty rate under Section 206AA is 20%. Under CBDT Circular 23/2017, where GST is separately stated in the invoice, TDS applies strictly on the basic rent excluding GST.
+> Any person (other than an individual or a HUF not subject to tax audit) paying any income by way of rent to a resident is required to deduct tax at source. Statutory Rates: (a) 2% for the use of any machinery, plant, or equipment; (b) 10% for the use of any land, building (including factory building), land appurtenant to a building, furniture, or fittings. Threshold: Under Section 194I of the 1961 Act, tax is deductible only if the aggregate amount of rent credited or paid during the financial year exceeds ₹2,40,000. Under Section 393(1), Table 1, Sl. No. 2 of the 2025 Act (w.e.f. 1 April 2026), the threshold transitions to exceeding ₹50,000 for a month or part of a month. Non-PAN / Inoperative PAN penalty rate under Section 206AA is 20%. Under CBDT Circular 23/2017, where GST is separately stated in the invoice, TDS applies strictly on the basic rent excluding GST.
 
 **Key Deterministic Thresholds**:
 ```json
 {
   "annualAggregateThresholdInr": 240000,
+  "successorAct2025MonthlyThresholdInr": 50000,
   "plantMachineryEquipmentRatePercent": 2,
   "landBuildingFurnitureRatePercent": 10,
   "nonCompliantPanPenaltyRatePercent": 20,
@@ -740,7 +901,7 @@ The table below records the provenance baseline, verification standard, and oper
 
 **Official Citations & Trust Anchors**:
 - **Ministry of Law & Justice / CBDT** — [Section 194I, Income-tax Act, 1961](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *Deduction of tax at source on payment of rent*
-- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 5, Item (i)](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *TDS on rent under new Direct Tax Code*
+- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 2](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *TDS on rent under new Direct Tax Code*
 - **Central Board of Direct Taxes (CBDT)** — [Circular No. 23 of 2017](https://www.incometaxindia.gov.in/w/circular-no.-23/2017-modification-of-circular-no.1-of-2014-in-view-of-substitution-of-service-tax-by-goods-and-services-tax-gst-): *Exclusion of GST component from rent value for tax deduction at source*
 
 **Executive Circulars Bundled**:
@@ -756,9 +917,9 @@ The table below records the provenance baseline, verification standard, and oper
 #### Section 194-IB: Payment of Rent by Certain Individuals or Hindu Undivided Family (Section 194-IB)
 
 - **Governing Statute**: Income-tax Act, 1961 (Act No. 43 of 1961)
-- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 5, Item (ib)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 1, Sl. No. 2(iii)
 - **Temporal Validity**: `2017-06-01` to `2026-03-31`
-- **Legislative Sunset / Transition**: Transitions to Section 393(1) of the Income-tax Act, 2025 effective 1 April 2026.
+- **Legislative Sunset / Transition**: Transitions to Section 393(1), Table 1, Sl. No. 2(iii) of the Income-tax Act, 2025 effective 1 April 2026.
 - **Machine-Readable Source**: [`okf/direct_tax/tds_rent_individual_194ib/section.json`](../okf/direct_tax/tds_rent_individual_194ib/section.json)
 
 **Statutory Summary**:
@@ -793,18 +954,19 @@ The table below records the provenance baseline, verification standard, and oper
 #### Section 194J: Fees for professional or technical services, royalty, and non-compete fees
 
 - **Governing Statute**: Income-tax Act, 1961
-- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 6, Item (iii)
+- **Successor Provision**: Income-tax Act, 2025 &mdash; Section 393(1), Table 1, Sl. No. 6(iii)
 - **Temporal Validity**: `1995-07-01` to `2026-03-31`
-- **Legislative Sunset / Transition**: Transitions to Section 393(1) Table 6 Item (iii) of Income-tax Act, 2025 effective 1 April 2026.
+- **Legislative Sunset / Transition**: Transitions to Section 393(1), Table 1, Sl. No. 6(iii) of the Income-tax Act, 2025 effective 1 April 2026, where the threshold increases from ₹30,000 to ₹50,000 per financial year.
 - **Machine-Readable Source**: [`okf/direct_tax/tds_services_194j/section.json`](../okf/direct_tax/tds_services_194j/section.json)
 
 **Statutory Summary**:
-> Deduction of tax at source under Section 194J on payments to resident payees. (1) Statutory Rates: (a) Fees for Technical Services (FTS) under Section 194J(1)(a): 2% (reduced by Finance Act, 2020 s. 80); (b) Fees for Professional Services: 10%; (c) Royalty for cinematographic films: 2%; (d) Other royalties and non-compete fees under Section 28(va): 10%. (2) Threshold: ₹30,000 per financial year applied separately to each statutory category. (3) Classification Invariants: Professional services are strictly defined under Section 44AA(1) (legal, medical, engineering, architecture, accountancy, technical consultancy, interior decoration, IT); FTS is defined under Explanation 2 to Section 9(1)(vii) (managerial, technical, or consultancy services). (4) Reclassification Risk & Penalties: If services deducted at 2% (FTS) are recharacterized on assessment as Section 44AA(1) professional services (10%), the deductor is liable for: (a) the 8% differential withholding tax; (b) mandatory penal interest under Section 201(1A) at 1% per month from the date tax was deductible to date deducted and 1.5% from deduction to deposit; and (c) 30% business expenditure disallowance under Section 40(a)(ia) until tax is deposited.
+> Deduction of tax at source on professional and technical payments to resident payees. (1) Statutory Rates: (a) Fees for Technical Services (FTS) under Section 194J(1)(a) / Section 393(1), Table 1, Sl. No. 6(iii).D(a): 2%; (b) Fees for Professional Services: 10%; (c) Royalty for cinematographic films: 2%; (d) Other royalties and non-compete fees: 10%; (e) Director fees: 10% with zero threshold. (2) Threshold: Under Section 194J of the 1961 Act, ₹30,000 per financial year per statutory category. Under Section 393(1), Table 1, Sl. No. 6(iii) of the 2025 Act (w.e.f. 1 April 2026), the threshold increases to ₹50,000. (3) Classification Invariants: Professional services are strictly defined under Section 44AA(1) (legal, medical, engineering, architecture, accountancy, technical consultancy, interior decoration, IT); FTS is defined under Explanation 2 to Section 9(1)(vii) (managerial, technical, or consultancy services). (4) Reclassification Risk & Penalties: If services deducted at 2% (FTS) are recharacterized on assessment as Section 44AA(1) professional services (10%), the deductor is liable for differential withholding tax, penal interest under Section 201(1A), and 30% expenditure disallowance under Section 40(a)(ia).
 
 **Key Deterministic Thresholds**:
 ```json
 {
   "categoryThresholdInr": 30000,
+  "successorAct2025ThresholdInr": 50000,
   "technicalServicesRatePercent": 2,
   "professionalServicesRatePercent": 10,
   "nonCompliantPanPenaltyRatePercent": 20,
@@ -818,6 +980,7 @@ The table below records the provenance baseline, verification standard, and oper
 
 **Official Citations & Trust Anchors**:
 - **Ministry of Law & Justice / CBDT** — [Finance Act, 2020 (Act No. 12 of 2020), Section 80 amending Section 194J(1)](https://www.incometaxindia.gov.in/pages/acts/finance-acts.aspx): *Reduction of TDS rate on Fees for Technical Services (FTS) from 10% to 2%*
+- **Parliament of India / Ministry of Finance** — [Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 6(iii)](https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx): *TDS on fees for professional and technical services under new Direct Tax Code*
 - **Central Board of Direct Taxes (CBDT)** — [Circular No. 23 of 2017](https://www.incometaxindia.gov.in/w/circular-no.-23/2017-modification-of-circular-no.1-of-2014-in-view-of-substitution-of-service-tax-by-goods-and-services-tax-gst-): *Exclusion of GST component from value of service for tax deduction at source*
 
 **Executive Circulars Bundled**:
@@ -1198,8 +1361,10 @@ The table below records the provenance baseline, verification standard, and oper
 - **Central Board of Indirect Taxes and Customs (CBIC)** — [Notification No. 19/2022-Central Tax (Dated 28 September 2022)](https://taxinformation.cbic.gov.in/view-pdf/1009511/ENG/Notifications): *Substitution of Rule 37 to align 180-day ITC reversal and Section 50 interest*
 - **Central Board of Indirect Taxes and Customs (CBIC)** — [Notification No. 26/2022-Central Tax (Dated 26 December 2022)](https://taxinformation.cbic.gov.in/view-pdf/1009605/ENG/Notifications): *Insertion of Rule 37A for ITC reversal where supplier fails to file GSTR-3B*
 - **Central Board of Indirect Taxes and Customs (CBIC)** — [Circular No. 170/02/2022-GST (Dated 06 July 2022)](https://taxinformation.cbic.gov.in/view-pdf/1003110/ENG/Circulars): *Mandatory reporting of reclaimable ITC reversals in Table 4(B)(2) of Form GSTR-3B*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Circular No. 192/04/2023-GST (Dated 17 July 2023)](https://gstcouncil.gov.in/node/4913): *Clarification on charging of interest under section 50(3) read with Rule 88B(3) in cases of wrong availment of IGST credit and consideration of combined ECL balance*
 
 **Executive Circulars Bundled**:
+- [`cbic_circular_192_2023_ecl_interest_calculation.md`](../okf/indirect_tax_gst/itc_reversal_rule37_37a/circulars/cbic_circular_192_2023_ecl_interest_calculation.md)
 - [`cbic_notification_19_2022_rule37.md`](../okf/indirect_tax_gst/itc_reversal_rule37_37a/circulars/cbic_notification_19_2022_rule37.md)
 
 **Compliance Return Schemas & Templates**:
@@ -1227,7 +1392,8 @@ The table below records the provenance baseline, verification standard, and oper
     "Legal services provided by individual advocates / firms of advocates",
     "Services provided by a Director of a company/body corporate to the company",
     "Services by way of sponsorship to any body corporate or partnership firm",
-    "Services provided by way of supply of security personnel to a registered person"
+    "Services provided by way of supply of security personnel to a registered person",
+    "Service by way of renting of any commercial property (other than residential dwelling) by any unregistered person to any registered person other than a composition taxpayer under Section 10 (Notification No. 09/2024-Central Tax (Rate) w.e.f. 10 October 2024 as amended by Notification No. 07/2025-Central Tax (Rate) w.e.f. 16 January 2025)"
   ],
   "mandatoryCashPaymentRule": "RCM liability CANNOT be adjusted against Electronic Credit Ledger (ITC); must strictly be discharged via Electronic Cash Ledger under Section 49(4)",
   "selfInvoiceMandate": "Section 31(3)(f): Recipient liable to pay tax under Section 9(3) or 9(4) must issue a self-invoice within 30 days of receiving supply from unregistered supplier",
@@ -1240,9 +1406,15 @@ The table below records the provenance baseline, verification standard, and oper
 - **Central Board of Indirect Taxes and Customs (CBIC)** — [Central Goods and Services Tax Act, 2017 (Act No. 12 of 2017)](https://taxinformation.cbic.gov.in/content-page/explore-act): *Section 9(3): Levy and collection under Reverse Charge Mechanism & Section 31(3)(f)/(g): Self-invoicing and payment vouchers*
 - **Central Board of Indirect Taxes and Customs (CBIC)** — [Notification No. 13/2017-Central Tax (Rate) dated 28 June 2017](https://cbic-gst.gov.in/hindi/pdf/central-tax-rate/Notification13-CGST.pdf): *Categories of services on which tax is payable under reverse charge mechanism by the recipient*
 - **Central Board of Indirect Taxes and Customs (CBIC)** — [Circular No. 102/21/2019-GST dated 28 June 2019](https://cbic-gst.gov.in/pdf/circular-cgst-102.pdf): *Clarification regarding applicability of GST on additional/penal interest and RCM applicability*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Notification No. 09/2024-Central Tax (Rate) dated 8 October 2024](https://taxinformation.cbic.gov.in/view-pdf/1010183/ENG/Notifications): *Mandatory reverse charge on renting of commercial immovable property by an unregistered supplier to a registered recipient w.e.f. 10 October 2024*
+- **Central Board of Indirect Taxes and Customs (CBIC)** — [Notification No. 07/2025-Central Tax (Rate) dated 16 January 2025](https://gstcouncil.gov.in/072025-central-tax-rate): *Exclusion of composition taxpayers paying tax under Section 10 from reverse charge liability on commercial property renting w.e.f. 16 January 2025*
+- **Goods and Services Tax Council (GST Council)** — [55th GST Council Meeting Recommendations dated 21 December 2024](https://cbic-gst.gov.in/pdf/Press-Release%20-55-GST-Council.pdf): *Regularization of past intervening period (10 October 2024 to 15 January 2025) on as is where is basis for composition taxpayers leasing commercial property*
 
 **Executive Circulars Bundled**:
 - [`cbic_circular_102_2019_rcm_clarifications.md`](../okf/indirect_tax_gst/rcm_liability_sec9_3/circulars/cbic_circular_102_2019_rcm_clarifications.md)
+- [`cbic_notification_07_2025_composition_rent_exclusion.md`](../okf/indirect_tax_gst/rcm_liability_sec9_3/circulars/cbic_notification_07_2025_composition_rent_exclusion.md)
+- [`cbic_notification_09_2024_renting_rcm.md`](../okf/indirect_tax_gst/rcm_liability_sec9_3/circulars/cbic_notification_09_2024_renting_rcm.md)
+- [`gst_council_55th_meeting_renting_rcm_regularization.md`](../okf/indirect_tax_gst/rcm_liability_sec9_3/circulars/gst_council_55th_meeting_renting_rcm_regularization.md)
 
 **Compliance Return Schemas & Templates**:
 - [`rcm_self_invoice_payment_voucher.json`](../okf/indirect_tax_gst/rcm_liability_sec9_3/forms/rcm_self_invoice_payment_voucher.json)
@@ -1291,6 +1463,44 @@ The table below records the provenance baseline, verification standard, and oper
 
 **Compliance Return Schemas & Templates**:
 - [`form_15ca_15cb_compliance_checklist.json`](../okf/international_tax/cross_border_remittance_195/forms/form_15ca_15cb_compliance_checklist.json)
+
+---
+
+<a id="indas-109-ifrs-9"></a>
+
+#### Section INDAS-109-IFRS-9: Financial Instruments: Classification, Measurement & Expected Credit Loss (ECL) Impairment
+
+- **Governing Statute**: Companies (Indian Accounting Standards) Rules, 2015 read with Section 133 of Companies Act, 2013 and US GAAP FASB Accounting Standards Codification Topic 326 (Financial Instruments - Credit Losses / CECL)
+- **Successor Provision**: Companies Act, 2013 (Indian Accounting Standards) &mdash; Ind AS 109
+- **Temporal Validity**: `2018-04-01` to `OPEN_ENDED`
+- **Legislative Sunset / Transition**: Mandatory standard notified via MCA G.S.R. 365(E) effective FY 2018-19 onwards.
+- **Machine-Readable Source**: [`okf/international_tax/financial_instruments_ecl_indas_109/section.json`](../okf/international_tax/financial_instruments_ecl_indas_109/section.json)
+
+**Statutory Summary**:
+> Under Ind AS 109 (converged with IFRS 9 and conceptually aligned with US GAAP ASC 326 CECL), financial assets are classified based on the entity's business model for managing them and their contractual cash flow characteristics into three measurement categories: Amortised Cost, Fair Value through Other Comprehensive Income (FVTOCI), and Fair Value through Profit or Loss (FVTPL). The standard enforces a forward-looking Expected Credit Loss (ECL) impairment model that replaces the incurred loss model of legacy Ind AS 39. For general financial assets, a 3-stage model applies: Stage 1 (12-month ECL for assets with no Significant Increase in Credit Risk / SICR since origination), Stage 2 (Lifetime ECL for assets experiencing SICR), and Stage 3 (Lifetime ECL for credit-impaired assets). For trade receivables, contract assets, and lease receivables without a significant financing component, Ind AS 109 mandates or permits a Simplified Approach using a Provision Matrix, where lifetime expected credit losses are computed across aging brackets using historical default rates adjusted for current and forward-looking economic forecasts. Under Indian Income Tax law, an ECL provision recognized in books under Ind AS 109 is a non-deductible contingent provision disallowed under Section 36(1)(vii) read with Section 40A(9) until actual irrecoverable write-off, creating a mandatory deferred tax asset (DTA) under Ind AS 12.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "stagingModelCategories": 3,
+  "simplifiedApproachPermitted": true,
+  "tradeReceivablesNoFinancingComponentSimplifiedMandatory": true,
+  "forwardLookingMacroAdjustmentMandatory": true,
+  "incomeTaxDeductibleOnProvision": false,
+  "incomeTaxDeductibleOnWriteOff": true,
+  "lossAllowanceBalanceSheetOffset": "CONTRA_ASSET_REDUCING_GROSS_RECEIVABLES"
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Ministry of Corporate Affairs (MCA)** — [Companies (Indian Accounting Standards) Rules, 2015 (G.S.R. 365(E))](https://www.mca.gov.in/content/mca/global/en/acts-rules/ebooks/accounting-standards.html): *Notification of Ind AS 109 Financial Instruments and Expected Credit Loss Framework*
+- **Institute of Chartered Accountants of India (ICAI)** — [ICAI Educational Material on Indian Accounting Standard (Ind AS) 109 Financial Instruments](https://www.icai.org/post.html?post_id=14323): *Detailed practical guidance on simplified provision matrix, SICR assessment, and staging criteria*
+
+**Executive Circulars Bundled**:
+- [`mca_notification_indas_109_financial_instruments.md`](../okf/international_tax/financial_instruments_ecl_indas_109/circulars/mca_notification_indas_109_financial_instruments.md)
+
+**Compliance Return Schemas & Templates**:
+- [`indas_109_ecl_provision_matrix_schedule.json`](../okf/international_tax/financial_instruments_ecl_indas_109/forms/indas_109_ecl_provision_matrix_schedule.json)
 
 ---
 
@@ -1495,6 +1705,44 @@ The table below records the provenance baseline, verification standard, and oper
 
 ---
 
+<a id="indas-116-asc-842"></a>
+
+#### Section INDAS-116-ASC-842: Lease Accounting & On-Balance-Sheet Capitalization (Right-of-Use Asset & Lease Liability Amortization)
+
+- **Governing Statute**: Companies (Indian Accounting Standards) Rules, 2015 read with Section 133 of Companies Act, 2013 and US GAAP FASB Accounting Standards Codification Topic 842
+- **Successor Provision**: Companies Act, 2013 (Indian Accounting Standards) &mdash; Ind AS 116
+- **Temporal Validity**: `2019-04-01` to `OPEN_ENDED`
+- **Legislative Sunset / Transition**: Mandatory standard notified via MCA G.S.R. 273(E) effective FY 2019-20 onwards.
+- **Machine-Readable Source**: [`okf/msme_commercial/lease_accounting_indas_116/section.json`](../okf/msme_commercial/lease_accounting_indas_116/section.json)
+
+**Statutory Summary**:
+> Under Ind AS 116 (converged with IFRS 16 and aligned with US GAAP ASC 842), lessees must recognize a Right-of-Use (ROU) Asset and a corresponding Lease Liability for all leases on the balance sheet, eliminating the off-balance-sheet operating lease classification previously allowed under Ind AS 17. The only exceptions are short-term leases (term of 12 months or less with no purchase option) and leases of low-value assets (underlying asset value < approx. USD 5,000 / INR 4 Lakhs). At the lease commencement date, the Lease Liability is measured at the present value of future lease payments discounted using the interest rate implicit in the lease, or if that rate cannot be readily determined, the lessee's Incremental Borrowing Rate (IBR). The ROU Asset is measured initially at cost, comprising the initial lease liability, lease payments made at or prior to commencement date, initial direct costs, and estimated restoration/decommissioning costs, less lease incentives received. Subsequentially, the ROU Asset is depreciated straight-line over the lease term (or economic life if ownership transfers), while the Lease Liability is accreted using the effective interest method (recognizing interest expense in profit or loss) and reduced by cash lease payments. This results in a front-loaded total expense profile in P&L (higher interest in early years). For dual-reporting entities, reconciliation must bridge Ind AS 116 single-lessee model with US GAAP ASC 842 dual-model (which retains a single straight-line lease cost for operating leases) and Indian Income Tax Section 32/37 rent deduction schedules.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "shortTermLeaseExemptionMonths": 12,
+  "lowValueAssetExemptionThresholdUsd": 5000,
+  "discountRateHierarchy": "RATE_IMPLICIT_IN_LEASE_OR_LESSEE_IBR",
+  "subsequentExpenseProfile": "FRONT_LOADED_INTEREST_AND_STRAIGHT_LINE_DEPRECIATION",
+  "balanceSheetCapitalizationMandatory": true,
+  "offBalanceSheetOperatingLeasePermitted": false
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Ministry of Corporate Affairs (MCA)** — [Companies (Indian Accounting Standards) Amendment Rules, 2019 (G.S.R. 273(E))](https://www.mca.gov.in/content/mca/global/en/acts-rules/ebooks/accounting-standards.html): *Notification of Ind AS 116 (Leases) superseding Ind AS 17 and eliminating off-balance sheet operating leases*
+- **Institute of Chartered Accountants of India (ICAI)** — [ICAI Educational Material on Indian Accounting Standard (Ind AS) 116 Leases](https://www.icai.org/post.html?post_id=15541): *Technical implementation guidance on IBR determination, lease term assessment, and ROU amortization*
+- **Internal Revenue Service (IRS)** — [IRS Tangible Property Regulations and Leasehold Improvements Guidance (Treas. Reg. Section 1.162-11)](https://www.irs.gov/businesses/corporations): *US Federal tax treatment of lease payments vs financial accounting capitalization under ASC 842*
+
+**Executive Circulars Bundled**:
+- [`mca_notification_indas_116_leases.md`](../okf/msme_commercial/lease_accounting_indas_116/circulars/mca_notification_indas_116_leases.md)
+
+**Compliance Return Schemas & Templates**:
+- [`lease_rou_asset_and_liability_schedule.json`](../okf/msme_commercial/lease_accounting_indas_116/forms/lease_rou_asset_and_liability_schedule.json)
+
+---
+
 <a id="mca-msme-1"></a>
 
 #### Section MCA-MSME-1: Mandatory half-yearly reporting of outstanding dues exceeding 45 days to Micro & Small Enterprises (Form MSME-1)
@@ -1529,6 +1777,82 @@ The table below records the provenance baseline, verification standard, and oper
 
 **Compliance Return Schemas & Templates**:
 - [`form_msme_1_half_yearly_return.json`](../okf/msme_commercial/mca_msme_1_filing/forms/form_msme_1_half_yearly_return.json)
+
+---
+
+<a id="indas-37-asc-450"></a>
+
+#### Section INDAS-37-ASC-450: Provisions, Contingent Liabilities & Contingent Assets (Dispute Probability Triangulation & Footnote Disclosures)
+
+- **Governing Statute**: Companies (Indian Accounting Standards) Rules, 2015 read with Section 133 of Companies Act, 2013, ICAI Guidance Note on Provisions and Contingencies, and US GAAP FASB ASC Topic 450 (Contingencies)
+- **Successor Provision**: Companies Act, 2013 (Indian Accounting Standards) &mdash; Ind AS 37
+- **Temporal Validity**: `2015-04-01` to `OPEN_ENDED`
+- **Legislative Sunset / Transition**: Mandatory standard notified via MCA G.S.R. 111(E) effective FY 2015-16 onwards.
+- **Machine-Readable Source**: [`okf/msme_commercial/provisions_contingencies_indas_37/section.json`](../okf/msme_commercial/provisions_contingencies_indas_37/section.json)
+
+**Statutory Summary**:
+> Under Ind AS 37 (converged with IAS 37 and aligned with US GAAP ASC 450), entities must distinguish between Provisions, Contingent Liabilities, and Contingent Assets. A Provision is recognized if and only if: (1) an entity has a present legal or constructive obligation as a result of a past event; (2) it is probable (more likely than not, i.e. > 50% probability) that an outflow of economic benefits will be required to settle the obligation; and (3) a reliable estimate can be made of the amount of the obligation. Provisions are recognized as balance sheet liabilities and expensed in the Statement of Profit and Loss (discounted to present value where the time value of money is material). A Contingent Liability is a possible obligation whose existence will be confirmed only by the occurrence or non-occurrence of one or more uncertain future events not wholly within the control of the entity (typically 5% to 50% probability), or a present obligation that is not recognized because an outflow is not probable or cannot be reliably measured. Contingent liabilities are never recognized on the balance sheet; instead, they are disclosed in Schedule III Notes to Accounts with estimates of financial effect and uncertainties. If the probability of outflow is Remote (< 5%), neither recognition nor disclosure is required. A Contingent Asset is never recognized in financial statements unless realization is virtually certain; it is disclosed only when an inflow of economic benefits is probable. For corporate statutory defense, tax demands (disputed GST notices under Sections 73/74, disputed Income Tax assessment additions under appeal before CIT(A) or ITAT, and customs disputes) must be rigorously evaluated against this probability matrix to prevent both premature balance sheet over-accruals and audit qualification for non-disclosure.
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "probableThresholdPercentage": 50,
+  "remoteThresholdPercentage": 5,
+  "provisionRecognizedOnBalanceSheet": true,
+  "contingentLiabilityDisclosedInFootnotes": true,
+  "contingentAssetNeverRecognizedUnlessVirtuallyCertain": true,
+  "longTermProvisionDiscountingMandatory": true
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Ministry of Corporate Affairs (MCA)** — [Companies (Indian Accounting Standards) Rules, 2015 (G.S.R. 111(E))](https://www.mca.gov.in/content/mca/global/en/acts-rules/ebooks/accounting-standards.html): *Notification of Ind AS 37 Provisions, Contingent Liabilities and Contingent Assets*
+- **Institute of Chartered Accountants of India (ICAI)** — [ICAI Guidance Note on Accounting for Provisions, Contingent Liabilities and Contingent Assets](https://www.icai.org/post.html?post_id=14323): *Guidance on probability assessment for legal claims, statutory tax litigation, and onerous contracts*
+
+**Executive Circulars Bundled**:
+- [`mca_notification_indas_37_provisions.md`](../okf/msme_commercial/provisions_contingencies_indas_37/circulars/mca_notification_indas_37_provisions.md)
+
+**Compliance Return Schemas & Templates**:
+- [`provisions_and_contingent_liabilities_register.json`](../okf/msme_commercial/provisions_contingencies_indas_37/forms/provisions_and_contingent_liabilities_register.json)
+
+---
+
+<a id="indas-115-asc-606"></a>
+
+#### Section INDAS-115-ASC-606: Revenue from Contracts with Customers (5-Step Transaction Price Allocation & Performance Obligation Recognition)
+
+- **Governing Statute**: Companies (Indian Accounting Standards) Rules, 2015 read with Section 133 of Companies Act, 2013 and US GAAP FASB Accounting Standards Codification Topic 606
+- **Successor Provision**: Companies Act, 2013 (Indian Accounting Standards) &mdash; Ind AS 115
+- **Temporal Validity**: `2018-04-01` to `OPEN_ENDED`
+- **Legislative Sunset / Transition**: Mandatory standard notified via MCA G.S.R. 310(E) effective FY 2018-19 onwards.
+- **Machine-Readable Source**: [`okf/msme_commercial/revenue_recognition_indas_115/section.json`](../okf/msme_commercial/revenue_recognition_indas_115/section.json)
+
+**Statutory Summary**:
+> Under Ind AS 115 (converged with IFRS 15 and substantially aligned with US GAAP ASC 606), revenue is recognized upon the transfer of promised goods or services to customers in an amount that reflects the consideration to which the entity expects to be entitled. The standard enforces a uniform, mandatory five-step revenue framework: (1) Identify the contract with a customer; (2) Identify the performance obligations in the contract, distinguishing between distinct goods or services; (3) Determine the transaction price, taking into account variable consideration (discounts, rebates, refunds, penalties) subject to the constraint that a significant reversal must be highly probable not to occur; (4) Allocate the transaction price to each performance obligation on a relative Standalone Selling Price (SSP) basis; and (5) Recognize revenue when or as the entity satisfies a performance obligation, either over time (if the customer simultaneously receives and consumes benefits, the entity creates/enhances a customer-controlled asset, or the entity has an enforceable right to payment for performance completed to date with no alternative use) or at a point in time. When consideration is received or due prior to performance, the entity recognizes a Contract Liability (Deferred Revenue). When performance is completed prior to unconditional billing entitlement, the entity recognizes a Contract Asset (Unbilled Revenue). For dual-reporting entities (e.g. US Delaware Parent and Indian Subsidiary), revenue recognition schedules must reconcile cross-border contract allocations against both US GAAP ASC 606 and Indian Income Computation and Disclosure Standard IV (ICDS IV).
+
+**Key Deterministic Thresholds**:
+```json
+{
+  "fiveStepModelMandatory": true,
+  "sspAllocationBasis": "RELATIVE_STANDALONE_SELLING_PRICE",
+  "distinctGoodsServicesCriteria": "CAPABLE_OF_BEING_DISTINCT_AND_DISTINCT_IN_CONTRACT",
+  "contractAssetRecognitionRoute": "STATEMENT_OF_FINANCIAL_POSITION_UNBILLED",
+  "contractLiabilityRecognitionRoute": "STATEMENT_OF_FINANCIAL_POSITION_DEFERRED",
+  "variableConsiderationConstraint": "HIGHLY_PROBABLE_NO_SIGNIFICANT_REVERSAL",
+  "overTimeRecognitionCriteriaCount": 3
+}
+```
+
+**Official Citations & Trust Anchors**:
+- **Ministry of Corporate Affairs (MCA)** — [Companies (Indian Accounting Standards) Amendment Rules, 2018 (G.S.R. 310(E))](https://www.mca.gov.in/content/mca/global/en/acts-rules/ebooks/accounting-standards.html): *Notification of Ind AS 115 (Revenue from Contracts with Customers) replacing Ind AS 18 and Ind AS 11*
+- **Institute of Chartered Accountants of India (ICAI)** — [ICAI Educational Material on Indian Accounting Standard (Ind AS) 115](https://www.icai.org/post.html?post_id=14323): *Comprehensive guidance on 5-step model, performance obligations, variable consideration, and licensing*
+- **Internal Revenue Service (IRS)** — [IRS Publication and Guidance on Accrual Method and Conformity (IRC Section 451)](https://www.irs.gov/businesses/corporations): *Tax conformity with financial accounting revenue recognition under ASC 606 / Ind AS 115*
+
+**Executive Circulars Bundled**:
+- [`mca_notification_indas_115_revenue_contracts.md`](../okf/msme_commercial/revenue_recognition_indas_115/circulars/mca_notification_indas_115_revenue_contracts.md)
+
+**Compliance Return Schemas & Templates**:
+- [`revenue_contract_5step_allocation_schedule.json`](../okf/msme_commercial/revenue_recognition_indas_115/forms/revenue_contract_5step_allocation_schedule.json)
 
 ---
 

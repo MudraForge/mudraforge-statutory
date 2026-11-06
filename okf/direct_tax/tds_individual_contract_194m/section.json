@@ -14,13 +14,13 @@
   "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
   "statutorySection": "Section 194M",
   "successorStatute": "Income-tax Act, 2025",
-  "successorSection": "Section 393(1), Table 5, Item (m)",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 6(i) / 6(iii) / 1(ii)",
   "title": "Payment of Certain Sums by Certain Individuals or Hindu Undivided Family (Section 194M)",
   "effectivePeriod": {
     "validFrom": "2019-09-01",
     "validTo": "2026-03-31",
-    "annualReset": "Every April 1 (Cumulative ,150 Lakh Threshold)",
-    "sunsetNotes": "Transitions to Section 393(1) of the Income-tax Act, 2025 effective 1 April 2026."
+    "annualReset": "Every April 1 (Cumulative ₹50 Lakh Threshold)",
+    "sunsetNotes": "Transitions to Section 393(1), Table 1 of the Income-tax Act, 2025 effective 1 April 2026."
   },
   "plainTextSummary": "Any person, being an individual or a Hindu undivided family (other than those who are required to deduct income-tax as per the provisions of section 194C, section 194H or section 194J), responsible for paying any sum to any resident for carrying out any work (including supply of labour) in pursuance of a contract, by way of commission or brokerage, or by way of fees for professional services during the financial year, shall deduct an amount equal to 2% (reduced from 5% w.e.f. 1 October 2024 by Finance (No. 2) Act, 2024) if such sum or aggregate of sums exceeds fifty lakh rupees in a financial year.",
   "keyStatutoryThresholds": {

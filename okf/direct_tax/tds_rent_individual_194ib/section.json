@@ -14,13 +14,13 @@
   "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
   "statutorySection": "Section 194-IB",
   "successorStatute": "Income-tax Act, 2025",
-  "successorSection": "Section 393(1), Table 5, Item (ib)",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 2(iii)",
   "title": "Payment of Rent by Certain Individuals or Hindu Undivided Family (Section 194-IB)",
   "effectivePeriod": {
     "validFrom": "2017-06-01",
     "validTo": "2026-03-31",
     "annualReset": "Every April 1 (Cumulative Monthly Threshold)",
-    "sunsetNotes": "Transitions to Section 393(1) of the Income-tax Act, 2025 effective 1 April 2026."
+    "sunsetNotes": "Transitions to Section 393(1), Table 1, Sl. No. 2(iii) of the Income-tax Act, 2025 effective 1 April 2026."
   },
   "plainTextSummary": "Any person, being an individual or a Hindu undivided family (other than those referred to in the second proviso to section 194-I), responsible for paying to a resident any income by way of rent exceeding fifty thousand rupees for a month or part of a month during the previous year, shall deduct an amount equal to 2% (reduced from 5% w.e.f. 1 October 2024 by Finance (No. 2) Act, 2024) of such income as income-tax thereon. Deduction is made at the time of credit of rent for the last month of previous year or last month of tenancy, or at the time of payment, whichever is earlier. Section 194-IB(4) mandates that deduction under Section 206AA shall not exceed the rent payable for the last month of the tenancy.",
   "keyStatutoryThresholds": {

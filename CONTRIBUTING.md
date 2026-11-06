@@ -42,13 +42,13 @@ Every `section.json` must provide these required fields:
   "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
   "statutorySection": "Section 194Q",
   "successorStatute": "Income-tax Act, 2025",
-  "successorSection": "Section 393(1), Table 8, Item (ii)",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 8(ii)",
   "title": "Deduction of tax at source on payment of a certain sum for purchase of goods",
   "effectivePeriod": {
     "validFrom": "2021-07-01",
     "validTo": "2026-03-31",
     "annualReset": "Every April 1 (Cumulative Purchases Reset Annually)",
-    "sunsetNotes": "Transitions to Section 393(1) Table 8(ii) of the Income-tax Act, 2025 effective 1 April 2026."
+    "sunsetNotes": "Transitions to Section 393(1), Table 1, Sl. No. 8(ii) of the Income-tax Act, 2025 effective 1 April 2026."
   },
   "plainTextSummary": "Plain English summary explaining who must deduct, when, and on what base.",
   "keyStatutoryThresholds": {

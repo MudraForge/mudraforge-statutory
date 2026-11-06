@@ -433,6 +433,7 @@ export declare function calculateEsopAmortizationIndAs102(payload?: any): any;
 export declare function calculateDeferredTaxIndAs12(payload?: any): any;
 export declare function evaluateProvisionsAndContingenciesIndAs37(payload?: any): any;
 export declare function calculateForeignCurrencyIndAs21(payload?: any): any;
+export declare function resolveMissingPanPenaltyFloor(params?: any): any;
 export declare function evaluateSection194Q(payload: any): any;
 export declare function evaluateSection194C(payload: any): any;
 export declare function evaluateSection194H(payload: any): any;

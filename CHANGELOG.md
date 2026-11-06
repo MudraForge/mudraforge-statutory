@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.12.1] - 2026-11-06
+
+### Fixed
+- **Statutory Identity Migration to Official Income-tax Act, 2025 Architecture**:
+  - Migrated colloquial Section 393 table shorthand (Table 8, Table 6, Table 5, Table 4, Table 3) to canonical enacted references under **Section 393(1), Table 1, Serial Numbers (Sl. Nos.)** for payments to residents:
+    - Section 194H $\to$ Section 393(1), Table 1, Sl. No. 1(ii) (Commission or brokerage).
+    - Section 194-I $\to$ Section 393(1), Table 1, Sl. No. 2 (Rent).
+    - Section 194-IB $\to$ Section 393(1), Table 1, Sl. No. 2(iii) (Rent by Individuals/HUF).
+    - Section 194-IA $\to$ Section 393(1), Table 1, Sl. No. 3(i) (Immovable property).
+    - Section 194A $\to$ Section 393(1), Table 1, Sl. No. 5(ii) & 5(iii) (Interest).
+    - Section 194C $\to$ Section 393(1), Table 1, Sl. No. 6(i) (Works contracts).
+    - Section 194J $\to$ Section 393(1), Table 1, Sl. No. 6(iii) (Fees for professional or technical services).
+    - Section 194-O $\to$ Section 393(1), Table 1, Sl. No. 8(i) (E-commerce).
+    - Section 194Q $\to$ Section 393(1), Table 1, Sl. No. 8(ii) (Purchase of goods).
+    - Section 194R $\to$ Section 393(1), Table 1, Sl. No. 8(iv) (Business perquisites).
+    - Section 194M $\to$ Section 393(1), Table 1, Sl. No. 6(i) / 6(iii) / 1(ii) (Specified individual contracts).
+  - Maintained backward-compatible aliases (such as `393(1)(table 8)(ii)`, `393(1)(table 6)`) for seamless query resolution.
+
+### Changed
+- **Date-Effective Statutory Threshold Logic (Income-tax Act, 2025 Transition)**:
+  - Commission (194H): ₹15,000 (pre-1 April 2026) $\to$ ₹20,000 (post-1 April 2026).
+  - Professional/Technical Fees (194J): ₹30,000 (pre-1 April 2026) $\to$ ₹50,000 (post-1 April 2026); Director remuneration maintains strict ₹0 threshold under both Acts.
+  - Rent (194-I): ₹2,40,000 annual aggregate (1961 Act) $\to$ ₹50,000 per month or part thereof (2025 Act).
+  - Interest (194A): Commercial ₹5,000 $\to$ ₹10,000; Banking ₹40,000 $\to$ ₹50,000; Senior citizen bank deposits ₹50,000 $\to$ ₹1,00,000.
+  - Strict statutory excess math enforced across all thresholds (`cumulative > threshold`; exact equality is exempt).
+
 ## [2.12.0] - 2026-11-01
 
 ### Added

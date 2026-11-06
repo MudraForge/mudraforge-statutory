@@ -13,13 +13,13 @@
   "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
   "statutorySection": "Section 194C",
   "successorStatute": "Income-tax Act, 2025",
-  "successorSection": "Section 393(1), Table 3, Item (i)",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 6(i)",
   "title": "Deduction of tax at source on payments to contractors and sub-contractors",
   "effectivePeriod": {
     "validFrom": "1972-04-01",
     "validTo": "2026-03-31",
     "annualReset": "Every April 1 (Cumulative Invoices Reset Annually)",
-    "sunsetNotes": "Transitions to Section 393(1) Table 3 Item (i) of the Income-tax Act, 2025 effective 1 April 2026."
+    "sunsetNotes": "Transitions to Section 393(1), Table 1, Sl. No. 6(i) of the Income-tax Act, 2025 effective 1 April 2026."
   },
   "plainTextSummary": "Any person responsible for paying any sum to a resident contractor for carrying out any work (including supply of labour for carrying out any work) in pursuance of a contract between the contractor and a specified person must deduct tax at source. Statutory Rates: (a) 1% where the payment is being made or credited to an individual or a Hindu Undivided Family (HUF); (b) 2% where the payment is being made or credited to any person other than an individual or a HUF (companies, partnership firms, LLPs, AOPs, BOIs). Thresholds: Tax is deductible if a single contract or invoice exceeds ₹30,000, OR if the aggregate of amounts paid or credited to the contractor during the financial year exceeds ₹1,00,000. Transport Operator Exemption: Under Section 194C(6), no deduction shall be made from any sum credited or paid to a contractor during the course of business of plying, hiring, or leasing goods carriages, where such contractor owns 10 or fewer goods carriages at any time during the previous year and furnishes a declaration to that effect along with their PAN. Non-PAN penalty rate under Section 206AA is 20%.",
   "keyStatutoryThresholds": {
@@ -42,7 +42,7 @@
     },
     {
       "authority": "Parliament of India / Ministry of Finance",
-      "instrument": "Income-tax Act, 2025 Section 393(1), Table 3, Item (i)",
+      "instrument": "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 6(i)",
       "subject": "TDS on contractor payments under new Direct Tax Code",
       "officialUrl": "https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx"
     },

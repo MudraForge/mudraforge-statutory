@@ -13,7 +13,7 @@ official_url: https://www.incometaxindia.gov.in/pages/acts/finance-acts.aspx
 
 > [STATUTORY VALIDITY WINDOW & TEMPORAL STATUS]  
 > **Valid From**: 1 April 2020  
-> **Valid To**: OPEN_ENDED (Active statutory rule under Section 194J(1); transitions to Section 393(1) Table 6 Item (iii) of Income-tax Act, 2025 effective 1 April 2026)  
+> **Valid To**: OPEN_ENDED (Active statutory rule under Section 194J(1); transitions to Section 393(1), Table 1, Sl. No. 6(iii) of Income-tax Act, 2025 effective 1 April 2026)  
 > **Temporal Status**: ACTIVE  
 > **Core Rate Distinction**: 2% TDS on Fees for Technical Services (FTS) vs. 10% TDS on Professional Fees.  
 > **Statutory Notice**: This document is a structured machine-readable distillation of CBDT Circular No. 3 of 2020 for automated compliance reasoning, citing primary statutory authority.

@@ -14,17 +14,18 @@
   "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
   "statutorySection": "Section 194I",
   "successorStatute": "Income-tax Act, 2025",
-  "successorSection": "Section 393(1), Table 5, Item (i)",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 2",
   "title": "Deduction of tax at source on payment of rent",
   "effectivePeriod": {
     "validFrom": "1994-06-01",
     "validTo": "2026-03-31",
     "annualReset": "Every April 1 (Cumulative Rent Resets Annually)",
-    "sunsetNotes": "Transitions to Section 393(1) Table 5 Item (i) of the Income-tax Act, 2025 effective 1 April 2026."
+    "sunsetNotes": "Transitions to Section 393(1), Table 1, Sl. No. 2 of the Income-tax Act, 2025 effective 1 April 2026, transitioning from an annual aggregate threshold of ₹2,40,000 to ₹50,000 per month (or part thereof) across rent categories."
   },
-  "plainTextSummary": "Any person (other than an individual or a HUF not subject to tax audit) paying any income by way of rent to a resident is required to deduct tax at source. Statutory Rates: (a) 2% for the use of any machinery, plant, or equipment; (b) 10% for the use of any land, building (including factory building), land appurtenant to a building, furniture, or fittings. Threshold: Tax is deductible only if the aggregate amount of rent credited or paid during the financial year exceeds ₹2,40,000. Non-PAN / Inoperative PAN penalty rate under Section 206AA is 20%. Under CBDT Circular 23/2017, where GST is separately stated in the invoice, TDS applies strictly on the basic rent excluding GST.",
+  "plainTextSummary": "Any person (other than an individual or a HUF not subject to tax audit) paying any income by way of rent to a resident is required to deduct tax at source. Statutory Rates: (a) 2% for the use of any machinery, plant, or equipment; (b) 10% for the use of any land, building (including factory building), land appurtenant to a building, furniture, or fittings. Threshold: Under Section 194I of the 1961 Act, tax is deductible only if the aggregate amount of rent credited or paid during the financial year exceeds ₹2,40,000. Under Section 393(1), Table 1, Sl. No. 2 of the 2025 Act (w.e.f. 1 April 2026), the threshold transitions to exceeding ₹50,000 for a month or part of a month. Non-PAN / Inoperative PAN penalty rate under Section 206AA is 20%. Under CBDT Circular 23/2017, where GST is separately stated in the invoice, TDS applies strictly on the basic rent excluding GST.",
   "keyStatutoryThresholds": {
     "annualAggregateThresholdInr": 240000,
+    "successorAct2025MonthlyThresholdInr": 50000,
     "plantMachineryEquipmentRatePercent": 2,
     "landBuildingFurnitureRatePercent": 10,
     "nonCompliantPanPenaltyRatePercent": 20,
@@ -40,7 +41,7 @@
     },
     {
       "authority": "Parliament of India / Ministry of Finance",
-      "instrument": "Income-tax Act, 2025 Section 393(1), Table 5, Item (i)",
+      "instrument": "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 2",
       "subject": "TDS on rent under new Direct Tax Code",
       "officialUrl": "https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx"
     },

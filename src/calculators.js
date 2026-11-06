@@ -1572,8 +1572,8 @@ export function resolveMissingPanPenaltyFloor({
     const sec = String(sectionCode || '').toUpperCase().trim();
     const item = String(tableItem || '').toLowerCase().trim();
 
-    const isGoodsPurchase = sec === '194Q' || item === '393_8_ii' || item === 'item 8(ii)' || item === '8(ii)';
-    const isEcommerce = sec === '194O' || sec === '194-O' || item === '393_8_v' || item === 'item 8(v)' || item === '8(v)';
+    const isGoodsPurchase = sec === '194Q' || item === '393_8_ii' || item === '393_1_8_ii' || item === 'sl 8(ii)' || item === 'sl. no. 8(ii)' || item === 'item 8(ii)' || item === '8(ii)';
+    const isEcommerce = sec === '194O' || sec === '194-O' || item === '393_8_v' || item === '393_1_8_i' || item === 'sl 8(i)' || item === 'sl. no. 8(i)' || item === 'item 8(v)' || item === '8(v)' || item === '8(i)';
 
     if (isGoodsPurchase || isEcommerce) {
         return {
@@ -1581,7 +1581,7 @@ export function resolveMissingPanPenaltyFloor({
             isConcessional5PercentApplicable: true,
             categoryScope: isGoodsPurchase ? 'SPECIFIED_GOODS_PURCHASE_5_PERCENT' : 'SPECIFIED_ECOMMERCE_PARTICIPANT_5_PERCENT',
             governingProviso: isAct2025
-                ? `Income-tax Act, 2025 Section 397(2)(b)(i)(${isGoodsPurchase ? 'C' : 'D'}) read with Section 393(1) Table 8, Item ${isGoodsPurchase ? '8(ii)' : '8(v)'}`
+                ? `Income-tax Act, 2025 Section 397(2)(b)(i)(${isGoodsPurchase ? 'C' : 'D'}) read with Section 393(1), Table 1, Sl. No. ${isGoodsPurchase ? '8(ii)' : '8(i)'}`
                 : `Income-tax Act, 1961 Section 206AA(1) First Proviso read with Section ${sec}`
         };
     }
@@ -1949,7 +1949,7 @@ export function evaluateSection194Q({
         isAct2025 = effectiveDate >= '2026-04-01';
         isPost206cSunset = effectiveDate >= '2025-04-01';
         governingWithholdingSection = isSection194QApplicable || isBuyerPrescriptionIndeterminate
-            ? (isAct2025 ? "Income-tax Act, 2025 Section 393(1) Table 8, Item (ii)" : "Income-tax Act, 1961 Section 194Q")
+            ? (isAct2025 ? "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 8(ii)" : "Income-tax Act, 1961 Section 194Q")
             : "N/A (Buyer turnover does not exceed ₹10 Cr threshold)";
     } else {
         // Date is missing: preserve uncertainty rather than coercing machine date
@@ -1957,12 +1957,12 @@ export function evaluateSection194Q({
         isAct2025 = false;
         isPost206cSunset = true; // Section 206C(1H) sunset on 1 April 2025
         governingWithholdingSection = isSection194QApplicable || isBuyerPrescriptionIndeterminate
-            ? "Income-tax Act, 1961 Section 194Q (or Income-tax Act, 2025 Section 393(1) Table 8, Item 8(ii) if credited/paid on or after 1 April 2026)"
+            ? "Income-tax Act, 1961 Section 194Q (or Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 8(ii) if credited/paid on or after 1 April 2026)"
             : "N/A (Buyer turnover does not exceed ₹10 Cr threshold)";
     }
 
     let governingPanPenaltySection = isAct2025 
-        ? "Income-tax Act, 2025 Section 397(2)(b)(i)(C) read with Section 393(1) Table 8, Item 8(ii)" 
+        ? "Income-tax Act, 2025 Section 397(2)(b)(i)(C) read with Section 393(1), Table 1, Sl. No. 8(ii)" 
         : "Income-tax Act, 1961 Section 206AA(1) First Proviso read with Section 194Q";
     
     // Resolve certificate framework with Section 536(2) transitional savings and validity evaluation
@@ -2662,7 +2662,7 @@ export function evaluateSection194C({
     // ── Temporal Act Bridge ──
     const isAct2025 = effectiveDate ? effectiveDate >= '2026-04-01' : false;
     const governingSection = isAct2025
-        ? "Income-tax Act, 2025 Section 393(1) Table 6, Item (i)"
+        ? "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 6(i)"
         : "Income-tax Act, 1961 Section 194C";
     
     // Resolve certificate framework with Section 536(2) transitional savings and validity evaluation
@@ -2973,9 +2973,9 @@ export function evaluateSection194J({
 
     // ── Temporal Act Bridge ──
     const isAct2025 = Boolean(effectiveDate && String(effectiveDate).slice(0, 10) >= '2026-04-01');
-    const governingSection = isAct2025
-        ? "Income-tax Act, 2025 Section 393(1) Table 6, Item (iii)"
-        : "Income-tax Act, 1961 Section 194J";
+    const governingSection = isDirectorFee
+        ? (isAct2025 ? "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 6(iii) (Director Remuneration)" : "Income-tax Act, 1961 Section 194J(1)(ba)")
+        : (isAct2025 ? "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 6(iii)" : "Income-tax Act, 1961 Section 194J");
 
     // ── Rate Determination ──
     // 2% for FTS, BPO, Royalty; 10% for Professional Services, Non-compete, and Director fees
@@ -2992,7 +2992,9 @@ export function evaluateSection194J({
 
     // ── Threshold Evaluation ──
     // Director remuneration has NO threshold under 3rd proviso to Section 194J(1)
-    const CATEGORY_THRESHOLD = isDirectorFee ? 0 : 30000;
+    // Director remuneration has NO threshold under 3rd proviso to Section 194J(1) / Section 393(1) Table 1 Sl. No. 6(iii)
+    // 1961 Act threshold: ₹30,000; 2025 Act threshold: ₹50,000 (Section 393(1), Table 1, Sl. No. 6(iii))
+    const CATEGORY_THRESHOLD = isDirectorFee ? 0 : (isAct2025 ? 50000 : 30000);
     const isThresholdBreached = isDirectorFee || cumulative > CATEGORY_THRESHOLD;
 
     let taxableBase = 0;
@@ -3171,6 +3173,8 @@ export function evaluateSection194J({
  */
 export function evaluateSection194I({
     invoiceAmount,
+    monthlyRent = null,
+    rentPeriodMonths = null,
     priorFyRent = 0,
     priorFyPayments = null,
     priorFyPaymentsAlreadyTaxed = null,
@@ -3229,7 +3233,7 @@ export function evaluateSection194I({
 
     const isAct2025 = Boolean(effectiveDate && String(effectiveDate).slice(0, 10) >= '2026-04-01');
     const governingSection = isAct2025
-        ? "Income-tax Act, 2025 Section 393(1) Table 8, Item 5"
+        ? "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 2"
         : "Income-tax Act, 1961 Section 194I";
 
     const panAvailable = Boolean(hasPan) && !isPanInoperative;
@@ -3240,8 +3244,16 @@ export function evaluateSection194I({
     });
     const standardRatePercent = panAvailable ? baseStatutoryRatePercent : Math.max(baseStatutoryRatePercent, panFloorResolution.penaltyFloorPercent);
 
-    // Threshold: ₹2,40,000 per financial year
-    const RENT_THRESHOLD = 240000;
+    // Threshold: Under 1961 Act: ₹2,40,000 per financial year; Under 2025 Act: ₹50,000 per month or part thereof (Section 393(1), Table 1, Sl. No. 2)
+    let RENT_THRESHOLD;
+    if (isAct2025) {
+        const effectiveRentMonths = (rentPeriodMonths !== null && rentPeriodMonths !== undefined && !isNaN(Number(rentPeriodMonths)) && Number(rentPeriodMonths) > 0)
+            ? Number(rentPeriodMonths)
+            : null;
+        RENT_THRESHOLD = effectiveRentMonths ? (50000 * effectiveRentMonths) : 50000;
+    } else {
+        RENT_THRESHOLD = 240000;
+    }
     const isThresholdBreached = cumulative > RENT_THRESHOLD;
 
     let taxableBase = 0;
@@ -3386,7 +3398,7 @@ export function evaluateSection194H({
     const baseStatutoryRatePercent = isPostOctober2024 ? 2.0 : 5.0;
 
     const governingSection = isAct2025
-        ? "Income-tax Act, 2025 Section 393(1) Table 8, Item 4"
+        ? "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 1(ii)"
         : "Income-tax Act, 1961 Section 194H";
 
     const panAvailable = Boolean(hasPan) && !isPanInoperative;
@@ -3397,8 +3409,8 @@ export function evaluateSection194H({
     });
     const standardRatePercent = panAvailable ? baseStatutoryRatePercent : Math.max(baseStatutoryRatePercent, panFloorResolution.penaltyFloorPercent);
 
-    // Threshold: ₹15,000 per financial year
-    const COMMISSION_THRESHOLD = 15000;
+    // Threshold: ₹15,000 under 1961 Act; ₹20,000 under 2025 Act Section 393(1), Table 1, Sl. No. 1(ii)
+    const COMMISSION_THRESHOLD = isAct2025 ? 20000 : 15000;
     const isThresholdBreached = cumulative > COMMISSION_THRESHOLD;
 
     let taxableBase = 0;
@@ -3541,20 +3553,35 @@ export function evaluateSection194A({
     }
 
     const isAct2025 = Boolean(effectiveDate && String(effectiveDate).slice(0, 10) >= '2026-04-01');
-    const governingSection = isAct2025
-        ? "Income-tax Act, 2025 Section 393(1) Table 4, Item (i)"
-        : "Income-tax Act, 1961 Section 194A";
 
     // Payee Category & Threshold Resolution
     const isExemptInstitution = payeeCategory === 'EXEMPT_INSTITUTION';
     const isFirmToPartner = payeeCategory === 'FIRM_TO_PARTNER';
     const isStatutoryExclusion = isExemptInstitution || isFirmToPartner;
 
-    let INTEREST_THRESHOLD = 5000;
-    if (payeeCategory === 'BANKING_OR_COOPERATIVE') {
-        INTEREST_THRESHOLD = 40000;
-    } else if (payeeCategory === 'SENIOR_CITIZEN_DEPOSIT') {
-        INTEREST_THRESHOLD = 50000;
+    let INTEREST_THRESHOLD;
+    let governingSection;
+
+    if (isAct2025) {
+        if (payeeCategory === 'SENIOR_CITIZEN_DEPOSIT') {
+            INTEREST_THRESHOLD = 100000;
+            governingSection = "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 5(ii)";
+        } else if (payeeCategory === 'BANKING_OR_COOPERATIVE') {
+            INTEREST_THRESHOLD = 50000;
+            governingSection = "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 5(ii)";
+        } else {
+            INTEREST_THRESHOLD = 10000;
+            governingSection = "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 5(iii)";
+        }
+    } else {
+        if (payeeCategory === 'SENIOR_CITIZEN_DEPOSIT') {
+            INTEREST_THRESHOLD = 50000;
+        } else if (payeeCategory === 'BANKING_OR_COOPERATIVE') {
+            INTEREST_THRESHOLD = 40000;
+        } else {
+            INTEREST_THRESHOLD = 5000;
+        }
+        governingSection = "Income-tax Act, 1961 Section 194A";
     }
 
     const isThresholdBreached = !isStatutoryExclusion && (cumulative > INTEREST_THRESHOLD);
@@ -3937,7 +3964,7 @@ export function evaluateSection194IA({
 
     const isAct2025 = Boolean(effectiveDate && String(effectiveDate).slice(0, 10) >= '2026-04-01');
     const governingSection = isAct2025
-        ? 'Income-tax Act, 2025 Section 393(1) Table 4 Item (q)'
+        ? 'Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 3(i)'
         : 'Income-tax Act, 1961 Section 194-IA';
 
     if (!isThresholdMet) {

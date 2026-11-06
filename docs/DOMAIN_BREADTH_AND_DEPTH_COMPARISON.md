@@ -65,7 +65,7 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
   - **Forms**: Form 26Q quarterly TDS return schema, Form 16A certificate schema, Form 10IC corporate tax election, Vendor PAN / 206AB declaration template.
 * **Full Enterprise Engine (Adesha Runtime)**:
   - Reaches **Level 5**.
-  - **Full Statutory Spectrum**: Table 8 of Income-tax Act, 2025 (Section 392 Rent, 393 Goods, 394 Contractors, 395 Professional/FTS, 397 Non-PAN).
+  - **Full Statutory Spectrum**: Section 393(1), Table 1 of Income-tax Act, 2025 (Section 392 Rent, 393 Goods, 394 Contractors, 395 Professional/FTS, 397 Non-PAN).
   - **TRACES Lower Deduction Vault**: Automatically ingests, validates, and tracks Section 197 / Section 395 lower withholding certificates; enforces monetary ceilings and tracks consumed quota.
   - **Advance Netting & Challan Reconciliation**: Matches credits against Challan ITNS 281 tax deposits under Rule 30.
   - **Deterministic Output**: Generates balanced double-entry Journal Vouchers (JVs) debiting expense/inventory, debiting GST ITC, crediting TDS Payable, and crediting AP.

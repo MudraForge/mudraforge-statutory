@@ -15,13 +15,13 @@
   "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
   "statutorySection": "Section 194O",
   "successorStatute": "Income-tax Act, 2025",
-  "successorSection": "Section 393(1), Table 8, Item (i)",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 8(i)",
   "title": "Payment of certain sums by e-commerce operator to e-commerce participant",
   "effectivePeriod": {
     "validFrom": "2020-10-01",
     "validTo": "2026-03-31",
     "annualReset": "Every April 1 (Cumulative Platform Sales Reset Annually)",
-    "sunsetNotes": "Rate reduced from 1% to 0.1% w.e.f. 1 October 2024 by Finance (No. 2) Act, 2024. Transitions to Section 393(1) Table 8 Item (i) of the Income-tax Act, 2025 effective 1 April 2026."
+    "sunsetNotes": "Rate reduced from 1% to 0.1% w.e.f. 1 October 2024 by Finance (No. 2) Act, 2024. Transitions to Section 393(1), Table 1, Sl. No. 8(i) of the Income-tax Act, 2025 effective 1 April 2026."
   },
   "plainTextSummary": "Every e-commerce operator facilitating the sale of goods or provision of services through its digital or electronic platform must deduct income-tax at source on the gross amount of such sales or services credited or paid to a resident e-commerce participant. Statutory Rate: (a) 1.0% prior to 1 October 2024; (b) 0.1% on or after 1 October 2024 (as amended by Finance (No. 2) Act, 2024). In the absence of a valid PAN or where PAN is inoperative, tax is deductible at 5.0% under Section 206AA(1). De Minimis Exemption: No deduction is required if the participant is a resident Individual or HUF, the gross amount of sales/services through the operator does not exceed ₹5,00,000 in the financial year, and the participant has furnished their PAN/Aadhaar. Corporate, LLP, and partnership participants have zero threshold (TDS applies from ₹1). Section 194O has statutory precedence: transactions subject to Section 194O are exempt from Section 194Q buyer TDS and Section 206C(1H) seller TCS.",
   "keyStatutoryThresholds": {
@@ -42,7 +42,7 @@
     },
     {
       "authority": "Parliament of India / Ministry of Finance",
-      "instrument": "Income-tax Act, 2025 Section 393(1), Table 8, Item (i)",
+      "instrument": "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 8(i)",
       "subject": "TDS on e-commerce operators under new Direct Tax Code",
       "officialUrl": "https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx"
     },

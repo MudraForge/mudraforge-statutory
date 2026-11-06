@@ -12,17 +12,18 @@
   "governingStatute": "Income-tax Act, 1961",
   "statutorySection": "Section 194J",
   "successorStatute": "Income-tax Act, 2025",
-  "successorSection": "Section 393(1), Table 6, Item (iii)",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 6(iii)",
   "title": "Fees for professional or technical services, royalty, and non-compete fees",
   "effectivePeriod": {
     "validFrom": "1995-07-01",
     "validTo": "2026-03-31",
     "annualReset": "Annual",
-    "sunsetNotes": "Transitions to Section 393(1) Table 6 Item (iii) of Income-tax Act, 2025 effective 1 April 2026."
+    "sunsetNotes": "Transitions to Section 393(1), Table 1, Sl. No. 6(iii) of the Income-tax Act, 2025 effective 1 April 2026, where the threshold increases from ₹30,000 to ₹50,000 per financial year."
   },
-  "plainTextSummary": "Deduction of tax at source under Section 194J on payments to resident payees. (1) Statutory Rates: (a) Fees for Technical Services (FTS) under Section 194J(1)(a): 2% (reduced by Finance Act, 2020 s. 80); (b) Fees for Professional Services: 10%; (c) Royalty for cinematographic films: 2%; (d) Other royalties and non-compete fees under Section 28(va): 10%. (2) Threshold: ₹30,000 per financial year applied separately to each statutory category. (3) Classification Invariants: Professional services are strictly defined under Section 44AA(1) (legal, medical, engineering, architecture, accountancy, technical consultancy, interior decoration, IT); FTS is defined under Explanation 2 to Section 9(1)(vii) (managerial, technical, or consultancy services). (4) Reclassification Risk & Penalties: If services deducted at 2% (FTS) are recharacterized on assessment as Section 44AA(1) professional services (10%), the deductor is liable for: (a) the 8% differential withholding tax; (b) mandatory penal interest under Section 201(1A) at 1% per month from the date tax was deductible to date deducted and 1.5% from deduction to deposit; and (c) 30% business expenditure disallowance under Section 40(a)(ia) until tax is deposited.",
+  "plainTextSummary": "Deduction of tax at source on professional and technical payments to resident payees. (1) Statutory Rates: (a) Fees for Technical Services (FTS) under Section 194J(1)(a) / Section 393(1), Table 1, Sl. No. 6(iii).D(a): 2%; (b) Fees for Professional Services: 10%; (c) Royalty for cinematographic films: 2%; (d) Other royalties and non-compete fees: 10%; (e) Director fees: 10% with zero threshold. (2) Threshold: Under Section 194J of the 1961 Act, ₹30,000 per financial year per statutory category. Under Section 393(1), Table 1, Sl. No. 6(iii) of the 2025 Act (w.e.f. 1 April 2026), the threshold increases to ₹50,000. (3) Classification Invariants: Professional services are strictly defined under Section 44AA(1) (legal, medical, engineering, architecture, accountancy, technical consultancy, interior decoration, IT); FTS is defined under Explanation 2 to Section 9(1)(vii) (managerial, technical, or consultancy services). (4) Reclassification Risk & Penalties: If services deducted at 2% (FTS) are recharacterized on assessment as Section 44AA(1) professional services (10%), the deductor is liable for differential withholding tax, penal interest under Section 201(1A), and 30% expenditure disallowance under Section 40(a)(ia).",
   "keyStatutoryThresholds": {
     "categoryThresholdInr": 30000,
+    "successorAct2025ThresholdInr": 50000,
     "technicalServicesRatePercent": 2,
     "professionalServicesRatePercent": 10,
     "nonCompliantPanPenaltyRatePercent": 20,
@@ -38,6 +39,12 @@
       "instrument": "Finance Act, 2020 (Act No. 12 of 2020), Section 80 amending Section 194J(1)",
       "subject": "Reduction of TDS rate on Fees for Technical Services (FTS) from 10% to 2%",
       "officialUrl": "https://www.incometaxindia.gov.in/pages/acts/finance-acts.aspx"
+    },
+    {
+      "authority": "Parliament of India / Ministry of Finance",
+      "instrument": "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 6(iii)",
+      "subject": "TDS on fees for professional and technical services under new Direct Tax Code",
+      "officialUrl": "https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx"
     },
     {
       "authority": "Central Board of Direct Taxes (CBDT)",

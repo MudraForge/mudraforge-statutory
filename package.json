@@ -1,6 +1,6 @@
 {
   "name": "@mudraforge/statutory",
-  "version": "2.12.0",
+  "version": "2.12.1",
   "description": "Open Knowledge Format (OKF) client & AI Agent Skill for Indian and cross-border statutory tax provisions. Zero dependencies.",
   "type": "module",
   "main": "src/index.js",
