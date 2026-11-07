@@ -1,0 +1,23 @@
+{
+  "sectionId": "ITACT1961_SEC115BAA_115JB",
+  "version": "1.0.0",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Sections 115BAA, 115JB & 115JAA",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 115BAA & MAT equivalents",
+  "triggerPolicy": {
+    "type": "FISCAL_YEAR_END",
+    "description": "Annual Corporate Tax Return filing & MAT comparison"
+  },
+  "computation": {
+    "archetype": "CORPORATE_TAX_MAT_VS_CONCESSIONAL",
+    "concessionalBaseRate": 0.22,
+    "matBaseRate": 0.15,
+    "surchargeConcessional": 0.1,
+    "cessRate": 0.04
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

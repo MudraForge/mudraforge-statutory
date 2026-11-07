@@ -1,0 +1,59 @@
+{
+  "$schema": "https://mudraforge.in/schemas/statutory-ast-v2.1.json",
+  "sectionId": "ITA1961_SEC194IB",
+  "version": "2.1.0",
+  "title": "TDS on Payment of Certain Rent by Certain Individuals or HUF",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194-IB",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 11",
+  "successorTableItem": "TABLE_1_SL_NO_11_RENT_INDIVIDUAL",
+  "transitionalCutoverDate": "2026-04-01",
+  "effectivePeriod": {
+    "validFrom": "2017-06-01",
+    "validTo": null
+  },
+  "triggerPolicy": {
+    "type": "EARLIER_OF",
+    "events": [
+      "BOOK_CREDIT",
+      "PAYMENT_DISBURSEMENT"
+    ],
+    "statutoryBasis": "Section 194-IB earlier of credit to last month account or payment"
+  },
+  "guards": [
+    {
+      "id": "GUARD_TAX_AUDIT_COVERED_PAYER",
+      "field": "isPayerTaxAuditCovered",
+      "operator": "EQ",
+      "value": true,
+      "onMatch": {
+        "action": "HALT_EXEMPT",
+        "disposition": "EXEMPT_GOVERNED_BY_SECTION_194I",
+        "reason": "Payers covered under Section 44AB tax audit are governed by Section 194I, not Section 194-IB."
+      }
+    },
+    {
+      "id": "GUARD_MISSING_PAN_206AA",
+      "field": "payee.isPanValid",
+      "operator": "EQ",
+      "value": false,
+      "onMatch": {
+        "action": "OVERRIDE_RATE",
+        "overrideRateBps": 2000,
+        "governingSection1961": "Section 206AA (20% missing PAN, capped at last month rent)",
+        "governingSection2025": "Section 397(2)"
+      }
+    }
+  ],
+  "computation": {
+    "archetype": "CLIFF_THRESHOLD",
+    "thresholdPaisa": "5000000",
+    "standardRateBps": 200,
+    "baseDetermination": "MONTHLY_RENT"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

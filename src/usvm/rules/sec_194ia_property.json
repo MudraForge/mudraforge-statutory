@@ -1,0 +1,70 @@
+{
+  "$schema": "https://mudraforge.in/schemas/statutory-ast-v2.1.json",
+  "sectionId": "ITA1961_SEC194IA",
+  "version": "2.1.0",
+  "title": "TDS on Payment on Transfer of Certain Immovable Property",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194-IA",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 10",
+  "successorTableItem": "TABLE_1_SL_NO_10_PROPERTY_TRANSFER",
+  "transitionalCutoverDate": "2026-04-01",
+  "effectivePeriod": {
+    "validFrom": "2013-06-01",
+    "validTo": null
+  },
+  "triggerPolicy": {
+    "type": "EARLIER_OF",
+    "events": [
+      "BOOK_CREDIT",
+      "PAYMENT_DISBURSEMENT"
+    ],
+    "statutoryBasis": "Section 194-IA earlier of credit or payment"
+  },
+  "guards": [
+    {
+      "id": "GUARD_AGRICULTURAL_LAND",
+      "field": "isAgriculturalLand",
+      "operator": "EQ",
+      "value": true,
+      "onMatch": {
+        "action": "HALT_EXEMPT",
+        "disposition": "EXEMPT_AGRICULTURAL_LAND",
+        "reason": "Section 194-IA(1): Excludes rural agricultural land from TDS."
+      }
+    },
+    {
+      "id": "GUARD_NON_RESIDENT_SELLER",
+      "field": "sellerIsResident",
+      "operator": "EQ",
+      "value": false,
+      "onMatch": {
+        "action": "HALT_EXEMPT",
+        "disposition": "EXEMPT_GOVERNED_BY_SECTION_195",
+        "reason": "Non-resident seller transfer of immovable property is governed exclusively by Section 195."
+      }
+    },
+    {
+      "id": "GUARD_MISSING_PAN_206AA",
+      "field": "payee.isPanValid",
+      "operator": "EQ",
+      "value": false,
+      "onMatch": {
+        "action": "OVERRIDE_RATE",
+        "overrideRateBps": 2000,
+        "governingSection1961": "Section 206AA (20% missing PAN)",
+        "governingSection2025": "Section 397(2)"
+      }
+    }
+  ],
+  "computation": {
+    "archetype": "CLIFF_THRESHOLD",
+    "thresholdPaisa": "500000000",
+    "standardRateBps": 100,
+    "baseDetermination": "CONTRACTUAL_CONSIDERATION_OR_STAMP_DUTY_VALUE"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

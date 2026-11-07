@@ -1,0 +1,59 @@
+{
+  "$schema": "https://mudraforge.in/schemas/statutory-ast-v2.1.json",
+  "sectionId": "ITA1961_SEC194M",
+  "version": "2.1.0",
+  "title": "TDS on Payment to Contractors/Professionals by Certain Individuals or HUF",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194M",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 14",
+  "successorTableItem": "TABLE_1_SL_NO_14_INDIVIDUAL_CONTRACTOR",
+  "transitionalCutoverDate": "2026-04-01",
+  "effectivePeriod": {
+    "validFrom": "2019-09-01",
+    "validTo": null
+  },
+  "triggerPolicy": {
+    "type": "EARLIER_OF",
+    "events": [
+      "BOOK_CREDIT",
+      "PAYMENT_DISBURSEMENT"
+    ],
+    "statutoryBasis": "Section 194M earlier of credit or payment"
+  },
+  "guards": [
+    {
+      "id": "GUARD_COVERED_BY_194C_H_J",
+      "field": "isPayerCoveredBy194C_H_J",
+      "operator": "EQ",
+      "value": true,
+      "onMatch": {
+        "action": "HALT_EXEMPT",
+        "disposition": "EXEMPT_GOVERNED_BY_SECTIONS_194C_194H_194J",
+        "reason": "Payers required to deduct under 194C, 194H, or 194J are exempt from 194M."
+      }
+    },
+    {
+      "id": "GUARD_MISSING_PAN_206AA",
+      "field": "payee.isPanValid",
+      "operator": "EQ",
+      "value": false,
+      "onMatch": {
+        "action": "OVERRIDE_RATE",
+        "overrideRateBps": 2000,
+        "governingSection1961": "Section 206AA (20% missing PAN)",
+        "governingSection2025": "Section 397(2)"
+      }
+    }
+  ],
+  "computation": {
+    "archetype": "CLIFF_THRESHOLD",
+    "thresholdPaisa": "500000000",
+    "standardRateBps": 200,
+    "baseDetermination": "ANNUAL_AGGREGATE"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

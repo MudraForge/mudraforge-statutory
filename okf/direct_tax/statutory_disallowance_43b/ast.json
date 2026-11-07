@@ -1,0 +1,35 @@
+{
+  "sectionId": "ITACT1961_SEC43BH",
+  "version": "1.0.0",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 43B(h)",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 37(2)(g)",
+  "triggerPolicy": {
+    "type": "PAYMENT_ONLY",
+    "description": "Evaluated against invoice date, agreed terms, and March 31 fiscal year-end boundary"
+  },
+  "guards": [
+    {
+      "id": "GUARD_TRADER_EXCLUSION",
+      "field": "isTrader",
+      "operator": "IS_TRUE",
+      "onMatch": {
+        "action": "HALT_EXEMPT",
+        "disposition": "EXEMPT_TRADER_NOT_GOVERNED_BY_43BH",
+        "reason": "Retail and wholesale trade (NIC 45, 46, 47) excluded from Section 43B(h) per Ministry OM 02.07.2021"
+      }
+    }
+  ],
+  "computation": {
+    "archetype": "MSME_FISCAL_BOUNDARY_43BH",
+    "maxWrittenDays": 45,
+    "statutoryBaselineDays": 15,
+    "fiscalYearBoundaryMonth": 3,
+    "fiscalYearBoundaryDay": 31
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

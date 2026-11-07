@@ -1,0 +1,20 @@
+{
+  "sectionId": "CGST2017_SEC16_2",
+  "version": "1.0.0",
+  "governingStatute": "Central Goods and Services Tax Act, 2017",
+  "statutorySection": "Section 16(2)",
+  "successorStatute": "Central Goods and Services Tax Act, 2017",
+  "successorSection": "Section 16(2)",
+  "triggerPolicy": {
+    "type": "INVOICE_DATE",
+    "description": "Cumulative four-condition statutory eligibility gate"
+  },
+  "computation": {
+    "archetype": "ITC_ELIGIBILITY_GATE_16_2",
+    "mandatoryConditionsCount": 4
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

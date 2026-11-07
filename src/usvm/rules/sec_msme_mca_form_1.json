@@ -1,0 +1,20 @@
+{
+  "sectionId": "MCA2019_FORM_MSME_1",
+  "version": "1.0.0",
+  "governingStatute": "Companies Act, 2013 read with Specified Companies Order 2019",
+  "statutorySection": "Section 405 Companies Act read with MSMED Section 15",
+  "successorStatute": "Companies Act, 2013",
+  "successorSection": "Form MSME-1",
+  "triggerPolicy": {
+    "type": "FISCAL_YEAR_END",
+    "description": "Half-yearly MCA return for MSME dues overdue beyond 45 days"
+  },
+  "computation": {
+    "archetype": "MCA_MSME_1_AGING_BIFURCATION",
+    "statutoryOverdueThresholdDays": 45
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

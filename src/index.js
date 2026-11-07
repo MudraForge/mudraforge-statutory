@@ -15,6 +15,10 @@ import crypto from 'node:crypto';
 import dns from 'node:dns';
 import { fileURLToPath } from 'node:url';
 import {
+    evaluateStatutoryAst,
+    resolveTemporalCrystallization
+} from './usvm/index.js';
+import {
     roundToPaisa,
     roundSection288B,
     cleanNumericAmount,
@@ -117,7 +121,7 @@ export { STATUTORY_CLIENT_VERSION, DEFAULT_BASE_URL };
 /**
  * Current verified Merkle root digest for the active OKF v0.2 corpus.
  */
-export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-b17c37b2724aece2a28beaab5720a777ae27e661ac51f1436be6eff3ca5ef64b';
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-7ffc75e8611a9c966eea756dd544fdae9144e2318d3478633232bb876d05e364';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
 
 /**
@@ -125,6 +129,7 @@ export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
  * Prevents unauthorized bundle substitution attacks even if an attacker controls the remote endpoint.
  */
 export const PINNED_RELEASE_ROOTS = new Set([
+    'sha256-7ffc75e8611a9c966eea756dd544fdae9144e2318d3478633232bb876d05e364', // feat/usvm-declarative-architecture (46 Declarative ASTs across 5 canonical domains)
     'sha256-318004673a779499e82fd7316c7a6728f3bcdaf449bb4a557b6bd685b899dee3', // fix/public-okf-table1-sl-nos-and-temporal-thresholds (Section 393 Table 1 Sl Nos & 2025 Act thresholds)
     'sha256-b17c37b2724aece2a28beaab5720a777ae27e661ac51f1436be6eff3ca5ef64b', // feat/okf-accounting-domain-expansion (46 Sections across 5 Domains, 52 Circulars, 47 Forms)
     'sha256-a94baf08cbdea064a7b1bd25c1e1311821bf75e9b0d15cc8e0648339d487c79b', // feat/zoho-gstr2b-ap-reconciliation (38 Sections across 5 Domains, 44 Circulars, 39 Forms)
@@ -915,6 +920,13 @@ export function lookupLocalStatute(section, okfDir = DEFAULT_LOCAL_OKF_DIR) {
                 circulars: fs.existsSync(circularsDir) ? fs.readdirSync(circularsDir).filter(f => f.endsWith('.md')) : [],
                 forms: fs.existsSync(formsDir) ? fs.readdirSync(formsDir).filter(f => f.endsWith('.json') || f.endsWith('.md')) : []
             };
+
+            const astPath = path.join(parentDir, 'ast.json');
+            if (fs.existsSync(astPath)) {
+                try {
+                    data.ast = JSON.parse(fs.readFileSync(astPath, 'utf8'));
+                } catch (_) {}
+            }
 
             return data;
     }
@@ -3412,7 +3424,9 @@ export {
     calculateEclUtilizationInterest,
     calculatePortfolioEclUtilizationInterest,
     buildEvidenceProvenance,
-    runStatutoryWatchtower
+    runStatutoryWatchtower,
+    evaluateStatutoryAst,
+    resolveTemporalCrystallization
 };
 
 

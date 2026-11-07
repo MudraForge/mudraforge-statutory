@@ -1,0 +1,26 @@
+{
+  "sectionId": "ITACT1961_SEC206AB",
+  "version": "1.0.0",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 206AB",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Omitted w.e.f. 1 April 2025 by Finance Act, 2025",
+  "triggerPolicy": {
+    "type": "EARLIER_OF",
+    "events": [
+      "creditDate",
+      "paymentDate"
+    ],
+    "description": "Earlier of credit or payment for non-compliant specified persons"
+  },
+  "computation": {
+    "archetype": "NON_FILER_PENAL_RATE_206AB",
+    "multiplier": 2,
+    "minimumPenalRatePercent": 5,
+    "sunsetOmissionDate": "2025-04-01"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

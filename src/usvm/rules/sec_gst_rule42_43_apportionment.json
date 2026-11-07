@@ -1,0 +1,26 @@
+{
+  "sectionId": "CGST2017_RULE42_43",
+  "version": "1.0.0",
+  "governingStatute": "Central Goods and Services Tax Act, 2017",
+  "statutorySection": "Rules 42 and 43 of CGST Rules, 2017",
+  "successorStatute": "Central Goods and Services Tax Act, 2017",
+  "successorSection": "Rules 42 and 43 (as amended)",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "description": "Evaluated per tax period or annual true-up reconciliation"
+  },
+  "computation": {
+    "archetype": "COMMON_CREDIT_APPORTIONMENT_RULE42",
+    "nonBusinessApportionmentPercent": 5.0,
+    "capitalGoodsUsefulLifeMonths": 60,
+    "c1Formula": "T - (T1 + T2 + T3)",
+    "c2Formula": "C1 - T4",
+    "d1Formula": "(E / F) * C2",
+    "d2Formula": "0.05 * C2",
+    "c3Formula": "C2 - (D1 + D2)"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

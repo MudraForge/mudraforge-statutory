@@ -1,0 +1,45 @@
+{
+  "sectionId": "CGST2017_RULE37_37A",
+  "version": "1.0.0",
+  "governingStatute": "Central Goods and Services Tax Act, 2017",
+  "statutorySection": "Section 16(2) second proviso read with Rule 37 & 37A",
+  "successorStatute": "Central Goods and Services Tax Act, 2017",
+  "successorSection": "Rule 37 & 37A (as amended)",
+  "triggerPolicy": {
+    "type": "PAYMENT_ONLY",
+    "description": "Triggered by payment status relative to 180-day grace period from invoice date"
+  },
+  "guards": [
+    {
+      "id": "GUARD_RCM_EXEMPTION",
+      "field": "isRcm",
+      "operator": "IS_TRUE",
+      "onMatch": {
+        "action": "HALT_EXEMPT",
+        "disposition": "EXEMPT_FROM_180_DAY_REVERSAL_RCM",
+        "reason": "Supplies subject to Reverse Charge Mechanism u/s 9(3) or 9(4) exempt from 180-day reversal"
+      }
+    },
+    {
+      "id": "GUARD_SCHEDULE_I_EXEMPTION",
+      "field": "isScheduleISupply",
+      "operator": "IS_TRUE",
+      "onMatch": {
+        "action": "HALT_EXEMPT",
+        "disposition": "EXEMPT_FROM_180_DAY_REVERSAL_SCHEDULE_I",
+        "reason": "Deemed supplies without consideration under Schedule I are exempt from 180-day reversal"
+      }
+    }
+  ],
+  "computation": {
+    "archetype": "PROPORTIONAL_REVERSAL_180_DAYS",
+    "gracePeriodDays": 180,
+    "annualInterestRatePercent": 18.0,
+    "interestChargingSection": "CGST Act, 2017 Section 50(1)",
+    "gstr3bReportingTable": "Table 4(B)(2) - Others (Reclaimable)"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

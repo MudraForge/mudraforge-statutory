@@ -1,0 +1,24 @@
+{
+  "sectionId": "INDAS109_FINANCIAL_INSTRUMENTS",
+  "version": "1.0.0",
+  "governingStatute": "Companies (Indian Accounting Standards) Rules, 2015",
+  "statutorySection": "Ind AS 109 / IFRS 9",
+  "successorStatute": "Ind AS 109",
+  "successorSection": "Ind AS 109",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "description": "3-stage forward-looking Expected Credit Loss impairment"
+  },
+  "computation": {
+    "archetype": "EXPECTED_CREDIT_LOSS_INDAS109",
+    "stages": [
+      "STAGE_1_12_MONTH",
+      "STAGE_2_LIFETIME",
+      "STAGE_3_CREDIT_IMPAIRED"
+    ]
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

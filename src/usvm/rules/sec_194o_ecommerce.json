@@ -1,0 +1,48 @@
+{
+  "$schema": "https://mudraforge.in/schemas/statutory-ast-v2.1.json",
+  "sectionId": "ITA1961_SEC194O",
+  "version": "2.1.0",
+  "title": "TDS on Payments by E-Commerce Operator to E-Commerce Participants",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194O",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 15",
+  "successorTableItem": "TABLE_1_SL_NO_15_ECOMMERCE",
+  "transitionalCutoverDate": "2026-04-01",
+  "effectivePeriod": {
+    "validFrom": "2020-10-01",
+    "validTo": null
+  },
+  "triggerPolicy": {
+    "type": "EARLIER_OF",
+    "events": [
+      "BOOK_CREDIT",
+      "PAYMENT_DISBURSEMENT"
+    ],
+    "statutoryBasis": "Section 194O earlier of credit or payment"
+  },
+  "guards": [
+    {
+      "id": "GUARD_MISSING_PAN_5_PERCENT",
+      "field": "payee.isPanValid",
+      "operator": "EQ",
+      "value": false,
+      "onMatch": {
+        "action": "OVERRIDE_RATE",
+        "overrideRateBps": 500,
+        "governingSection1961": "Section 206AA Second Proviso (5% e-commerce cap)",
+        "governingSection2025": "Section 397(2)"
+      }
+    }
+  ],
+  "computation": {
+    "archetype": "FLAT_RATE",
+    "thresholdPaisa": "0",
+    "standardRateBps": 10,
+    "baseDetermination": "GROSS_SALE_CONSIDERATION"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

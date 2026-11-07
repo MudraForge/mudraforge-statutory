@@ -26,6 +26,10 @@
       "import": "./src/calculators.js",
       "default": "./src/calculators.js"
     },
+    "./usvm": {
+      "import": "./src/usvm/index.js",
+      "default": "./src/usvm/index.js"
+    },
     "./zoho_gstr2b": {
       "types": "./types/index.d.ts",
       "import": "./src/zoho_gstr2b.js",

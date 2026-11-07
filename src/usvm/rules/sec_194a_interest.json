@@ -1,0 +1,59 @@
+{
+  "$schema": "https://mudraforge.in/schemas/statutory-ast-v2.1.json",
+  "sectionId": "ITA1961_SEC194A",
+  "version": "2.1.0",
+  "title": "TDS on Interest other than Interest on Securities",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194A",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 1(i)",
+  "successorTableItem": "TABLE_1_SL_NO_1_I_INTEREST_OTHER",
+  "transitionalCutoverDate": "2026-04-01",
+  "effectivePeriod": {
+    "validFrom": "1967-04-01",
+    "validTo": null
+  },
+  "triggerPolicy": {
+    "type": "EARLIER_OF",
+    "events": [
+      "BOOK_CREDIT",
+      "PAYMENT_DISBURSEMENT"
+    ],
+    "statutoryBasis": "Section 194A(1) earlier of credit or payment"
+  },
+  "guards": [
+    {
+      "id": "GUARD_EXEMPT_PAYEE_INSTITUTION",
+      "field": "isExemptInstitution",
+      "operator": "EQ",
+      "value": true,
+      "onMatch": {
+        "action": "HALT_EXEMPT",
+        "disposition": "EXEMPT_INSTITUTION_SECTION_194A_3",
+        "reason": "Section 194A(3)(iii): Banking institutions and financial corporations are exempt."
+      }
+    },
+    {
+      "id": "GUARD_MISSING_PAN_206AA",
+      "field": "payee.isPanValid",
+      "operator": "EQ",
+      "value": false,
+      "onMatch": {
+        "action": "OVERRIDE_RATE",
+        "overrideRateBps": 2000,
+        "governingSection1961": "Section 206AA (20% missing PAN)",
+        "governingSection2025": "Section 397(2)"
+      }
+    }
+  ],
+  "computation": {
+    "archetype": "CLIFF_THRESHOLD",
+    "thresholdPaisa": "500000",
+    "standardRateBps": 1000,
+    "baseDetermination": "ANNUAL_AGGREGATE"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "sectionId": "ITACT1961_SEC281",
+  "version": "1.0.0",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 281",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 281 equivalent",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "description": "Evaluation of asset transfer during pending tax assessment proceedings"
+  },
+  "computation": {
+    "archetype": "TAX_CLEARANCE_VOID_TRANSFER_SEC281",
+    "deMinimisDemandInr": 5000,
+    "deMinimisAssetInr": 10000
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

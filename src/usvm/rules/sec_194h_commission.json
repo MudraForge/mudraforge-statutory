@@ -1,0 +1,60 @@
+{
+  "$schema": "https://mudraforge.in/schemas/statutory-ast-v2.1.json",
+  "sectionId": "ITA1961_SEC194H",
+  "version": "2.1.0",
+  "title": "TDS on Commission or Brokerage",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194H",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 1(ii)",
+  "successorTableItem": "TABLE_1_SL_NO_1_II_COMMISSION",
+  "transitionalCutoverDate": "2026-04-01",
+  "effectivePeriod": {
+    "validFrom": "2001-06-01",
+    "validTo": null
+  },
+  "triggerPolicy": {
+    "type": "EARLIER_OF",
+    "events": [
+      "BOOK_CREDIT",
+      "PAYMENT_DISBURSEMENT"
+    ],
+    "statutoryBasis": "Section 194H earlier of credit or payment"
+  },
+  "guards": [
+    {
+      "id": "GUARD_MISSING_PAN_206AA",
+      "field": "payee.isPanValid",
+      "operator": "EQ",
+      "value": false,
+      "onMatch": {
+        "action": "OVERRIDE_RATE",
+        "overrideRateBps": 2000,
+        "governingSection1961": "Section 206AA (20% missing PAN)",
+        "governingSection2025": "Section 397(2) (20% missing PAN)"
+      }
+    },
+    {
+      "id": "GUARD_PRE_OCTOBER_2024_5_PERCENT",
+      "field": "isPreOctober2024",
+      "operator": "EQ",
+      "value": true,
+      "onMatch": {
+        "action": "OVERRIDE_RATE",
+        "overrideRateBps": 500,
+        "governingSection1961": "Section 194H prior to Finance (No. 2) Act 2024 (5%)",
+        "governingSection2025": "Section 393(1)"
+      }
+    }
+  ],
+  "computation": {
+    "archetype": "CLIFF_THRESHOLD",
+    "thresholdPaisa": "1500000",
+    "standardRateBps": 200,
+    "baseDetermination": "ANNUAL_AGGREGATE"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

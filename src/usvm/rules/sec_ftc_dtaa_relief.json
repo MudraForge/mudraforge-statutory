@@ -1,0 +1,20 @@
+{
+  "sectionId": "IRC_SEC901_904_FTC",
+  "version": "1.0.0",
+  "governingStatute": "US Internal Revenue Code & DTAA Article 23",
+  "statutorySection": "IRC §§ 901/904 & Income-tax Act Section 90/91",
+  "successorStatute": "IRC §§ 901/904",
+  "successorSection": "Sections 901/904",
+  "triggerPolicy": {
+    "type": "FISCAL_YEAR_END",
+    "description": "Foreign tax credit relief limitation and ordinary credit computation"
+  },
+  "computation": {
+    "archetype": "FOREIGN_TAX_CREDIT_RELIEF",
+    "limitationBasis": "LOWER_OF_DOMESTIC_OR_FOREIGN_TAX"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

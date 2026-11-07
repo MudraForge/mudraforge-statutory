@@ -1,0 +1,26 @@
+{
+  "sectionId": "CGST2017_SEC17_5",
+  "version": "1.0.0",
+  "governingStatute": "Central Goods and Services Tax Act, 2017",
+  "statutorySection": "Section 17(5)",
+  "successorStatute": "Central Goods and Services Tax Act, 2017",
+  "successorSection": "Section 17(5)",
+  "triggerPolicy": {
+    "type": "INVOICE_DATE",
+    "description": "Evaluation at time of input tax credit booking"
+  },
+  "computation": {
+    "archetype": "BLOCKED_CREDIT_GATE_17_5",
+    "blockedCategories": [
+      "MOTOR_VEHICLES_PASSENGER",
+      "FOOD_AND_BEVERAGES",
+      "CLUB_MEMBERSHIP",
+      "PERSONAL_CONSUMPTION",
+      "LOST_STOLEN_GOODS"
+    ]
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

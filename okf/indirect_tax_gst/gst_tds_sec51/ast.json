@@ -1,0 +1,23 @@
+{
+  "sectionId": "CGST2017_SEC51",
+  "version": "1.0.0",
+  "governingStatute": "Central Goods and Services Tax Act, 2017",
+  "statutorySection": "Section 51",
+  "successorStatute": "Central Goods and Services Tax Act, 2017",
+  "successorSection": "Section 51",
+  "triggerPolicy": {
+    "type": "PAYMENT_ONLY",
+    "description": "Government entity contract withholding"
+  },
+  "computation": {
+    "archetype": "GST_TDS_DEDUCTION_SEC51",
+    "thresholdPaisa": "25000000",
+    "cgstRateBps": 100,
+    "sgstRateBps": 100,
+    "totalRateBps": 200
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://mudraforge.in/schemas/statutory-ast-v2.1.json",
+  "sectionId": "ITA1961_SEC194C",
+  "version": "2.1.0",
+  "title": "TDS on Payments to Contractors and Sub-Contractors",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194C",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 2",
+  "successorTableItem": "TABLE_1_SL_NO_2_CONTRACTORS",
+  "transitionalCutoverDate": "2026-04-01",
+  "effectivePeriod": {
+    "validFrom": "1972-06-01",
+    "validTo": null
+  },
+  "triggerPolicy": {
+    "type": "EARLIER_OF",
+    "events": [
+      "BOOK_CREDIT",
+      "PAYMENT_DISBURSEMENT"
+    ],
+    "statutoryBasis": "Section 194C(1) earlier of credit or payment"
+  },
+  "guards": [
+    {
+      "id": "GUARD_TRANSPORTER_EXEMPTION",
+      "field": "isTransporterExempt",
+      "operator": "EQ",
+      "value": true,
+      "onMatch": {
+        "action": "HALT_EXEMPT",
+        "disposition": "EXEMPT_TRANSPORTER_SECTION_194C_6",
+        "reason": "Section 194C(6): Goods transport operators owning ten or fewer carriages furnishing PAN declaration are exempt."
+      }
+    },
+    {
+      "id": "GUARD_MISSING_PAN_206AA",
+      "field": "payee.isPanValid",
+      "operator": "EQ",
+      "value": false,
+      "onMatch": {
+        "action": "OVERRIDE_RATE",
+        "overrideRateBps": 2000,
+        "governingSection1961": "Section 206AA (20% missing PAN)",
+        "governingSection2025": "Section 397(2) (20% missing PAN)"
+      }
+    },
+    {
+      "id": "GUARD_INDIVIDUAL_HUF_1_PERCENT",
+      "field": "isIndividualOrHuf",
+      "operator": "EQ",
+      "value": true,
+      "onMatch": {
+        "action": "OVERRIDE_RATE",
+        "overrideRateBps": 100,
+        "governingSection1961": "Section 194C(1)(a) (1% for Individual/HUF)",
+        "governingSection2025": "Section 393(1) Table 1 (1% for Individual/HUF)"
+      }
+    }
+  ],
+  "computation": {
+    "archetype": "CLIFF_THRESHOLD",
+    "thresholdPaisa": "3000000",
+    "standardRateBps": 200,
+    "baseDetermination": "CONTRACT_VALUE_OR_AGGREGATE_ANNUAL"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

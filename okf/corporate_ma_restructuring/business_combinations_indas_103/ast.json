@@ -1,0 +1,20 @@
+{
+  "sectionId": "INDAS103_BUSINESS_COMBINATIONS",
+  "version": "1.0.0",
+  "governingStatute": "Companies (Indian Accounting Standards) Rules, 2015",
+  "statutorySection": "Ind AS 103 / IFRS 3",
+  "successorStatute": "Ind AS 103",
+  "successorSection": "Ind AS 103",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "description": "Acquisition method purchase price allocation & goodwill / capital reserve"
+  },
+  "computation": {
+    "archetype": "BUSINESS_COMBINATIONS_INDAS103",
+    "acquisitionMethodRequired": true
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

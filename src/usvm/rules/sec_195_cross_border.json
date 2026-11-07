@@ -1,0 +1,39 @@
+{
+  "sectionId": "ITACT1961_SEC195",
+  "version": "1.0.0",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 195",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(2)",
+  "transitionalCutoverDate": "2026-04-01",
+  "triggerPolicy": {
+    "type": "EARLIER_OF",
+    "events": ["creditDate", "paymentDate"],
+    "description": "Earlier of book credit or SWIFT remittance disbursement"
+  },
+  "guards": [
+    {
+      "id": "GUARD_TAX_HAVEN",
+      "field": "isTaxHaven",
+      "operator": "IS_TRUE",
+      "onMatch": {
+        "action": "OVERRIDE_RATE",
+        "overrideRateBps": 3000,
+        "governingSection1961": "Section 94A NJA",
+        "governingSection2025": "Section 393(2) NJA"
+      }
+    }
+  ],
+  "computation": {
+    "archetype": "DTAA_TREATY_TAX_HAVEN_MATRIX",
+    "standardDomesticRatePercent": 20,
+    "taxHavenRatePercent": 30,
+    "treatyFtsRatePercent": 10,
+    "treatyBusinessProfitsRatePercent": 0,
+    "thresholdPartAInr": 500000
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

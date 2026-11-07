@@ -1,0 +1,60 @@
+{
+  "$schema": "https://mudraforge.in/schemas/statutory-ast-v2.1.json",
+  "sectionId": "ITA1961_SEC194I",
+  "version": "2.1.0",
+  "title": "TDS on Rent of Land, Building or Machinery",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194I",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 2",
+  "successorTableItem": "TABLE_1_SL_NO_2_RENT",
+  "transitionalCutoverDate": "2026-04-01",
+  "effectivePeriod": {
+    "validFrom": "1994-06-01",
+    "validTo": null
+  },
+  "triggerPolicy": {
+    "type": "EARLIER_OF",
+    "events": [
+      "BOOK_CREDIT",
+      "PAYMENT_DISBURSEMENT"
+    ],
+    "statutoryBasis": "Section 194I earlier of credit or payment"
+  },
+  "guards": [
+    {
+      "id": "GUARD_MISSING_PAN_206AA",
+      "field": "payee.isPanValid",
+      "operator": "EQ",
+      "value": false,
+      "onMatch": {
+        "action": "OVERRIDE_RATE",
+        "overrideRateBps": 2000,
+        "governingSection1961": "Section 206AA (20% missing PAN)",
+        "governingSection2025": "Section 397(2) (20% missing PAN)"
+      }
+    },
+    {
+      "id": "GUARD_LAND_BUILDING_10_PERCENT",
+      "field": "isLandOrBuilding",
+      "operator": "EQ",
+      "value": true,
+      "onMatch": {
+        "action": "OVERRIDE_RATE",
+        "overrideRateBps": 1000,
+        "governingSection1961": "Section 194I(b) (10% for Land, Building, Furniture)",
+        "governingSection2025": "Section 393(1)"
+      }
+    }
+  ],
+  "computation": {
+    "archetype": "CLIFF_THRESHOLD",
+    "thresholdPaisa": "24000000",
+    "standardRateBps": 200,
+    "baseDetermination": "ANNUAL_AGGREGATE"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

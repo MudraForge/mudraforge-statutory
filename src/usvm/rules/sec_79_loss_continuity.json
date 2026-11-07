@@ -1,0 +1,33 @@
+{
+  "sectionId": "ITACT1961_SEC79",
+  "version": "1.0.0",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 79",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 79 equivalent",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "description": "Evaluated at annual tax return filing based on beneficial shareholding continuity"
+  },
+  "guards": [
+    {
+      "id": "GUARD_IBC_RESOLUTION",
+      "field": "isIbcResolutionPlan",
+      "operator": "IS_TRUE",
+      "onMatch": {
+        "action": "HALT_EXEMPT",
+        "disposition": "EXEMPT_IBC_RESOLUTION_PLAN",
+        "reason": "Section 79(2)(c) exemption for companies whose resolution plan is approved under IBC 2016"
+      }
+    }
+  ],
+  "computation": {
+    "archetype": "VOTING_CONTINUITY_PERCENTAGE",
+    "standardContinuityThresholdPercent": 51.0,
+    "dpiitStartupRelief": true
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

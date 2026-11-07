@@ -1,0 +1,47 @@
+{
+  "$schema": "https://mudraforge.in/schemas/statutory-ast-v2.1.json",
+  "sectionId": "ITA1961_SEC194R",
+  "version": "2.1.0",
+  "title": "TDS on Benefit or Perquisite in Respect of Business or Profession",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194R",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 18",
+  "successorTableItem": "TABLE_1_SL_NO_18_BENEFITS_PERQUISITES",
+  "transitionalCutoverDate": "2026-04-01",
+  "effectivePeriod": {
+    "validFrom": "2022-07-01",
+    "validTo": null
+  },
+  "triggerPolicy": {
+    "type": "PAYMENT_ONLY",
+    "events": [
+      "PAYMENT_DISBURSEMENT"
+    ],
+    "statutoryBasis": "Section 194R before releasing benefit or perquisite"
+  },
+  "guards": [
+    {
+      "id": "GUARD_MISSING_PAN_206AA",
+      "field": "payee.isPanValid",
+      "operator": "EQ",
+      "value": false,
+      "onMatch": {
+        "action": "OVERRIDE_RATE",
+        "overrideRateBps": 2000,
+        "governingSection1961": "Section 206AA (20% missing PAN)",
+        "governingSection2025": "Section 397(2)"
+      }
+    }
+  ],
+  "computation": {
+    "archetype": "CLIFF_THRESHOLD",
+    "thresholdPaisa": "2000000",
+    "standardRateBps": 1000,
+    "baseDetermination": "ANNUAL_AGGREGATE_VALUE_OF_BENEFITS"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

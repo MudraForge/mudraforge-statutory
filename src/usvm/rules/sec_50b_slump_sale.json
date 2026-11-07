@@ -1,0 +1,21 @@
+{
+  "sectionId": "ITACT1961_SEC50B",
+  "version": "1.0.0",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 50B read with Rule 11UAE",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 50B equivalent",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "description": "Lump-sum business undertaking transfer capital gains computation"
+  },
+  "computation": {
+    "archetype": "SLUMP_SALE_NET_WORTH_50B",
+    "excludeRevaluationReserve": true,
+    "depreciableAssetBasis": "WDV_UNDER_SECTION_43_6"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

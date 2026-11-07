@@ -1,0 +1,71 @@
+{
+  "$schema": "https://mudraforge.in/schemas/statutory-ast-v2.1.json",
+  "sectionId": "ITA1961_SEC194Q",
+  "version": "2.1.0",
+  "title": "Tax Deduction at Source on Purchase of Goods",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194Q",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 8(ii)",
+  "successorTableItem": "TABLE_1_SL_NO_8_II_PURCHASE_OF_GOODS",
+  "transitionalCutoverDate": "2026-04-01",
+  "effectivePeriod": {
+    "validFrom": "2021-07-01",
+    "validTo": null
+  },
+  "triggerPolicy": {
+    "type": "EARLIER_OF",
+    "events": [
+      "BOOK_CREDIT",
+      "PAYMENT_DISBURSEMENT"
+    ],
+    "statutoryBasis": "Section 194Q(1) earlier of credit or payment"
+  },
+  "guards": [
+    {
+      "id": "GUARD_FOREIGN_IMPORT",
+      "field": "isImportOfGoods",
+      "operator": "EQ",
+      "value": true,
+      "onMatch": {
+        "action": "HALT_EXEMPT",
+        "disposition": "EXEMPT_IMPORT_OF_GOODS_FOREIGN_VENDOR",
+        "reason": "CBDT Circular 13/2021 Question 3: Section 194Q does not apply to import of goods from non-residents."
+      }
+    },
+    {
+      "id": "GUARD_NON_RESIDENT_SELLER",
+      "field": "payee.isResident",
+      "operator": "EQ",
+      "value": false,
+      "onMatch": {
+        "action": "HALT_EXEMPT",
+        "disposition": "EXEMPT_IMPORT_OF_GOODS_FOREIGN_VENDOR",
+        "reason": "Non-resident seller without PE in India is exempt from 194Q."
+      }
+    },
+    {
+      "id": "GUARD_MISSING_OR_INOPERATIVE_PAN",
+      "field": "payee.isPanValid",
+      "operator": "EQ",
+      "value": false,
+      "onMatch": {
+        "action": "OVERRIDE_RATE",
+        "overrideRateBps": 500,
+        "governingSection1961": "Section 206AA(1) First Proviso (5% statutory cap for goods)",
+        "governingSection2025": "Section 397(2)(b)(i)(C) (5% statutory cap for goods)"
+      }
+    }
+  ],
+  "computation": {
+    "archetype": "EXCESS_OVER_THRESHOLD",
+    "thresholdPaisa": "500000000",
+    "standardRateBps": 10,
+    "baseDetermination": "CUMULATIVE_TURNOVER_IN_FINANCIAL_YEAR",
+    "notes": "Tax applies strictly to the incremental excess over 50 Lakhs."
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

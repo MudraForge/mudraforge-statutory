@@ -1,0 +1,20 @@
+{
+  "sectionId": "IGST2017_SEC16",
+  "version": "1.0.0",
+  "governingStatute": "Integrated Goods and Services Tax Act, 2017",
+  "statutorySection": "Section 16",
+  "successorStatute": "Integrated Goods and Services Tax Act, 2017",
+  "successorSection": "Section 16",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "description": "Zero-rated export of services under Letter of Undertaking"
+  },
+  "computation": {
+    "archetype": "EXPORT_LUT_ZERO_RATED_SEC16",
+    "lutIgstRateBps": 0
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

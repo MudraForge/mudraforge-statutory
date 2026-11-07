@@ -1,0 +1,25 @@
+{
+  "sectionId": "ITACT1961_SEC92C",
+  "version": "1.0.0",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 92C read with Rule 10CA",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 92C equivalent",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "description": "Evaluation of international transaction margin against comparable dataset"
+  },
+  "computation": {
+    "archetype": "TRANSFER_PRICING_PERCENTILE_ALP",
+    "wholesaleTolerancePercent": 3.0,
+    "standardTolerancePercent": 1.0,
+    "minComparablesForPercentile": 6,
+    "rangePercentileLower": 35,
+    "rangePercentileUpper": 65,
+    "secondaryAdjustmentThresholdInr": 10000000
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "sectionId": "CGST2017_SEC8",
+  "version": "1.0.0",
+  "governingStatute": "Central Goods and Services Tax Act, 2017",
+  "statutorySection": "Section 8",
+  "successorStatute": "Central Goods and Services Tax Act, 2017",
+  "successorSection": "Section 8",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "description": "Bundled supply classification and tax rate determination"
+  },
+  "computation": {
+    "archetype": "COMPOSITE_MIXED_SUPPLY_SEC8",
+    "compositeRule": "PRINCIPAL_SUPPLY_RATE",
+    "mixedRule": "HIGHEST_APPLICABLE_RATE"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

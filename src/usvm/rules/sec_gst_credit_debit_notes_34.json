@@ -1,0 +1,21 @@
+{
+  "sectionId": "CGST2017_SEC34",
+  "version": "1.0.0",
+  "governingStatute": "Central Goods and Services Tax Act, 2017",
+  "statutorySection": "Section 34",
+  "successorStatute": "Central Goods and Services Tax Act, 2017",
+  "successorSection": "Section 34",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "description": "Credit note adjustment temporal cutoff"
+  },
+  "computation": {
+    "archetype": "CREDIT_NOTE_TIMELINES_SEC34",
+    "cutoffMonth": 11,
+    "cutoffDay": 30
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

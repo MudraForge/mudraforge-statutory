@@ -1,0 +1,38 @@
+{
+  "sectionId": "MSMED2006_SEC15_16",
+  "version": "1.0.0",
+  "governingStatute": "Micro, Small and Medium Enterprises Development Act, 2006",
+  "statutorySection": "Sections 15 & 16 of MSMED Act, 2006",
+  "successorStatute": "MSMED Act, 2006",
+  "successorSection": "Sections 15 & 16",
+  "triggerPolicy": {
+    "type": "PAYMENT_ONLY",
+    "description": "Interest accrues upon payment delay past statutory due date or appointed day"
+  },
+  "guards": [
+    {
+      "id": "GUARD_TRADER_EXCLUSION",
+      "field": "vendorNicCode",
+      "operator": "IN",
+      "value": ["45", "46", "47"],
+      "onMatch": {
+        "action": "HALT_EXEMPT",
+        "disposition": "EXEMPT_TRADER_EXCLUSION",
+        "reason": "Wholesale and Retail Traders (NIC 45, 46, 47) excluded from MSMED Chapter V under Ministry OM dated 02.07.2021"
+      }
+    }
+  ],
+  "computation": {
+    "archetype": "COMPOUND_INTEREST_MONTHLY_RESTS",
+    "rateMultiplier": 3,
+    "defaultBankRate": 0.0675,
+    "defaultTimelineDays": 15,
+    "maxAgreedDays": 45,
+    "compoundingRest": "CALENDAR_MONTH",
+    "dayCountConvention": "ACTUAL/365_OR_366"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

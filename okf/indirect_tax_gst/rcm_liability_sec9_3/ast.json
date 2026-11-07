@@ -1,0 +1,26 @@
+{
+  "sectionId": "CGST2017_SEC9_3",
+  "version": "1.0.0",
+  "governingStatute": "Central Goods and Services Tax Act, 2017",
+  "statutorySection": "Section 9(3)",
+  "successorStatute": "Central Goods and Services Tax Act, 2017",
+  "successorSection": "Section 9(3)",
+  "triggerPolicy": {
+    "type": "INVOICE_DATE",
+    "description": "Reverse charge recipient tax payment obligation"
+  },
+  "computation": {
+    "archetype": "RCM_LIABILITY_EVALUATION_9_3",
+    "coveredNotifiedServices": [
+      "GTA",
+      "LEGAL_SERVICES",
+      "DIRECTOR_SERVICES",
+      "RECOVERY_AGENT",
+      "SECURITY_SERVICES"
+    ]
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

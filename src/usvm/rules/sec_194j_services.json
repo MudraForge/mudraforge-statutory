@@ -1,0 +1,60 @@
+{
+  "$schema": "https://mudraforge.in/schemas/statutory-ast-v2.1.json",
+  "sectionId": "ITA1961_SEC194J",
+  "version": "2.1.0",
+  "title": "TDS on Fees for Professional or Technical Services",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194J",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 3",
+  "successorTableItem": "TABLE_1_SL_NO_3_PROFESSIONAL_TECHNICAL",
+  "transitionalCutoverDate": "2026-04-01",
+  "effectivePeriod": {
+    "validFrom": "1995-07-01",
+    "validTo": null
+  },
+  "triggerPolicy": {
+    "type": "EARLIER_OF",
+    "events": [
+      "BOOK_CREDIT",
+      "PAYMENT_DISBURSEMENT"
+    ],
+    "statutoryBasis": "Section 194J(1) earlier of credit or payment"
+  },
+  "guards": [
+    {
+      "id": "GUARD_MISSING_PAN_206AA",
+      "field": "payee.isPanValid",
+      "operator": "EQ",
+      "value": false,
+      "onMatch": {
+        "action": "OVERRIDE_RATE",
+        "overrideRateBps": 2000,
+        "governingSection1961": "Section 206AA (20% missing PAN)",
+        "governingSection2025": "Section 397(2) (20% missing PAN)"
+      }
+    },
+    {
+      "id": "GUARD_PROFESSIONAL_OR_NON_COMPETE_10_PERCENT",
+      "field": "isProfessionalOrNonCompete",
+      "operator": "EQ",
+      "value": true,
+      "onMatch": {
+        "action": "OVERRIDE_RATE",
+        "overrideRateBps": 1000,
+        "governingSection1961": "Section 194J(1) (10% for Professional Services/Non-Compete)",
+        "governingSection2025": "Section 393(1) Table 1 (10% for Professional Services)"
+      }
+    }
+  ],
+  "computation": {
+    "archetype": "CLIFF_THRESHOLD",
+    "thresholdPaisa": "3000000",
+    "standardRateBps": 200,
+    "baseDetermination": "CATEGORY_ANNUAL_AGGREGATE"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

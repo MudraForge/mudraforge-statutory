@@ -1,0 +1,25 @@
+{
+  "sectionId": "MSMED2006_SEC7",
+  "version": "1.0.0",
+  "governingStatute": "Micro, Small and Medium Enterprises Development Act, 2006",
+  "statutorySection": "Section 7 of MSMED Act, 2006",
+  "successorStatute": "MSMED Act, 2006",
+  "successorSection": "Section 7",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "description": "Evaluation based on annual audited investment and turnover criteria"
+  },
+  "computation": {
+    "archetype": "ENTERPRISE_CLASSIFICATION_MSME",
+    "microPlantMachineryPaisa": "1000000000",
+    "microTurnoverPaisa": "5000000000",
+    "smallPlantMachineryPaisa": "10000000000",
+    "smallTurnoverPaisa": "50000000000",
+    "mediumPlantMachineryPaisa": "50000000000",
+    "mediumTurnoverPaisa": "250000000000"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

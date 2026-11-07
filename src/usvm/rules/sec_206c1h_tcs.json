@@ -1,0 +1,69 @@
+{
+  "$schema": "https://mudraforge.in/schemas/statutory-ast-v2.1.json",
+  "sectionId": "ITA1961_SEC206C_1H",
+  "version": "2.1.0",
+  "title": "TCS on Sale of Goods Exceeding Fifty Lakh Rupees",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 206C(1H)",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 206C(1H) (Omitted w.e.f. 1 April 2025)",
+  "successorTableItem": "OMITTED_SUNSET_BY_FINANCE_ACT_2025",
+  "transitionalCutoverDate": "2025-04-01",
+  "effectivePeriod": {
+    "validFrom": "2020-10-01",
+    "validTo": "2025-03-31"
+  },
+  "triggerPolicy": {
+    "type": "DEBIT_OR_RECEIPT",
+    "events": [
+      "PAYMENT_DISBURSEMENT"
+    ],
+    "statutoryBasis": "Section 206C(1H) at the time of receipt of amount"
+  },
+  "guards": [
+    {
+      "id": "GUARD_SUNSET_OMITTED_FINANCE_ACT_2025",
+      "field": "isPostSunset2025",
+      "operator": "EQ",
+      "value": true,
+      "onMatch": {
+        "action": "HALT_EXEMPT",
+        "disposition": "OMITTED_SUNSET_BY_FINANCE_ACT_2025",
+        "reason": "Section 206C(1H) was omitted effective 1 April 2025 by Finance Act, 2025."
+      }
+    },
+    {
+      "id": "GUARD_BUYER_LIABLE_FOR_194Q",
+      "field": "isBuyerDeducting194Q",
+      "operator": "EQ",
+      "value": true,
+      "onMatch": {
+        "action": "HALT_EXEMPT",
+        "disposition": "EXEMPT_BUYER_DEDUCTING_194Q",
+        "reason": "Section 206C(1H) second proviso: TCS not applicable if buyer is liable and deducting TDS under 194Q."
+      }
+    },
+    {
+      "id": "GUARD_MISSING_PAN_TCS_1_PERCENT",
+      "field": "payee.isPanValid",
+      "operator": "EQ",
+      "value": false,
+      "onMatch": {
+        "action": "OVERRIDE_RATE",
+        "overrideRateBps": 100,
+        "governingSection1961": "Section 206C(1H) Second Proviso (1% cap)",
+        "governingSection2025": "Section 206C(1H)"
+      }
+    }
+  ],
+  "computation": {
+    "archetype": "EXCESS_OVER_THRESHOLD",
+    "thresholdPaisa": "500000000",
+    "standardRateBps": 10,
+    "baseDetermination": "CUMULATIVE_RECEIPTS_IN_FINANCIAL_YEAR"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

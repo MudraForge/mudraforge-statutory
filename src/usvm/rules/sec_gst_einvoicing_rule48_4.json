@@ -1,0 +1,20 @@
+{
+  "sectionId": "CGST2017_RULE48_4",
+  "version": "1.0.0",
+  "governingStatute": "Central Goods and Services Tax Rules, 2017",
+  "statutorySection": "Rule 48(4)",
+  "successorStatute": "CGST Rules, 2017",
+  "successorSection": "Rule 48(4)",
+  "triggerPolicy": {
+    "type": "INVOICE_DATE",
+    "description": "Mandatory B2B Invoice Registration Number (IRN) generation"
+  },
+  "computation": {
+    "archetype": "EINVOICING_MANDATE_RULE48_4",
+    "turnoverThresholdPaisa": "500000000"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

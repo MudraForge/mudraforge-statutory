@@ -1,0 +1,20 @@
+{
+  "sectionId": "INDAS115_REVENUE",
+  "version": "1.0.0",
+  "governingStatute": "Companies (Indian Accounting Standards) Rules, 2015",
+  "statutorySection": "Ind AS 115 / ASC 606",
+  "successorStatute": "Ind AS 115",
+  "successorSection": "Ind AS 115",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "description": "5-step revenue allocation across distinct performance obligations"
+  },
+  "computation": {
+    "archetype": "REVENUE_ALLOCATION_INDAS115",
+    "allocationBasis": "STANDALONE_SELLING_PRICE"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "sectionId": "INDAS102_SHARE_BASED_PAYMENTS",
+  "version": "1.0.0",
+  "governingStatute": "Companies (Indian Accounting Standards) Rules, 2015",
+  "statutorySection": "Ind AS 102 / ASC 718",
+  "successorStatute": "Ind AS 102",
+  "successorSection": "Ind AS 102",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "description": "Grant date fair value ESOP graded vesting expense amortization"
+  },
+  "computation": {
+    "archetype": "SHARE_BASED_PAYMENTS_INDAS102",
+    "vestingModel": "GRADED_VESTING_AMORTIZATION"
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}
