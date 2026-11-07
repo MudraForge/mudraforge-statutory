@@ -94,11 +94,12 @@ The Supervised Shadow Pilot operates entirely offline as a non-intrusive analyti
               │
               ▼
 ┌────────────────────────────────────────┐
-│  Phase 3: Deterministic Grounding      │
-│  (@mudraforge/statutory)               │
+│  Phase 3: USVM Declarative Grounding   │
+│  (@mudraforge/statutory/usvm)          │
+│  - Declarative AST rule evaluation     │
 │  - Cumulative FY threshold evaluation  │
-│  - Statutory withholding rate derivation│
-│  - MSMED 15/45-day clock calculation   │
+│  - 5-stage rational BigInt arithmetic  │
+│  - Statutory withholding derivation    │
 └────────────────────────────────────────┘
               │
               ▼

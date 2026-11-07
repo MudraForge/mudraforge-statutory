@@ -300,15 +300,16 @@ To resolve these vulnerabilities, MudraForge enforces a strict **Separation of P
 └──────────────────────────────────▲─────────────────────────────────────┘
                                    │ Queries local disk / edge
 ┌──────────────────────────────────┴─────────────────────────────────────┐
-│ 2. Statutory Knowledge Substrate (OKF Layer - This Package)            │
+│ 2. Statutory Knowledge & USVM Substrate (OKF Layer - This Package)     │
 │    • Authoritative, versioned reference law under Google's OKF standard│
+│    • Universal Statutory Virtual Machine (USVM Declarative ASTs)       │
 │    • Temporal validity state machines (detects sunsets & transitions)  │
-│    • Zero dependencies, 100% offline-capable, sub-1ms local lookup     │
+│    • Zero dependencies, 100% offline-capable, <15µs local evaluation   │
 └──────────────────────────────────▲─────────────────────────────────────┘
                                    │ Feeds verified ground truth
 ┌──────────────────────────────────┴─────────────────────────────────────┐
-│ 3. Deterministic Execution & Governance (Adesha Runtime)               │
-│    • Pure arithmetic legal calculators (194Q excess, MSMED 3x RBI)     │
+│ 3. Deterministic Governance & Execution (Adesha Sovereign Runtime)     │
+│    • 5-stage rational BigInt arithmetic (194Q excess, MSMED 3x RBI)    │
 │    • Single-use payment leases, CAS gates & Two-Generals recovery      │
 │    • Double-entry general ledger writeback with source-bound lines     │
 └────────────────────────────────────────────────────────────────────────┘
@@ -336,16 +337,17 @@ To ensure safety, MudraForge enforces an absolute **Separation of Powers** acros
                                    │ Dispatches structured queries
                                    ▼
 ┌────────────────────────────────────────────────────────────────────────┐
-│ 2. STATUTORY KNOWLEDGE SUBSTRATE (OKF Layer - This Package)            │
+│ 2. STATUTORY KNOWLEDGE & USVM SUBSTRATE (OKF Layer - This Package)     │
 │    • Declarative legal ground truth under Google OKF specification     │
+│    • Universal Statutory Virtual Machine (USVM Declarative ASTs)       │
 │    • Deterministic temporal state machine (sunsets & Act 2025 mappings)│
-│    • 100% offline filesystem lookup (sub-1ms local traversal)          │
+│    • 100% offline filesystem lookup (<15µs local traversal)            │
 └──────────────────────────────────┬─────────────────────────────────────┘
-                                   │ Feeds verified statutory parameters
+                                   │ Feeds verified statutory AST & parameters
                                    ▼
 ┌────────────────────────────────────────────────────────────────────────┐
 │ 3. DETERMINISTIC GOVERNANCE & SETTLEMENT RUNTIME (Adesha Runtime)      │
-│    • Integer-paisa legal arithmetic calculators (194Q, MSMED 3x RBI)   │
+│    • 5-stage rational BigInt arithmetic (194Q excess, MSMED 3x RBI)    │
 │    • Single-use cryptographic CAS leases (RFC 8785 + SHA-256)          │
 │    • Two-Generals idempotent banking recovery (Host-to-Host RTGS)      │
 │    • Balanced double-entry writeback to core ERP (SAP / Zoho Books)    │
@@ -527,12 +529,13 @@ The statutory substrate published in this repository (`@mudraforge/statutory`) a
 flowchart TD
     AP["Corporate AP Stream:<br/>PDF Invoices / IRN e-Invoices"] --> Triage["Statutory Domain Classifier<br/>& Context Builder"]
     
-    subgraph Tier1["Tier 1: Open Substrate (This Repository)"]
+    subgraph Tier1["Tier 1: Open Substrate & USVM (This Repository)"]
         Triage --> Substrate{"Local OKF Filesystem<br/>(Zero Network Calls)"}
-        Substrate --> S1["194Q Thresholds & Excess Scope"]
-        Substrate --> S2["206C(1H) Sunset Evaluation"]
-        Substrate --> S3["MSMED 15/16 Payment Rules"]
-        Substrate --> S4["194J FTS vs Professional Rates"]
+        Substrate --> S1["194Q Thresholds & Excess AST"]
+        Substrate --> S2["206C(1H) Sunset Evaluation AST"]
+        Substrate --> S3["MSMED 15/16 Payment Rules AST"]
+        Substrate --> S4["194J FTS vs Professional AST"]
+        S1 & S2 & S3 & S4 --> USVMKernel["USVM Declarative Kernel<br/>(<15µs Latency, Rational BigInt)"]
     end
 
     subgraph Tier2["Tier 2: Hosted Edge Sync API (api.mudraforge.in)"]
@@ -541,8 +544,8 @@ flowchart TD
     end
 
     subgraph Tier3["Tier 3: Commercial Adesha Governance Runtime"]
-        S1 & S2 & S3 & S4 --> CalcEngine["Deterministic Arithmetic Calculator<br/>(₹50L Excess, 3x RBI Interest)"]
-        CalcEngine --> CanonResult["Canonical Financial Result<br/>(RFC 8785 JCS + SHA-256 Seal)"]
+        USVMKernel --> USVMRuntime["Enterprise USVM Pipeline<br/>(Ledger Accumulator & 3x RBI)"]
+        USVMRuntime --> CanonResult["Canonical Financial Result<br/>(RFC 8785 JCS + SHA-256 Seal)"]
         CanonResult --> PresLock["Presentation Consistency Lock<br/>(Automated Prose Auditor)"]
         PresLock --> Lease["Single-Use Payment Lease<br/>(Atomic CAS Gate)"]
         Lease --> Bank["Banking Outflow Rails<br/>(RazorpayX / Host-to-Host)"]
@@ -559,7 +562,7 @@ flowchart TD
 | **Offline Filesystem Traversal** | Supported (Sub-1ms local lookup, 0 network calls) | N/A (Edge API requires network) | Local caching within VPC |
 | **Edge Synchronization** | **Included** (Free best-effort sync: `npx @mudraforge/statutory sync`) | Priority SLA edge sync & expanded catalog | Automated continuous gazette synchronization |
 | **Agent Skill Interface** | Included (`init-skill` CLI) | Supported | Included |
-| **Deterministic Tax Math** | Reference metadata only | Gated Edge API (`POST /calculate`) | Built-in native arithmetic engine |
+| **Deterministic Tax Math & USVM** | Included via USVM (`@mudraforge/statutory/usvm`) | Gated Edge USVM API (`POST /calculate`) | Built-in native USVM execution with live ledger hooks |
 | **Systems of Record (SoR) Access** | None (Stateless) | None (Stateless) | **Direct Live Integration** (SAP, Zoho, Oracle, Bank Rails) |
 | **Statutory Claim Validator** | Excluded | Excluded | **Included Exclusively** *(Strictly requires live access to enterprise Systems of Record)* |
 | **Payment Authorization Leases**| Excluded | Excluded | Single-use cryptographic CAS leases |
@@ -631,13 +634,15 @@ To balance open developer accessibility with enterprise security, the architectu
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│ STATELESS REFERENCE & ARITHMETIC SUBSYSTEMS (Tiers 1 & 2)              │
-│ ~50% Functional Scope (Decoupled Reference Law & Edge Math)            │
+│ STATELESS REFERENCE & USVM ENGINE (Tiers 1 & 2)                        │
+│ ~50% Functional Scope (Decoupled Reference Law, ASTs & USVM)           │
 │ • Normalized OKF v0.2 schemas, rates, thresholds, and sunset timelines │
+│ • Universal Statutory Virtual Machine (USVM) declarative AST kernel    │
+│ • 5-stage rational BigInt arithmetic eliminating IEEE 754 float drift  │
 │ • Synchronous offline filesystem lookup (Tier 1 Free Package & CLI)    │
 │ • Best-effort edge gazette synchronization (Tier 1 & Tier 2)           │
-│ • Metered stateless cloud arithmetic API (Tier 2 POST /calculate)      │
-│ • Scope: Stateless reference & pure math; ZERO enterprise SoR access   │
+│ • Metered stateless cloud USVM API (Tier 2 POST /calculate)            │
+│ • Scope: Stateless reference & USVM math; ZERO enterprise SoR access   │
 └──────────────────────────────────┬─────────────────────────────────────┘
                                    │ Integrated into
                                    ▼
