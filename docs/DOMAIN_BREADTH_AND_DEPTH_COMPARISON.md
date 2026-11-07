@@ -1,8 +1,8 @@
 # MudraForge Statutory Substrate: Breadth & Depth Analysis
 ## Public Package Seed vs. Full Sovereign Operating Engine
 
-> **Document Version**: `2.0.0`  
-> **Package**: `@mudraforge/statutory` (v2.10.0)  
+> **Document Version**: `2.13.0`  
+> **Package**: `@mudraforge/statutory` (v2.13.0)  
 > **Enterprise Sovereign Engine**: MudraForge Adesha Sovereign Runtime  
 > **Specification**: Google Open Knowledge Format (OKF v0.2)  
 
@@ -12,7 +12,7 @@
 
 This document provides the authoritative architectural matrix comparing the **Breadth** (regulatory domains covered) and **Depth** (granularity, operative provisos, evidence attestation, and mathematical enforcement) between:
 
-1. **The Public Package (`@mudraforge/statutory`)**: The lightweight, zero-dependency, offline-capable package of 29 verified provisions across 5 foundational domains published for public AI agents and developer workflows.
+1. **The Public Package (`@mudraforge/statutory`)**: The lightweight, zero-dependency, offline-capable package of 46 verified provisions across 5 foundational domains with declarative USVM AST execution (`@mudraforge/statutory/usvm`) published for public AI agents and developer workflows.
 2. **The Full Sovereign Engine (Adesha Runtime)**: The private enterprise financial operating substrate governing live Accounts Payable (AP), Treasury, and General Ledger writebacks on the MudraForge Cloudflare Global Anycast Edge.
 
 ---
@@ -205,5 +205,5 @@ Level 5: Deterministic Mathematical Execution (Excess Math, Compound Interest, J
 ## 4. Architectural Summary: Why the Split Exists
 
 1. **Lightweight Developer Gateway**: Shipping the starter seed via npm keeps package size small (~2 MB) and enables instantaneous installation for any developer or AI agent.
-2. **Deterministic Security Boundary**: Proprietary mathematical execution code (`statutory_calculator.js`), banking CAS leases, and ledger writeback engines remain protected behind the MudraForge Cloudflare Anycast API.
+2. **Deterministic Security Boundary**: Enterprise financial orchestration, banking CAS leases, and multi-tenant ledger writeback engines remain protected within the MudraForge Adesha Runtime, while declarative statutory ASTs evaluate locally via USVM (`@mudraforge/statutory/usvm`).
 3. **Continuous Expansion via Edge Sync**: New regulatory domains (Ind AS, MCA, SEBI, FEMA) are curated and verified against primary gazette notifications, official CBDT/CBIC executive circulars, and independent programmatic test fixtures, deployed to the edge, and pulled on-demand via `npx @mudraforge/statutory sync`.

@@ -42,7 +42,8 @@ To ensure complete clarity for developers, auditors, and enterprise clients, Mud
 To ensure epistemic honesty and prevent conflating tested prototypes with general availability:
 
 - **`CURRENT_PRODUCTION` (Working, Publicly Inspectable Software)**:
-  - Bundled OKF statutory corpus (29 provisions across 5 legal domains).
+  - Bundled OKF statutory corpus (46 provisions across 5 legal domains).
+  - Universal Statutory Virtual Machine (USVM) declarative AST execution kernel (`@mudraforge/statutory/usvm`).
   - Pure deterministic calculators in `src/calculators.js` (Corporate Tax, LUT Export, TP ALP, Section 79, Ind AS 21/109).
   - Zero-network CLI (`mudraforge-statutory` doctor, crosswalk, diff, verify, browse).
   - Cryptographic SHA-256 Merkle root integrity verifier (`npm run manifest:check`).

@@ -42,7 +42,7 @@ flowchart TD
     subgraph PROFILE["MudraForge Statutory Profile (Engineering Extension)"]
         direction TB
         MF_JSON["section.json: Typed Machine Contracts & Formula ASTs"]
-        MF_CALC["Deterministic Calculation Engine (lib/core/statutory_calculator.js)"]
+        MF_CALC["Universal Statutory Virtual Machine (src/usvm/evaluation_vm.js)"]
         MF_HASH["SHA-256 Merkle Tree Integrity Manifests (okf/manifest.json)"]
         MF_SIG["Ed25519 Release Pinning & Tamper-Evident Signatures"]
         MF_FAIL["Fail-Closed Missing Evidence & Contradiction Gates"]
@@ -80,8 +80,8 @@ flowchart TD
         FS["forms/*.json | forms/*.md<br/>(Filing Schemas & Templates)"]
     end
 
-    subgraph ENGINE["Deterministic Execution Layer (CPU)"]
-        SJ --> CALC["statutory_calculator.js<br/>• Paisa Rounding & Excess Math<br/>• Cumulative Ledger Thresholds<br/>• Temporal Effective-Date Gates"]
+    subgraph ENGINE["Universal Statutory Virtual Machine (USVM)"]
+        SJ --> USVM["USVM Declarative Kernel<br/>• Declarative AST Execution<br/>• Rational BigInt Paisa Math<br/>• Fiduciary Invariant Gate"]
     end
 
     subgraph REASONING["Adesha Governance Layer (LLM + Human)"]
@@ -172,7 +172,7 @@ flowchart TD
    - `ACTIVE`: Currently in force under current legislation.
    - `SUNSET_SUPERSEDED`: Subject to statutory sunset (e.g. Section 206C(1H) on 1 April 2025).
    - `FUTURE_LAW`: Enacted forward law (e.g. Income-tax Act, 2025 Section 393 on 1 April 2026).
-3. Enforce deterministic calculator isolation in `statutory_calculator.js`.
+3. Author declarative AST package in `ast.json` evaluated by the Universal Statutory Virtual Machine (`src/usvm/evaluation_vm.js`).
 
 ### Step 2: Author `section.json` Machine Contract
 - Declare mandatory fields: `sectionId`, `sectionCode`, `aliases`, `governingStatute`, `statutorySection`, `successorStatute`, `successorSection`, `title`, `effectivePeriod`, `plainTextSummary`, `keyStatutoryThresholds`, `officialCitations`, `requiredDocumentChecklist`, `tier`, `version`.
@@ -246,7 +246,7 @@ All engineers and automated agents contributing to OKF provisions must uphold fi
 | Invariant | Operational Requirement | Verification Mechanism |
 |---|---|---|
 | **Rule 2: Stale Reference Scan** | After renaming or deprecating any provision, scan the entire codebase for stale references. | PowerShell `Get-ChildItem -Recurse \| Select-String` returns zero matches. |
-| **Rule 3: Single Execution Path** | No duplicate inline calculators. All dispatchers delegate to canonical `statutory_calculator.js`. | Unit tests confirm identical mathematical output across all entrypoints. |
+| **Rule 3: Single Execution Path** | No duplicate inline calculators. All dispatchers delegate to canonical USVM kernel (`@mudraforge/statutory/usvm`). | Unit tests confirm identical mathematical output across all entrypoints. |
 | **Rule 4: Regex User Input Escaping** | User-supplied search queries must be sanitized with `replace(/[.*+?^${}()\|[\]\\]/g, '\\$&')`. | Unit tests verify queries containing `(`, `)`, `[`, `]`, `*`. |
 | **Rule 5: No Dead Schema Parameters** | Every parameter declared in `section.json` must be evaluated by the execution runtime. | Parameter mapping audit in `statutory_commons.js`. |
 | **Rule 11: Statutory Truth Over Engine Output** | Calculations and effective dates must match independent legal ground truth, not merely agent agreement. | Parameterized test suites testing cumulative prior purchases and temporal dates. |

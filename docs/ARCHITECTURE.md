@@ -1,7 +1,7 @@
 # MudraForge Statutory Architecture
 ## Grounding Financial AI in Deterministic Law & Open Knowledge
 
-> **MudraForge Statutory Bundle**: `v2.10.0`  
+> **MudraForge Statutory Bundle**: `v2.13.0`  
 > **Knowledge Specification**: Google Open Knowledge Format (OKF) specification (upstream v0.2)  
 > **License**: MIT (Public Knowledge Commons)  
 > **Status**: Public Beta  
@@ -73,7 +73,7 @@ The journey of an accounts payable transaction from incoming PDF invoice to gene
 └───────────────────────────────────┬────────────────────────────────────┘
                                     ▼
 ┌────────────────────────────────────────────────────────────────────────┐
-│ STAGE 3: DETERMINISTIC STATUTORY COMPUTATION (Arithmetic Engine)       │
+│ STAGE 3: USVM DECLARATIVE AST EXECUTION (Rational BigInt Kernel)       │
 │ Prior FY Purchases: INR 45,00,000 | Cumulative: INR 1,05,00,000        │
 │ Taxable Excess: INR 55,00,000 | GST Unbundled (Circular 13/2021)       │
 │ TDS Deducted: INR 5,500 | Net Payable to Vendor: INR 70,74,500         │
@@ -150,27 +150,29 @@ The journey of an accounts payable transaction from incoming PDF invoice to gene
   - `ERR_STATUTE_SUNSET_EXPIRED`: Transaction attempted against an expired or omitted legal section.
   - `ERR_UNMAPPED_SUCCESSOR`: Transaction date falls into the 2025 Act era without an explicit statutory cross-reference.
 
-### 3.3 Stage 3: Deterministic Statutory Computation Engine
-- **Operational Purpose**: Executes statutory arithmetic in strictly isolated, deterministic code using integer paisa. Generative LLMs are barred from performing this arithmetic (Rule 11).
+### 3.3 Stage 3: Universal Statutory Virtual Machine (USVM) Declarative Execution Engine
+- **Operational Purpose**: Executes statutory rules through the stateless Universal Statutory Virtual Machine (`@mudraforge/statutory/usvm`), evaluating declarative Abstract Syntax Tree (AST) representations with 5-stage rational BigInt arithmetic. Generative LLMs are barred from performing this arithmetic (Rule 11).
 - **Inbound Data Contract**:
   - `ingestedInvoice`: Verified invoice amounts, item breakdown, and vendor PAN.
-  - `statutorySnapshot`: Applicable OKF rule parameters (thresholds, statutory rates, penalty escalations).
+  - `statutorySnapshot`: Applicable OKF declarative AST package (`ast.json` or pre-cached USVM rule).
   - `ledgerHistory`: Verified historical purchases from the same vendor within the active financial year.
 - **Deterministic Computation Algorithms**:
-  1. *Cumulative Threshold Evaluation (Section 194Q)*:
+  1. *Declarative AST Rule Traversal*: The USVM kernel (`evaluation_vm.js`, 355 lines) evaluates statutory expressions over facts in <15 microseconds without relying on hardcoded procedural conditionals.
+  2. *Cumulative Threshold Evaluation (Section 194Q)*:
      - Retrieves cumulative prior FY purchases from the verified ERP ledger: $\text{Prior Purchases} = \text{INR } 45,00,000$.
      - Computes cumulative aggregate: $\text{Cumulative} = 45,00,000 + 60,00,000 = \text{INR } 1,05,00,000$.
-  2. *GST Unbundling & Taxable Base Netting*:
+  3. *GST Unbundling & Taxable Base Netting*:
      - Strictly enforces CBDT Circular 13/2021 and Circular 23/2017: GST components (CGST/SGST/IGST) are excluded from the withholding base when charged separately.
      - Computes marginal taxable excess:
        $$\text{Taxable Excess} = \max(0, \min(\text{Basic Value}, \text{Cumulative} - 50,00,000)) = \text{INR } 55,00,000$$
-  3. *PAN Compliance & Penalty Rate Interception*:
+  4. *PAN Compliance & Penalty Rate Interception*:
      - Inspects vendor PAN validity and Section 206AB compliance. If PAN is valid and active, standard rate ($0.1\%$) applies:
        $$\text{TDS Deducted} = \lfloor 55,00,000 \times 0.001 \rfloor = \text{INR } 5,500$$
      - If PAN is inoperative or specified non-filer, automatically elevates rate to 5% u/s 206AA/206AB.
-  4. *Net Payable Allocation*:
-     $$\text{Net Payable to Vendor} = \text{Gross Invoice Total} - \text{TDS Deducted} = 70,80,000 - 5,500 = \text{INR } 70,74,500$$
-- **Outbound Payload**: Canonical `StatutoryCalculationResult` detailing basic value, unbundled taxes, taxable excess, deduction, and net payable.
+  5. *Net Payable Allocation & Rational BigInt Precision*:
+     - Computed via 5-stage rational fractions (`math_rational.js`) eliminating IEEE 754 float drift:
+       $$\text{Net Payable to Vendor} = \text{Gross Invoice Total} - \text{TDS Deducted} = 70,80,000 - 5,500 = \text{INR } 70,74,500$$
+- **Outbound Payload**: Canonical `StatutoryCalculationResult` detailing basic value, unbundled taxes, taxable excess, deduction, net payable, and mandatory fiduciary invariant `isAuthorizedToDisburse: false`.
 - **Failure Modes & Degradation Handling**:
   - `ERR_NEGATIVE_TAXABLE_BASE`: Negative purchase value or invalid credit note netting.
   - `ERR_PAN_INOPERATIVE_MANDATORY_ELEVATION`: Vendor PAN inoperative, requiring mandatory 5% withholding rate escalation.
@@ -614,9 +616,9 @@ Data traveling between tiers is encapsulated within a deterministic verification
 ### 9.3 Edge Consistency & Eventual Consistency Resolution (Cloudflare KV)
 
 Cloudflare Workers KV provides global low-latency reads via eventual consistency across edge nodes. To prevent release skew during regulatory updates:
-1. *Immutable Version Tagging*: All statutory releases are written under unique semver namespaces (`statutory:releases:v2.10.0:...`).
-2. *Atomic Manifest Flip*: The global pointer `statutory:active_release` is updated only after all 86 files across all domains are fully confirmed across edge replicas.
-3. *Cache-Control Invalidation*: Manifest responses carry strict validation headers (`ETag: "v2.10.0"`, `stale-while-revalidate=600`).
+1. *Immutable Version Tagging*: All statutory releases are written under unique semver namespaces (`statutory:releases:v2.13.0:...`).
+2. *Atomic Manifest Flip*: The global pointer `statutory:active_release` is updated only after all 191 files across all domains are fully confirmed across edge replicas.
+3. *Cache-Control Invalidation*: Manifest responses carry strict validation headers (`ETag: "v2.13.0"`, `stale-while-revalidate=600`).
 4. *Local Fallback*: If Tier 2 returns HTTP 5xx or fails DNS resolution, Tier 1 and Tier 3 automatically fall back to the bundled local filesystem snapshot without failing the active business transaction.
 
 ### 9.4 Architectural Boundaries: The Autonomous Coprocessor vs. Stateless Subsystems
@@ -677,27 +679,32 @@ The **Statutory Claim Validator** is deployed exclusively within the **Tier 3 Fu
    - **Vendor Compliance Standing & Penalty Rate Interception**: Inspects vendor compliance metrics to evaluate higher deduction rates under Section 206AB (non-filers of income tax returns) and Section 206AA (inoperative PAN status), elevating standard rates to mandatory statutory penalty tiers (5% or 20%) when non-compliance is verified.
    - **AI Assertion & Presentation Lock Verification**: Validates narrative claims generated by LLM assistants against verified SoR ground truth, ensuring no hallucinated tax rate, threshold, or section reference reaches human approving officers.
 
-### 9.6 The Deterministic Calculation Engine (`POST /calculate`)
+### 9.6 The Universal Statutory Virtual Machine (USVM) & Edge Calculation
 
-The **Deterministic Calculation Engine** executes verified tax arithmetic within an isolated runtime environment:
+The **Universal Statutory Virtual Machine (USVM)** (`@mudraforge/statutory/usvm`) provides a stateless, declarative AST execution kernel that eliminates hardcoded procedural calculation logic:
 
-1. **Multi-Invoice Cumulative Spend Tracking**:
-   Statutory provisions requiring cumulative threshold evaluations (such as Section 194Q) necessitate stateful tracking across a financial year. The engine interfaces with enterprise ledger history to aggregate verified prior purchases, applying withholding strictly to the marginal excess exceeding the statutory limit (e.g. INR 50,00,000) rather than the aggregate invoice gross.
-2. **Tax Component Unbundling**:
+1. **Declarative Abstract Syntax Tree (AST) Rules**:
+   Statutes are compiled into declarative AST expressions (e.g. `okf/*/ast.json` and `src/usvm/rules/*.json`). The virtual machine evaluates logical and arithmetic operations without embedding hardcoded procedural branching in application code.
+2. **Multi-Invoice Cumulative Spend Tracking**:
+   Statutory provisions requiring cumulative threshold evaluations (such as Section 194Q) evaluate prior purchases against financial-year limits, withholding strictly on the marginal excess exceeding the statutory limit (e.g. INR 50,00,000) rather than the aggregate invoice gross.
+3. **Tax Component Unbundling**:
    Implements administrative guidelines (including CBDT Circular 13/2021) requiring the exclusion of separately billed GST components from the tax deduction base, preventing compounding tax-on-tax withholding errors.
-3. **Integer-Paisa Precision & Cryptographic Lease Minting**:
-   Calculations are executed in integer paisa to eliminate floating-point representation drift. The resulting payment authorization is sealed via RFC 8785 JSON Canonicalization Scheme (JCS) and SHA-256 into a single-use Compare-and-Swap (CAS) lease. Any subsequent alteration to the transaction payload, beneficiary details, or tax allocation invalidates the lease prior to banking dispatch.
-4. **Distributed Edge Synchronization**:
-   To minimize compliance drift from legislative amendments, the calculation engine maintains synchronized release manifests across global edge nodes, ensuring tenant runtimes evaluate active transactions against validated gazette baselines.
+4. **5-Stage Rational BigInt Arithmetic (`math_rational.js`)**:
+   Calculations are executed with rational fractions (`[numerator, denominator]` BigInt pairs) to eliminate IEEE 754 floating-point drift before rounding to the nearest paisa (`roundToPaisa`).
+5. **Cryptographic CAS Lease Minting**:
+   The resulting payment authorization is sealed via RFC 8785 JSON Canonicalization Scheme (JCS) and SHA-256 into a single-use Compare-and-Swap (CAS) lease. Any subsequent alteration to the transaction payload, beneficiary details, or tax allocation invalidates the lease prior to banking dispatch.
+6. **Distributed Edge Synchronization & Lightweight Tree-Shaking**:
+   Exposed via tree-shakable subpath `@mudraforge/statutory/usvm` (~12 kB GZIP vs 92.9 kB full library), enabling microsecond edge evaluation on Cloudflare Workers V8 isolates without cold start latency.
 
 ---
 
-## 10. Working Example: Offline Local Traversal
+## 10. Working Example: Offline Traversal & USVM Execution
 
-The public package allows developers and agents to traverse statutory law with zero external network requests:
+The public package allows developers and agents to traverse statutory law and evaluate rules with zero external network requests:
 
 ```javascript
 import { lookupLocalStatute, isStatuteActive } from '@mudraforge/statutory';
+import { evaluateStatutoryAst, getStatutoryAst } from '@mudraforge/statutory/usvm';
 
 // 1. Look up Section 194Q offline (sub-1ms)
 const statute = lookupLocalStatute('194Q');
@@ -708,6 +715,17 @@ console.log(statute.keyStatutoryThresholds.taxableBaseScope);
 // 2. Check temporal status against effective dates
 const isActive2024 = await isStatuteActive('206C(1H)', '2024-05-01'); // true
 const isActive2025 = await isStatuteActive('206C(1H)', '2025-06-01'); // false (sunset effective 1 April 2025)
+
+// 3. Evaluate Section 194Q via USVM Declarative AST (<15µs latency)
+const ast194Q = getStatutoryAst('194Q');
+const voucher = evaluateStatutoryAst(ast194Q, {
+  invoiceAmount: 6000000,
+  priorFyPurchases: 4500000,
+  hasPan: true,
+  transactionDate: '2026-03-15'
+});
+console.log(voucher.calculatedTdsInr); // 5500 (0.1% on excess over ₹50L)
+console.log(voucher.isAuthorizedToDisburse); // false (Fiduciary invariant)
 ```
 
 ---
@@ -733,10 +751,10 @@ To prevent version skew across regions, the edge runtime employs an **Immutable 
 1. **Immutable Artifact Keys**: Every section schema, circular, and form is stored under an immutable, version-tagged key:
    ```
    statutory:releases:<semver>:<domain>:<section_code>
-   # Example: statutory:releases:v2.10.0:direct_tax:194Q
+   # Example: statutory:releases:v2.13.0:direct_tax:194Q
    ```
    Once written to KV, the bytes for a specific semver key are permanently immutable.
-2. **Atomic Manifest Pointers**: Releases are indexed by a versioned root manifest (`statutory:manifests:v2.10.0`). The active pointer is switched only after all constituent keys are fully populated.
+2. **Atomic Manifest Pointers**: Releases are indexed by a versioned root manifest (`statutory:manifests:v2.13.0`). The active pointer is switched only after all constituent keys are fully populated.
 3. **Cache Invalidation & ETag Gates**: The manifest endpoint serves HTTP `ETag` validators with short edge TTLs (`Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=600`). This ensures edge caches converge globally within minutes while allowing clients to detect release changes via deterministic SHA-256 root hash comparisons.
 - **Commercial Boundary**: Only the automated, continuously maintained edge update stream, neural discovery search, and deep deterministic calculator engines require an Enterprise API subscription post-beta.
 
