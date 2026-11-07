@@ -896,6 +896,45 @@ export interface WatchtowerReport {
 
 export declare function runStatutoryWatchtower(options?: { okfDir?: string; verbose?: boolean }): Promise<WatchtowerReport>;
 
+// Universal Statutory Virtual Machine (USVM) Declarative Kernel
+export interface UsvmAstRule {
+    sectionId: string;
+    sectionCode: string;
+    governingStatute: string;
+    statutorySection: string;
+    successorSection?: string;
+    mathArchetype: string;
+    triggerPolicy: string;
+    roundingPolicy: string;
+    rules?: any[];
+    [key: string]: any;
+}
+
+export interface UsvmEvaluationResult {
+    statuteCode: string;
+    governingStatute: string;
+    statutorySection: string;
+    isAuthorizedToDisburse: false;
+    calculatedTdsInr?: number;
+    calculatedTcsInr?: number;
+    effectiveRatePercent?: number;
+    taxableBaseInr?: number;
+    taxPayableInr?: number;
+    disposition?: string;
+    [key: string]: any;
+}
+
+export declare function evaluateStatutoryAst(ast: UsvmAstRule, facts: Record<string, any>, options?: { asOfDate?: string; trace?: boolean }): UsvmEvaluationResult;
+export declare function validateStatutoryAst(ast: unknown): { valid: boolean; errors?: string[] };
+export declare function toBigIntPaise(amountInr: number | string | bigint): bigint;
+export declare function fromBigIntPaise(paiseBigInt: bigint): number;
+export declare function getStatutoryAst(sectionKey: string): UsvmAstRule | null;
+export declare class StatutoryAstValidationError extends Error {
+    errors: string[];
+    constructor(message: string, errors?: string[]);
+}
+
+
 
 
 

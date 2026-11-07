@@ -27,6 +27,7 @@
       "default": "./src/calculators.js"
     },
     "./usvm": {
+      "types": "./types/index.d.ts",
       "import": "./src/usvm/index.js",
       "default": "./src/usvm/index.js"
     },
@@ -46,6 +47,12 @@
         "./types/index.d.ts"
       ],
       "constants": [
+        "./types/index.d.ts"
+      ],
+      "usvm": [
+        "./types/index.d.ts"
+      ],
+      "zoho_gstr2b": [
         "./types/index.d.ts"
       ]
     }
@@ -82,6 +89,10 @@
   "scripts": {
     "prepublishOnly": "node scripts/prepublish_gate.js",
     "test": "node test.js",
+    "check:types": "npx --yes @arethetypeswrong/cli --pack . --profile esm-only",
+    "check:exports": "npx --yes publint",
+    "ci:local": "node scripts/ci_parity.js",
+    "setup:hooks": "node scripts/install_git_hooks.js",
     "validate": "node scripts/validate_okf.js",
     "citations": "node scripts/verify_citation_links.js",
     "conformance": "node conformance/test_conformance.js",
