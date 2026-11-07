@@ -1,9 +1,9 @@
 # MudraForge Statutory Knowledge Quality Card
 
 > **Format Reference**: Inspired by Google's *Data Cards Playbook* and the OpenSSF Project Quality Standards.  
-> **Target Package**: `@mudraforge/statutory` v2.12.0  
+> **Target Package**: `@mudraforge/statutory` v2.13.0  
 > **Evaluation Mode**: Machine-audited against primary sources, official gazettes, and test fixtures.  
-> **Generated Timestamp**: 2026-11-06T18:36:37.873Z
+> **Generated Timestamp**: 2026-11-07T21:28:23.327Z
 
 ---
 
@@ -16,7 +16,7 @@
 | **Dual-Act 2025 Transition Bridges** | 16 direct tax provisions mapped | 17 direct tax provisions | **94.1%** | VERIFIED |
 | **Attached Administrative Circulars** | 52 official circulars | 46 provisions across active domains | **100% Attached** | VERIFIED |
 | **Attached Return/Compliance Schemas** | 47 schemas/templates | 46 provisions across active domains | **100% Attached** | VERIFIED |
-| **Cryptographic Merkle Verification** | 145 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
+| **Cryptographic Merkle Verification** | 191 bundle files verified | SHA-256 Merkle root digest | **0 Mismatches** | VERIFIED |
 
 ---
 

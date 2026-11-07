@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.13.0] - 2026-11-08
+
+### Added
+- **Universal Statutory Virtual Machine (USVM) Kernel (`@mudraforge/statutory/usvm`)**:
+  - Stateless execution kernel (`evaluation_vm.js`, 355 lines) evaluating declarative AST rules with sub-microsecond latency (p50: 14.32 microseconds).
+  - 5-stage rational BigInt arithmetic (`math_rational.js`) eliminating floating-point rounding drift.
+  - Strict AST schema validator and operator allowlists (`statutory_ast_schema.js`).
+  - Pre-cached 48 declarative AST packages in `src/usvm/rules/*.json`.
+  - Co-located 46 `ast.json` rule packages across the 5 canonical OKF domains.
+- **Tree-Shakable Package Subpath (`@mudraforge/statutory/usvm`)**:
+  - Exposes `evaluateStatutoryAst`, `validateStatutoryAst`, and `toBigIntPaise` for ultra-lightweight client bundles (~12 kB GZIP vs 92.9 kB).
+
+### Changed
+- Re-computed Merkle manifest SHA-256 root digest: `sha256-7ffc75e8611a9c966eea756dd544fdae9144e2318d3478633232bb876d05e364`.
+- Attached `ast` object to `lookupLocalStatute` return envelopes.
+- Package version bumped to `2.13.0`.
+
 ## [2.12.1] - 2026-11-06
 
 ### Fixed

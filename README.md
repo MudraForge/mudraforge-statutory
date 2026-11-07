@@ -57,6 +57,19 @@ console.log(exportEvaluation.igstPayableInr);         // 0 (0% IGST)
 // 4. Temporal Legislative Sunset Check
 const isActive = await isStatuteActive('206C(1H)', '2025-06-01');
 console.log(isActive); // false (Omitted w.e.f. 1 April 2025 by Finance Act, 2025)
+
+// 5. Universal Statutory Virtual Machine (USVM) Subpath (<15µs latency, ~12 kB GZIP bundle)
+import { evaluateStatutoryAst, getStatutoryAst } from '@mudraforge/statutory/usvm';
+
+const ast194Q = getStatutoryAst('194Q');
+const voucher = evaluateStatutoryAst(ast194Q, {
+  invoiceAmount: 2000000,
+  priorFyPurchases: 4500000,
+  hasPan: true,
+  transactionDate: '2026-03-15'
+});
+console.log(voucher.calculatedTdsInr); // 1500 (TDS on incremental excess)
+console.log(voucher.isAuthorizedToDisburse); // false (Fiduciary invariant)
 ```
 
 ---
