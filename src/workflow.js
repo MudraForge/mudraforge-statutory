@@ -559,6 +559,24 @@ export async function getRemoteCIStatus(options = {}) {
         });
 
         if (!resp.ok) {
+            if (resp.status === 422) {
+                return {
+                    status: 'NOT_PUSHED',
+                    owner,
+                    repo,
+                    branch,
+                    commitSha: sha,
+                    total: 0,
+                    passed: 0,
+                    inProgress: 0,
+                    queued: 0,
+                    allCompleted: false,
+                    allPassed: false,
+                    failures: [],
+                    successes: [],
+                    message: `Commit ${sha.slice(0, 7)} has not been pushed to remote repository yet.`
+                };
+            }
             return {
                 status: 'HTTP_ERROR',
                 httpStatus: resp.status,

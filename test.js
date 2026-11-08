@@ -6427,7 +6427,7 @@ async function run() {
         }
 
         // 2. Test getRemoteCIStatus API contract
-        const ciStatus = await getRemoteCIStatus();
+        const ciStatus = await getRemoteCIStatus({ commitSha: 'f0470e9' });
         if (!ciStatus || !ciStatus.status || typeof ciStatus.total !== 'number') {
             throw new Error(`getRemoteCIStatus failed to return valid schema: ${JSON.stringify(ciStatus)}`);
         }
