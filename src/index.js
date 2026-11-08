@@ -3142,6 +3142,10 @@ export {
     getRemoteRepoInfo,
     getRemoteCIStatus,
     waitForRemoteCI,
+    sanitizeRemoteName,
+    sanitizeGitBranch,
+    SAFE_REMOTE_NAME_RE,
+    SAFE_GIT_REF_RE,
     ALLOWED_BRANCH_PREFIXES,
     CONVENTIONAL_COMMIT_PREFIXES,
     EMOJI_DETECTION_RE

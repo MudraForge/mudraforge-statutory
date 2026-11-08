@@ -149,6 +149,21 @@ for (const file of jsFiles) {
                 line
             );
         }
+
+        // Check E: Command line injection / unvalidated child process parameters (js/second-order-command-line-injection)
+        // Flag unvalidated dynamic git arguments without option termination '--' or sanitizers
+        if (/runGit\(\s*\[[^\]]*(?:ls-remote|checkout|push|merge)[^\]]*\b(?:branch|remote|sourceBranch|targetBranch)\b[^\]]*\]/i.test(line)) {
+            if (!line.includes("'--'") && !line.includes('clean') && !line.includes('sanitize')) {
+                recordViolation(
+                    file,
+                    lineNum,
+                    'js/second-order-command-line-injection',
+                    'HIGH',
+                    'Potentially unvalidated git argument passed to child process without option terminator "--" or sanitization.',
+                    line
+                );
+            }
+        }
     }
 }
 

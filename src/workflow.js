@@ -62,6 +62,45 @@ export function findGitRootDir(startDir = process.cwd()) {
     return DEFAULT_ROOT_DIR;
 }
 
+export const SAFE_REMOTE_NAME_RE = /^[a-zA-Z0-9._-]+$/;
+export const SAFE_GIT_REF_RE = /^[a-zA-Z0-9._\/-]+$/;
+
+/**
+ * Sanitizes and validates a git remote name to strictly prevent command and option injection.
+ * Rejects leading dashes, shell metacharacters, or whitespace.
+ *
+ * @param {string} remote
+ * @returns {string} Sanitized remote name
+ */
+export function sanitizeRemoteName(remote = 'origin') {
+    if (typeof remote !== 'string') {
+        throw new Error('[@mudraforge/statutory] Remote name must be a string.');
+    }
+    const trimmed = remote.trim();
+    if (!trimmed || trimmed.startsWith('-') || !SAFE_REMOTE_NAME_RE.test(trimmed)) {
+        throw new Error(`[@mudraforge/statutory] Invalid or unsafe git remote name "${remote}".`);
+    }
+    return trimmed;
+}
+
+/**
+ * Sanitizes and validates a git branch name to strictly prevent command and option injection.
+ * Rejects leading dashes, double dots (..), shell metacharacters, or whitespace.
+ *
+ * @param {string} branch
+ * @returns {string} Sanitized branch name
+ */
+export function sanitizeGitBranch(branch) {
+    if (typeof branch !== 'string') {
+        throw new Error('[@mudraforge/statutory] Branch name must be a string.');
+    }
+    const trimmed = branch.trim();
+    if (!trimmed || trimmed.startsWith('-') || trimmed.includes('..') || !SAFE_GIT_REF_RE.test(trimmed)) {
+        throw new Error(`[@mudraforge/statutory] Invalid or unsafe git branch name "${branch}".`);
+    }
+    return trimmed;
+}
+
 /**
  * Extracts owner and repository name from git remote URL.
  * Supports canonical HTTPS and SSH GitHub remote formats.
@@ -71,9 +110,10 @@ export function findGitRootDir(startDir = process.cwd()) {
  * @returns {{ owner: string, repo: string } | null}
  */
 export function getRemoteRepoInfo(remote = 'origin', cwd = DEFAULT_ROOT_DIR) {
+    const cleanRemote = sanitizeRemoteName(remote);
     let repoUrl = '';
     try {
-        repoUrl = runGit(['remote', 'get-url', remote], cwd);
+        repoUrl = runGit(['remote', 'get-url', '--', cleanRemote], cwd);
     } catch (_) {
         return null;
     }
@@ -464,13 +504,15 @@ export function pushWorkflowBranch(params = {}) {
     }
 
     // 2. Push branch with upstream tracking
-    runGit(['push', '-u', remote, currentBranch], cwd);
+    const cleanRemote = sanitizeRemoteName(remote);
+    const cleanBranch = sanitizeGitBranch(currentBranch);
+    runGit(['push', '-u', '--', cleanRemote, cleanBranch], cwd);
     const headSha = runGit(['rev-parse', 'HEAD'], cwd);
 
     // Compute GitHub Pull Request URL
     let repoUrl = '';
     try {
-        repoUrl = runGit(['remote', 'get-url', remote], cwd);
+        repoUrl = runGit(['remote', 'get-url', '--', cleanRemote], cwd);
     } catch (_) {}
 
     let prUrl = null;
@@ -516,26 +558,37 @@ export function pushWorkflowBranch(params = {}) {
  */
 export async function getRemoteCIStatus(options = {}) {
     const cwd = findGitRootDir(options.rootDir || process.cwd());
-    const remote = options.remote || 'origin';
-    const repoInfo = getRemoteRepoInfo(remote, cwd);
+    const cleanRemote = sanitizeRemoteName(options.remote || 'origin');
+    const repoInfo = getRemoteRepoInfo(cleanRemote, cwd);
     if (!repoInfo) {
         return { status: 'UNKNOWN_REMOTE', message: 'Not a recognized GitHub remote repository.' };
     }
 
     const { owner, repo } = repoInfo;
     let branch = options.branch;
-    if (!branch) {
+    if (branch) {
+        branch = sanitizeGitBranch(branch);
+    } else {
         try {
-            branch = runGit(['rev-parse', '--abbrev-ref', 'HEAD'], cwd);
+            const rawBranch = runGit(['rev-parse', '--abbrev-ref', 'HEAD'], cwd);
+            branch = sanitizeGitBranch(rawBranch);
         } catch (_) {}
     }
 
     let sha = options.commitSha;
-    if (!sha && branch) {
+    if (sha) {
+        if (!/^[0-9a-fA-F]{4,40}$/.test(String(sha).trim())) {
+            throw new Error(`[@mudraforge/statutory] Invalid commit SHA "${sha}".`);
+        }
+        sha = String(sha).trim();
+    } else if (branch) {
         try {
-            const lsOut = runGit(['ls-remote', remote, `refs/heads/${branch}`], cwd);
+            const lsOut = runGit(['ls-remote', '--', cleanRemote, `refs/heads/${branch}`], cwd);
             if (lsOut) {
-                sha = lsOut.split(/\s+/)[0];
+                const match = lsOut.match(/^([0-9a-fA-F]{40})\s+/);
+                if (match) {
+                    sha = match[1];
+                }
             }
         } catch (_) {}
         if (!sha) {
@@ -733,15 +786,18 @@ export function mergeWorkflowBranch(params) {
         }
     }
 
+    const cleanSource = sanitizeGitBranch(sourceBranch);
+    const cleanTarget = sanitizeGitBranch(targetBranch);
+
     // 3. Checkout target branch
-    runGit(['checkout', targetBranch], cwd);
+    runGit(['checkout', '--', cleanTarget], cwd);
 
     // 4. Merge
     if (squash) {
-        runGit(['merge', '--squash', sourceBranch], cwd);
-        runGit(['commit', '-m', `merge(squash): merge ${sourceBranch} into ${targetBranch}`], cwd);
+        runGit(['merge', '--squash', '--', cleanSource], cwd);
+        runGit(['commit', '-m', `merge(squash): merge ${cleanSource} into ${cleanTarget}`], cwd);
     } else {
-        runGit(['merge', sourceBranch, '-m', `merge: merge branch '${sourceBranch}' into ${targetBranch}`], cwd);
+        runGit(['merge', '--', cleanSource, '-m', `merge: merge branch '${cleanSource}' into ${cleanTarget}`], cwd);
     }
 
     const mergedSha = runGit(['rev-parse', 'HEAD'], cwd);
@@ -750,7 +806,7 @@ export function mergeWorkflowBranch(params) {
     if (pushAfterMerge) {
         process.env.ALLOW_MAIN_PUSH = '1';
         try {
-            runGit(['push', 'origin', targetBranch], cwd);
+            runGit(['push', 'origin', '--', cleanTarget], cwd);
         } finally {
             delete process.env.ALLOW_MAIN_PUSH;
         }

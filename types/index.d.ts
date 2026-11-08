@@ -933,6 +933,8 @@ export declare function waitForRemoteCI(options?: {
     pollIntervalMs?: number;
     onProgress?: (status: any, attempt: number) => void;
 }): Promise<any>;
+export declare function sanitizeRemoteName(remote?: string): string;
+export declare function sanitizeGitBranch(branch: string): string;
 
 
 

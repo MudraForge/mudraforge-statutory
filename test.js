@@ -70,6 +70,8 @@ import {
     appendWorkflowJournal,
     getRemoteRepoInfo,
     getRemoteCIStatus,
+    sanitizeRemoteName,
+    sanitizeGitBranch,
     STATUTORY_OUTCOMES_DICTIONARY,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION
@@ -6431,6 +6433,26 @@ async function run() {
         if (!ciStatus || !ciStatus.status || typeof ciStatus.total !== 'number') {
             throw new Error(`getRemoteCIStatus failed to return valid schema: ${JSON.stringify(ciStatus)}`);
         }
+
+        // 3. Command Injection & Git Ref Sanitization Defense
+        if (sanitizeRemoteName('origin') !== 'origin') throw new Error('sanitizeRemoteName failed on origin');
+        if (sanitizeGitBranch('feat/safe-branch') !== 'feat/safe-branch') throw new Error('sanitizeGitBranch failed on valid branch');
+
+        let injectedBlocked = false;
+        try {
+            sanitizeRemoteName('--upload-pack=malicious');
+        } catch (_) {
+            injectedBlocked = true;
+        }
+        if (!injectedBlocked) throw new Error('sanitizeRemoteName failed to reject leading dash option injection');
+
+        let branchInjectedBlocked = false;
+        try {
+            sanitizeGitBranch('--output=hack.txt');
+        } catch (_) {
+            branchInjectedBlocked = true;
+        }
+        if (!branchInjectedBlocked) throw new Error('sanitizeGitBranch failed to reject leading dash branch injection');
 
         console.log(`[PASS] Remote CI Verification & Pre-Merge Gate Engine Verified: Repo [${repoInfo.owner}/${repoInfo.repo}] status=${ciStatus.status}, total=${ciStatus.total}, passed=${ciStatus.passed}`);
     }
