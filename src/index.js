@@ -16,7 +16,11 @@ import dns from 'node:dns';
 import { fileURLToPath } from 'node:url';
 import {
     evaluateStatutoryAst,
-    resolveTemporalCrystallization
+    resolveTemporalCrystallization,
+    getStatutoryAst,
+    validateStatutoryAst,
+    toBigIntPaise,
+    fromBigIntPaise
 } from './usvm/index.js';
 import {
     roundToPaisa,
@@ -26,62 +30,17 @@ import {
     fromIntegerPaise,
     MalformedNumericInputError,
     MissingMandatoryParameterError,
-    assertMandatoryNumeric,
-    calculateCorporateTaxMatVsConcessional,
-    evaluatePlaceOfSupplyAndLut,
-    calculateTransferPricingAlp,
-    evaluateSection79LossContinuity,
-    evaluateSection281TaxClearance,
-    revalueForeignExchangeIndAs109,
-    calculateBusinessCombinationsIndAs103,
-    calculateImpairmentIndAs36,
-    calculateRevenueAllocationIndAs115,
-    calculateLeaseAmortizationIndAs116,
-    calculateExpectedCreditLossIndAs109,
-    calculateEsopAmortizationIndAs102,
-    calculateDeferredTaxIndAs12,
-    evaluateProvisionsAndContingenciesIndAs37,
-    calculateForeignCurrencyIndAs21,
-    resolveMissingPanPenaltyFloor,
-    evaluateSection194Q,
-    evaluateSection194C,
-    evaluateSection194H,
-    evaluateSection194I,
-    evaluateSection194J,
-    evaluateSection194A,
-    evaluateSection194O,
-    evaluateSection194IA,
-    evaluateSection194IB,
-    evaluateSection194M,
-    evaluateSection194R,
-    evaluateSection194S,
-    evaluateSection194BA,
-    evaluateSection194N,
-    evaluateSection194DA,
-    evaluateSection194K,
-    evaluateSection206C1G,
-    evaluateSection52GstTcs,
-    evaluateSection43BStatutoryPayables,
-    calculateItcReversalRule37,
-    calculateRule37ASupplierNonFilingReversal,
-    evaluateSection206C1H,
-    evaluateSection43bH,
-    calculateMsmeCompoundInterest,
-    calculateAdvanceTaxAndInterest,
-    calculateRule42InputServiceReversal,
-    reconcileRule42AnnualTrueUp,
-    calculateRule43CapitalGoodsReversal,
-    calculateGstItcApportionmentRule42_43,
-    evaluateCrossBorderRemittance,
-    generateMsme1AndScheduleThreeAging,
-    evaluateLowerDeductionCertificateValidity,
-    getRbiBankRateForDate,
+    assertMandatoryNumeric
+} from './numeric.js';
+import {
     DEFAULT_RBI_BANK_RATE,
     MSMED_RATE_MULTIPLIER,
     RBI_BANK_RATE_SCHEDULE,
+    getRbiBankRateForDate,
+    VALID_194J_CATEGORIES,
     AUTHORITATIVE_STATUTORY_RATES,
-    VALID_194J_CATEGORIES
-} from './calculators.js';
+    resolveMissingPanPenaltyFloor
+} from './constants.js';
 import { 
     getStatutoryOutcomes, 
     explainStatutoryDisposition, 
@@ -1735,8 +1694,9 @@ export class StatutoryClient {
         if (!this.apiKey) {
             const err = new Error(
                 '[@mudraforge/statutory] The hosted cloud calculation endpoint (\'/api/v1/statutory/calculate\') requires an Enterprise API key.\n' +
-                'To calculate deterministically offline without an API key or remote server, import pure calculation functions directly:\n' +
-                '  import { calculateCorporateTaxMatVsConcessional, evaluatePlaceOfSupplyAndLut, calculateTransferPricingAlp, evaluateSection79LossContinuity, revalueForeignExchangeIndAs109 } from \'@mudraforge/statutory\';\n' +
+                'To calculate deterministically offline without an API key or remote server, evaluate declarative statutory AST rules via USVM:\n' +
+                '  import { evaluateStatutoryAst } from \'@mudraforge/statutory/usvm\';\n' +
+                '  // or client.evaluateStatutoryAst(ruleAst, facts);\n' +
                 'For hosted cloud edge calculation access or custom enterprise models, contact hello@mudraforge.in or support@mudraforge.in.'
             );
             err.code = 'API_KEY_REQUIRED';
@@ -1879,304 +1839,21 @@ export class StatutoryClient {
     }
 
     /**
-     * Evaluate Corporate Tax: Normal MAT (Section 115JB) vs Concessional Regime (Section 115BAA).
+     * Universal Statutory Virtual Machine (USVM) AST Evaluation.
+     * Evaluates declarative statutory AST rules deterministically offline with sub-microsecond latency.
+     * Enforces statutory fiduciary invariant: isAuthorizedToDisburse === false.
+     *
+     * @param {Object} ruleAst - Validated OKF AST rule object
+     * @param {Object} facts - Input financial facts (amounts, dates, flags)
+     * @param {Object} [options] - Optional evaluation options
+     * @returns {Object} Deterministic evaluation result with full trace
      */
-    calculateCorporateTaxMatVsConcessional(payload) {
-        return calculateCorporateTaxMatVsConcessional(payload);
-    }
-
-    /**
-     * Evaluate Place of Supply (POS) & Zero-Rated Export of Services under LUT (IGST Sections 10, 12, 13, 16).
-     */
-    evaluatePlaceOfSupplyAndLut(payload) {
-        return evaluatePlaceOfSupplyAndLut(payload);
-    }
-
-    /**
-     * Compute Transfer Pricing Arm's Length Price (ALP) under Section 92C & Rule 10CA.
-     */
-    calculateTransferPricingAlp(payload) {
-        return calculateTransferPricingAlp(payload);
-    }
-
-    /**
-     * Evaluate Section 79 Loss Carry-Forward & Shareholding Continuity with unabsorbed depreciation protection.
-     */
-    evaluateSection79LossContinuity(payload) {
-        return evaluateSection79LossContinuity(payload);
-    }
-
-    /**
-     * Revalue foreign exchange monetary items at closing spot rates under Ind AS 21 and Ind AS 109.
-     */
-    revalueForeignExchangeIndAs109(payload) {
-        return revalueForeignExchangeIndAs109(payload);
-    }
-
-    /**
-     * Business Combinations & Purchase Price Allocation (PPA) under Ind AS 103 / IFRS 3 / ASC 805.
-     */
-    calculateBusinessCombinationsIndAs103(payload) {
-        return calculateBusinessCombinationsIndAs103(payload);
-    }
-
-    /**
-     * Asset & CGU Impairment Testing & DCF Value in Use under Ind AS 36 / IAS 36 / ASC 360.
-     */
-    calculateImpairmentIndAs36(payload) {
-        return calculateImpairmentIndAs36(payload);
-    }
-
-    /**
-     * 5-Step Revenue Recognition & Relative SSP Allocation under Ind AS 115 / IFRS 15 / ASC 606.
-     */
-    calculateRevenueAllocationIndAs115(payload) {
-        return calculateRevenueAllocationIndAs115(payload);
-    }
-
-    /**
-     * Right-of-Use Asset & Lease Liability Amortization under Ind AS 116 / IFRS 16 / ASC 842.
-     */
-    calculateLeaseAmortizationIndAs116(payload) {
-        return calculateLeaseAmortizationIndAs116(payload);
-    }
-
-    /**
-     * Expected Credit Loss (ECL) Impairment under Ind AS 109 / IFRS 9 / ASC 326.
-     */
-    calculateExpectedCreditLossIndAs109(payload) {
-        return calculateExpectedCreditLossIndAs109(payload);
-    }
-
-    /**
-     * ESOP Graded Vesting Front-Loaded Amortization under Ind AS 102 / IFRS 2 / ASC 718.
-     */
-    calculateEsopAmortizationIndAs102(payload) {
-        return calculateEsopAmortizationIndAs102(payload);
-    }
-
-    /**
-     * Balance Sheet Deferred Tax (DTA / DTL) and ETR Reconciliation under Ind AS 12 / IAS 12 / ASC 740.
-     */
-    calculateDeferredTaxIndAs12(payload) {
-        return calculateDeferredTaxIndAs12(payload);
-    }
-
-    /**
-     * Provisions, Contingent Liabilities & Tax Dispute Triangulation under Ind AS 37 / IAS 37 / ASC 450.
-     */
-    evaluateProvisionsAndContingenciesIndAs37(payload) {
-        return evaluateProvisionsAndContingenciesIndAs37(payload);
-    }
-
-    /**
-     * Foreign Currency Monetary Revaluation & FCTR Translation under Ind AS 21 / IAS 21 / ASC 830.
-     */
-    calculateForeignCurrencyIndAs21(payload) {
-        return calculateForeignCurrencyIndAs21(payload);
-    }
-
-    /**
-     * Section 194Q: Deduction of tax at source on purchase of goods exceeding ₹50 Lakh.
-     */
-    evaluateSection194Q(payload) {
-        return evaluateSection194Q(payload);
-    }
-
-    /**
-     * Section 194C: Withholding on contractor and sub-contractor payments.
-     */
-    evaluateSection194C(payload) {
-        return evaluateSection194C(payload);
-    }
-
-    /**
-     * Section 194H: Withholding on commission and brokerage payments.
-     */
-    evaluateSection194H(payload) {
-        return evaluateSection194H(payload);
-    }
-
-    /**
-     * Section 194I: Withholding on rent (land/building vs plant/machinery).
-     */
-    evaluateSection194I(payload) {
-        return evaluateSection194I(payload);
-    }
-
-    /**
-     * Section 194J: Withholding on professional and technical services (FTS).
-     */
-    evaluateSection194J(payload) {
-        return evaluateSection194J(payload);
-    }
-
-    /**
-     * Section 194A: Withholding on interest other than interest on securities.
-     */
-    evaluateSection194A(payload) {
-        return evaluateSection194A(payload);
-    }
-
-    /**
-     * Section 194O: E-commerce operator marketplace withholding & 194Q/206C(1H) override.
-     */
-    evaluateSection194O(payload) {
-        return evaluateSection194O(payload);
-    }
-
-    /**
-     * Section 194-IA: Immovable property transfer TDS (higher of consideration or SDV) & Form 26QB.
-     */
-    evaluateSection194IA(payload) {
-        return evaluateSection194IA(payload);
-    }
-
-    /**
-     * Section 194-IB: Individual/HUF rent TDS, 2% rate cut, Form 26QC, and Section 194-IB(4) last-month rent ceiling.
-     */
-    evaluateSection194IB(payload) {
-        return evaluateSection194IB(payload);
-    }
-
-    /**
-     * Section 194M: Individual/HUF contract/commission/professional TDS, 2% rate cut, Form 26QD, and 50L threshold.
-     */
-    evaluateSection194M(payload) {
-        return evaluateSection194M(payload);
-    }
-
-    /**
-     * Section 194R: Benefit or perquisite in business or profession TDS, in-kind advance tax, and de minimis threshold.
-     */
-    evaluateSection194R(payload) {
-        return evaluateSection194R(payload);
-    }
-
-    /**
-     * Section 194S: Deduction of tax at source on payment for transfer of virtual digital assets (Crypto / VDA).
-     */
-    evaluateSection194S(payload) {
-        return evaluateSection194S(payload);
-    }
-
-    /**
-     * Section 194BA: Deduction of tax at source on net winnings from online games.
-     */
-    evaluateSection194BA(payload) {
-        return evaluateSection194BA(payload);
-    }
-
-    /**
-     * Section 194N: Deduction of tax at source on cash withdrawals exceeding statutory limits.
-     */
-    evaluateSection194N(payload) {
-        return evaluateSection194N(payload);
-    }
-
-    /**
-     * Section 194DA: Deduction of tax at source on life insurance policy payouts.
-     */
-    evaluateSection194DA(payload) {
-        return evaluateSection194DA(payload);
-    }
-
-    /**
-     * Section 194K: Deduction of tax at source on income in respect of units of mutual funds.
-     */
-    evaluateSection194K(payload) {
-        return evaluateSection194K(payload);
-    }
-
-    /**
-     * Section 206C(1G): Tax collection at source on Liberalised Remittance Scheme (LRS) and overseas tour packages.
-     */
-    evaluateSection206C1G(payload) {
-        return evaluateSection206C1G(payload);
-    }
-
-    /**
-     * CGST Section 52: Tax collection at source by electronic commerce operators.
-     */
-    evaluateSection52GstTcs(payload) {
-        return evaluateSection52GstTcs(payload);
-    }
-
-    /**
-     * Section 43B / Section 36(1)(va): Statutory payables disallowance & Supreme Court Checkmate Doctrine.
-     */
-    evaluateSection43B(payload) {
-        return evaluateSection43BStatutoryPayables(payload);
-    }
-
-    /**
-     * Section 281: M&A asset transfer tax clearance & voidability evaluation under CBDT Circular 04/2011.
-     */
-    evaluateSection281(payload) {
-        return evaluateSection281TaxClearance(payload);
-    }
-
-    /**
-     * Rule 37: 180-day vendor non-payment ITC reversal & Section 50(1) 18% interest.
-     */
-    calculateItcReversalRule37(payload) {
-        return calculateItcReversalRule37(payload);
-    }
-
-    /**
-     * Rule 37A: Reversal of ITC where supplier failed to furnish Form GSTR-3B by November 30.
-     */
-    calculateRule37ASupplierNonFilingReversal(payload) {
-        return calculateRule37ASupplierNonFilingReversal(payload);
-    }
-
-    /**
-     * Rule 42: Inputs and input services common ITC reversal (monthly provisional).
-     */
-    calculateRule42InputServiceReversal(payload) {
-        return calculateRule42InputServiceReversal(payload);
-    }
-
-    /**
-     * Rule 42(2): Annual common credit true-up reconciliation & Section 50(1) interest.
-     */
-    reconcileRule42AnnualTrueUp(payload) {
-        return reconcileRule42AnnualTrueUp(payload);
-    }
-
-    /**
-     * Rule 43: Capital goods common ITC 60-month amortisation and reversal.
-     */
-    calculateRule43CapitalGoodsReversal(payload) {
-        return calculateRule43CapitalGoodsReversal(payload);
-    }
-
-    /**
-     * Rule 42 & 43: Combined input tax credit apportionment orchestrator.
-     */
-    calculateGstItcApportionmentRule42_43(payload) {
-        return calculateGstItcApportionmentRule42_43(payload);
-    }
-
-    /**
-     * MSMED Act Section 16: Compound interest with monthly rests at 3x RBI Bank Rate.
-     */
-    calculateMsmeCompoundInterest(payload) {
-        return calculateMsmeCompoundInterest(payload);
-    }
-
-    /**
-     * Section 43B(h): Year-end tax disallowance on overdue MSME invoices.
-     */
-    evaluateSection43bH(payload) {
-        return evaluateSection43bH(payload);
-    }
-
-    /**
-     * Section 195: Cross-border foreign remittance tax withholding.
-     */
-    evaluateCrossBorderRemittance(payload) {
-        return evaluateCrossBorderRemittance(payload);
+    evaluateStatutoryAst(ruleAst, facts, options = {}) {
+        const ast = typeof ruleAst === 'string' ? getStatutoryAst(ruleAst) : ruleAst;
+        if (!ast) {
+            throw new Error(`[@mudraforge/statutory] Unable to resolve statutory AST rule for '${ruleAst}'. Valid section keys include '194Q', '194C', '194J', '115BAA', '43B(h)', etc.`);
+        }
+        return evaluateStatutoryAst(ast, facts, options);
     }
 
     /**
@@ -3413,54 +3090,7 @@ export {
     MalformedNumericInputError,
     MissingMandatoryParameterError,
     assertMandatoryNumeric,
-    calculateCorporateTaxMatVsConcessional,
-    evaluatePlaceOfSupplyAndLut,
-    calculateTransferPricingAlp,
-    evaluateSection79LossContinuity,
-    evaluateSection281TaxClearance,
-    revalueForeignExchangeIndAs109,
-    calculateBusinessCombinationsIndAs103,
-    calculateImpairmentIndAs36,
-    calculateRevenueAllocationIndAs115,
-    calculateLeaseAmortizationIndAs116,
-    calculateExpectedCreditLossIndAs109,
-    calculateEsopAmortizationIndAs102,
-    calculateDeferredTaxIndAs12,
-    evaluateProvisionsAndContingenciesIndAs37,
-    calculateForeignCurrencyIndAs21,
     resolveMissingPanPenaltyFloor,
-    evaluateSection194Q,
-    evaluateSection194C,
-    evaluateSection194H,
-    evaluateSection194I,
-    evaluateSection194J,
-    evaluateSection194A,
-    evaluateSection194O,
-    evaluateSection194IA,
-    evaluateSection194IB,
-    evaluateSection194M,
-    evaluateSection194R,
-    evaluateSection194S,
-    evaluateSection194BA,
-    evaluateSection194N,
-    evaluateSection194DA,
-    evaluateSection194K,
-    evaluateSection206C1G,
-    evaluateSection52GstTcs,
-    evaluateSection43BStatutoryPayables,
-    calculateItcReversalRule37,
-    calculateRule37ASupplierNonFilingReversal,
-    evaluateSection206C1H,
-    evaluateSection43bH,
-    calculateMsmeCompoundInterest,
-    calculateAdvanceTaxAndInterest,
-    calculateRule42InputServiceReversal,
-    reconcileRule42AnnualTrueUp,
-    calculateRule43CapitalGoodsReversal,
-    calculateGstItcApportionmentRule42_43,
-    evaluateCrossBorderRemittance,
-    generateMsme1AndScheduleThreeAging,
-    evaluateLowerDeductionCertificateValidity,
     getRbiBankRateForDate,
     DEFAULT_RBI_BANK_RATE,
     MSMED_RATE_MULTIPLIER,
@@ -3490,7 +3120,11 @@ export {
     buildEvidenceProvenance,
     runStatutoryWatchtower,
     evaluateStatutoryAst,
-    resolveTemporalCrystallization
+    resolveTemporalCrystallization,
+    getStatutoryAst,
+    validateStatutoryAst,
+    toBigIntPaise,
+    fromBigIntPaise
 };
 
 

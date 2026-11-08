@@ -75,8 +75,8 @@ console.log(voucher.isAuthorizedToDisburse); // false (Fiduciary invariant)
 ---
 
 > [!NOTE]
-> **v2.14.0 Architecture Notice: USVM Declarative Engine & Procedural Deprecation**  
-> As of v2.14.0, the declarative **Universal Statutory Virtual Machine (`@mudraforge/statutory/usvm`)** is the primary, canonical execution engine for all statutory determination. Legacy procedural calculator functions in `@mudraforge/statutory/calculators` are marked `@deprecated` and will be retired in v3.0.0. In addition, internal development documentation and test suites have been decoupled from the npm tarball, shrinking package size from 536 kB to 404 kB (~25% reduction).
+> **v2.15.0 Architecture Notice: USVM Declarative Single Pipeline**  
+> As of v2.15.0, the declarative **Universal Statutory Virtual Machine (`@mudraforge/statutory/usvm`)** is the sole, canonical calculation pipeline for all statutory determination across 55 provisions and 64 AST rules. Legacy procedural calculators have been retired from package exports, shrinking client bundle size and establishing a unified declarative AST evaluation engine.
 
 ---
 
@@ -198,7 +198,7 @@ The repository currently publishes a verified inventory across five regulatory d
 - **29 Indexed Core Provisions**: Section 194Q, Section 194J, Section 194C, Section 194I, Section 194H, Section 206C(1H) sunset, Section 393 (Act 2025 crosswalk), Section 115BAA & 115JB (Corporate Tax MAT vs Concessional Regime), CGST Section 16(2) (ITC conditions & 180-day rule), CGST Section 17(5) (blocked credits), IGST Section 16 & Section 2(6) (Zero-Rated Export under LUT), MSMED Act Sections 15 & 16, US IRC §§ 901 & 904, Section 92C & Rule 10CA (Transfer Pricing ALP), Section 79 & Section 32(2) (Loss Carry-Forward & Virmani Doctrine), Section 50B (Slump Sale & Successor Liability), and Ind AS 21 & Ind AS 109 (Foreign Exchange Revaluation).
 - **30 Official Executive Circulars & Memoranda**: CBDT Circular 13/2021, CBDT Circular 23/2017, CBDT Circular 03/2020, CBDT Circular 29/2019, CBDT Circular 09/2020, CBDT Notification 86/2015, Finance Act 2024 Rate Cut Memo, Finance Act 2025 Sunset Memorandum, CBIC Circular 170/02/2022-GST, CBIC Circular 172/04/2022-GST, CBIC Circular 161/17/2021-GST, Ministry of MSME OM 1/4(1)/2021-P&G/Policy, MCA Ind AS 21 Rules, CBDT Notification 68/2021 (Rule 11UAE FMV), CBIC Notification 12/2017 Entry 2.
 - **27 Compliance Form Schemas & Verification Checklists**: Form 26Q quarterly TDS return, Form 16A certificate, Form 10-IC concessional tax election, Form GST RFD-11 LUT declaration, Form 3CEB transfer pricing report, Section 79 continuity schedule, Ind AS 109 hedge reserve schedule, Transporter declaration, GSTR-3B Table 4 reversal/reclaim reconciliation, GSTR-2B Table 4(B) ineligible ITC reconciliation, UDYAM portal registration verification, Companies Act Schedule III corporate balance sheet notes, Form 67 (Rule 128), US IRS Schedule K-3, Form 3CEA CA slump sale report schema, Section 281 & Section 313 M&A tax due diligence checklist, and Vendor PAN / Section 206AB declarations.
-- **7 Zero-Dependency Deterministic Calculators**: Pure, mathematical computation engines for: (1) Corporate Tax MAT vs 115BAA (`calculateCorporateTaxMatVsConcessional`), (2) Place of Supply & LUT Export (`evaluatePlaceOfSupplyAndLut`), (3) Transfer Pricing ALP & Rule 10CA (`calculateTransferPricingArmLength`), (4) Section 79 Loss Carry-Forward & Virmani Doctrine (`evaluateSection79LossContinuity`), (5) Ind AS 21 & 109 Forex Revaluation (`calculateForexRevaluationIndAs`), (6) Section 16 MSMED Compound Interest (`calculateMsmeCompoundInterest`), and (7) Section 288B Tax Rounding (`roundTaxSection288B`) — accompanied by 27 core TDS/TCS statutory withholding calculators in `@mudraforge/statutory/calculators`.
+- **Universal Statutory Virtual Machine (USVM)**: 64 zero-dependency declarative AST calculation rules evaluated deterministically offline with sub-microsecond latency via `@mudraforge/statutory/usvm` (`evaluateStatutoryAst`), enforcing `isAuthorizedToDisburse === false` across all statutory outcomes.
 - **100% Corpus Verification Suite**: Validated with 88/88 test suites passing, 108 primary citations with deep semantic integrity, and cryptographically pinned Merkle root.
 
 ---
@@ -289,7 +289,7 @@ To ensure absolute clarity for developers, finance leaders, prospective pilot cu
 | **Synthetic AP Execution Trace (`examples/`)** | **Public Package (Modeled Demo)** | Immediate via `npm run example:trace` | Synthetic invoice trace demonstrating 7-stage lifecycle with modeled fixtures |
 | **Cloudflare Anycast Edge Sync** | **Public Edge Service** | Free Beta via `api.mudraforge.in` | Global edge sync (`npx @mudraforge/statutory sync`) with ETag 304 caching |
 | **Interactive API Documentation** | **Public Edge Service** | Free Beta via `/api/v1/statutory/docs` | OpenAPI 3.1 schema and interactive documentation rendered on Anycast edge |
-| **Deterministic Calculators (7 Pure Functions)** | **Public Package** | Immediate via `@mudraforge/statutory/calculators` | Corporate tax MAT vs 115BAA, GST POS/LUT, TP ALP, Section 79, Ind AS 109, Section 16 MSMED, Section 288B (plus 27 TDS/TCS calculators) |
+| **Declarative Statutory USVM (64 AST Rules)** | **Public Package** | Immediate via `@mudraforge/statutory/usvm` | Corporate tax MAT vs 115BAA, GST POS/LUT, TP ALP, Section 79, Ind AS standards, Section 16 MSMED, Section 194Q/C/J/H/I/A/O/IA/IB/M/R/S/BA/N/DA/K |
 | **Hosted AP Engine & Cumulative Spend Tracking** | **Enterprise Edge / Internal** | Metered Enterprise API (Selective) | Hosted Section 194Q cumulative spend & Section 16 MSMED interest engine |
 | **Dual-Custody Mobile Approval Harness** | **Enterprise Internal / Pilot** | Enterprise Pilot Proposal | Mobile passkey approval prototype & TLA+ state machine (`specs/`) |
 | **ERP Two-Way Connectors (SAP/Tally/Zoho)** | **Enterprise Internal / Pilot** | Custom Enterprise Pilot Integration | Shadow-mode test connectors; no turnkey plug-ins shipped |
@@ -310,7 +310,7 @@ To ensure clarity for developers, CAs, and prospective enterprise clients, the o
 | **Statutory Knowledge** | Bundled Starter Seed (29 Verified Sections across 5 Domains) | 29 Active Provisions (Roadmap Catalog in expansion) | Full Sovereign Catalog + Custom Private Enterprise Contracts |
 | **Lookup Engine** | Exact code, alias & folder path resolution | System-1 Semantic Intent & Rule Discovery | Multi-tenant RAG & Context Assembler |
 | **Temporal Status** | Offline deterministic evaluation (`computeTemporalStatus`) | Live temporal state machine resolution | In-flight temporal locks across transaction lifecycle |
-| **Deterministic Calculators**| **Included** (7 Zero-dependency pure mathematical calculators exported in `src/calculators.js` via `@mudraforge/statutory/calculators`) | Hosted calculation endpoint (`POST /calculate`) | Full arithmetic engine with ₹50L excess & 3x RBI interest |
+| **Declarative Statutory USVM**| **Included** (64 Declarative statutory AST rules evaluated offline via `@mudraforge/statutory/usvm`) | Hosted calculation endpoint (`POST /calculate`) | Full arithmetic engine with ₹50L excess & 3x RBI interest |
 | **Payment Authorization** | *Not included* | *Not included* | **Single-Use Cryptographic Payment Leases (TLA+ verified)** |
 | **Banking Execution** | *Not included* | *Not included* | **Host-to-Host Bank Rails (RazorpayX / ICICI / HDFC)** |
 | **ERP Writebacks** | *Not included* | *Not included* | **Balanced double-entry journal writebacks (SAP / Zoho)** |

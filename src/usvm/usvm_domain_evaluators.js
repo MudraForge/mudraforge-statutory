@@ -46,7 +46,7 @@ import {
     evaluateSection194K,
     evaluateSection206C1G,
     evaluateSection52GstTcs
-} from '../calculators.js';
+} from './domain_math.js';
 
 import {
     evaluateSalaryTds

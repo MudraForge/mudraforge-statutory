@@ -15,10 +15,41 @@
  * Zero external npm dependencies: Native ES module and pure string/math parsing only.
  */
 
-import { evaluateSection194Q, roundToPaisa, cleanNumericAmount } from './calculators.js';
+import { roundToPaisa, cleanNumericAmount } from './numeric.js';
 import { decodeTaxIdentifier } from './index.js';
 
 const STATUTORY_THRESHOLD_INR = 5000000; // ₹50 Lakhs (Section 194Q(1))
+
+/**
+ * Deterministic Section 194Q daybook evaluation helper.
+ */
+function evaluate194QDaybookVoucher({ invoiceAmount, priorFyPurchases = 0, hasPan = true }) {
+    const rawAmt = Math.max(0, cleanNumericAmount(invoiceAmount));
+    const priorAmt = Math.max(0, cleanNumericAmount(priorFyPurchases));
+    const threshold = STATUTORY_THRESHOLD_INR;
+    const totalCumulative = roundToPaisa(priorAmt + rawAmt);
+    let taxableBase = 0;
+    let thresholdBreached = false;
+
+    if (totalCumulative > threshold) {
+        thresholdBreached = true;
+        if (priorAmt >= threshold) {
+            taxableBase = rawAmt;
+        } else {
+            taxableBase = roundToPaisa(totalCumulative - threshold);
+        }
+    }
+
+    const rate = hasPan ? 0.1 : 5.0;
+    const calculatedTdsInr = taxableBase > 0 ? roundToPaisa((taxableBase * rate) / 100) : 0;
+
+    return {
+        taxableBase,
+        calculatedTdsInr,
+        thresholdBreached,
+        effectiveRatePercent: rate
+    };
+}
 
 /**
  * Parses a standard CSV string representing a Tally or ERP purchase daybook.
@@ -393,16 +424,10 @@ export function reconcile194QDaybook(vouchers, options = {}) {
             vendorTotalPurchases = roundToPaisa(vendorTotalPurchases + amount);
 
             // Run deterministic Section 194Q calculator
-            const calc = evaluateSection194Q({
+            const calc = evaluate194QDaybookVoucher({
                 invoiceAmount: amount,
                 priorFyPurchases: rollingPriorPurchases,
-                hasPan: group.isPanValid,
-                isPanInoperative: false,
-                transactionDate: v.date,
-                buyerTurnoverCr,
-                gstAmountInr: v.gstAmount || 0,
-                buyerName: 'Buyer',
-                sellerName: v.partyName
+                hasPan: group.isPanValid
             });
 
             const taxableBase = calc.taxableBase || 0;

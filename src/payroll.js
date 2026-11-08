@@ -18,7 +18,7 @@
  * ==============================================================================
  */
 
-import { roundToPaisa, roundSection288B } from './calculators.js';
+import { roundToPaisa, roundSection288B } from './numeric.js';
 
 export const TAX_REGIMES = Object.freeze({
     NEW: 'NEW',

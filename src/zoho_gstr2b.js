@@ -41,9 +41,9 @@ import {
     cleanNumericAmount,
     toIntegerPaise,
     fromIntegerPaise,
-    roundToPaisa,
-    isValidGstinChecksum
-} from './calculators.js';
+    roundToPaisa
+} from './numeric.js';
+import { isValidGstinChecksum } from './index.js';
 
 /**
  * Calculates the exact Day 180 overdue date for an invoice under Section 16(2) second proviso.

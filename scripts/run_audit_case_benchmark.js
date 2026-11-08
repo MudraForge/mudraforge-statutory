@@ -6,7 +6,7 @@ import {
     decodeTaxIdentifier,
     calculateMsmeCompoundInterest,
     roundToPaisa
-} from '../src/calculators.js';
+} from '../src/usvm/domain_math.js';
 
 const SARVAM_API_KEY = process.env.SARVAM_API_KEY || 'sk_4vv09rza_qqWvL27j6s2a0YH3vcmm0x7w';
 

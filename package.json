@@ -21,11 +21,6 @@
       "import": "./src/constants.js",
       "default": "./src/constants.js"
     },
-    "./calculators": {
-      "types": "./types/index.d.ts",
-      "import": "./src/calculators.js",
-      "default": "./src/calculators.js"
-    },
     "./usvm": {
       "types": "./types/index.d.ts",
       "import": "./src/usvm/index.js",
@@ -40,9 +35,6 @@
   },
   "typesVersions": {
     "*": {
-      "calculators": [
-        "./types/index.d.ts"
-      ],
       "outcomes": [
         "./types/index.d.ts"
       ],
@@ -70,8 +62,6 @@
     "types",
     "bin",
     "okf",
-    "calculators.js",
-    "calculators.d.ts",
     "SKILL.md",
     "README.md",
     "CONTRIBUTING.md",

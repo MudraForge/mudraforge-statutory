@@ -456,6 +456,10 @@ export function evaluateStatutoryAst(ruleAst, facts = {}) {
             facts.priorPurchasesInCurrentFyInr ??
             facts.currentFyPriorPurchasesInr ??
             facts.priorFyPurchases ??
+            facts.cumulativePriorPaymentsInr ??
+            facts.cumulativePriorBenefitsInr ??
+            facts.cumulativePriorGrossAmount ??
+            facts.priorPaymentsInr ??
             0
         );
         priorPurchasesPaise = toBigIntPaise(priorPurchasesInr);
