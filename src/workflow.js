@@ -790,14 +790,14 @@ export function mergeWorkflowBranch(params) {
     const cleanTarget = sanitizeGitBranch(targetBranch);
 
     // 3. Checkout target branch
-    runGit(['checkout', '--', cleanTarget], cwd);
+    runGit(['checkout', cleanTarget], cwd);
 
     // 4. Merge
     if (squash) {
-        runGit(['merge', '--squash', '--', cleanSource], cwd);
+        runGit(['merge', '--squash', cleanSource], cwd);
         runGit(['commit', '-m', `merge(squash): merge ${cleanSource} into ${cleanTarget}`], cwd);
     } else {
-        runGit(['merge', '--', cleanSource, '-m', `merge: merge branch '${cleanSource}' into ${cleanTarget}`], cwd);
+        runGit(['merge', cleanSource, '-m', `merge: merge branch '${cleanSource}' into ${cleanTarget}`], cwd);
     }
 
     const mergedSha = runGit(['rev-parse', 'HEAD'], cwd);
@@ -806,7 +806,7 @@ export function mergeWorkflowBranch(params) {
     if (pushAfterMerge) {
         process.env.ALLOW_MAIN_PUSH = '1';
         try {
-            runGit(['push', 'origin', '--', cleanTarget], cwd);
+            runGit(['push', 'origin', cleanTarget], cwd);
         } finally {
             delete process.env.ALLOW_MAIN_PUSH;
         }
