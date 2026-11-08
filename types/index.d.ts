@@ -869,6 +869,46 @@ export declare class StatutoryAstValidationError extends Error {
     constructor(message: string, errors?: string[]);
 }
 
+// Workflow & GitHub Publishing Declarations
+export declare const ALLOWED_BRANCH_PREFIXES: string[];
+export declare const CONVENTIONAL_COMMIT_PREFIXES: string[];
+export declare const EMOJI_DETECTION_RE: RegExp;
+
+export interface WorkflowJournalEntry {
+    timestamp: string;
+    action: string;
+    branch?: string;
+    commitSha?: string;
+    message?: string;
+    [key: string]: any;
+}
+
+export interface WorkflowStatus {
+    currentBranch: string;
+    headSha: string;
+    isClean: boolean;
+    modifiedFiles: string[];
+    untrackedFiles: string[];
+    isMainProtected: boolean;
+    remoteTracking: string | null;
+    journalPath: string;
+    recentActions: WorkflowJournalEntry[];
+    error?: string;
+}
+
+export declare function getWorkflowJournalPath(rootDir?: string): string;
+export declare function appendWorkflowJournal(event: Record<string, any>, options?: { rootDir?: string; throwOnError?: boolean }): WorkflowJournalEntry;
+export declare function getWorkflowJournal(options?: { limit?: number; rootDir?: string }): WorkflowJournalEntry[];
+export declare function validateCommitMessage(message: string): { valid: boolean; errors: string[] };
+export declare function validateBranchName(branchName: string): { valid: boolean; errors: string[] };
+export declare function getWorkflowStatus(options?: { rootDir?: string }): WorkflowStatus;
+export declare function createWorkflowBranch(params: { branchName: string; baseBranch?: string; rootDir?: string }): { status: string; branch: string; commitSha: string; journalEntry: WorkflowJournalEntry };
+export declare function createWorkflowCommit(params: { message: string; files?: string[]; stageAll?: boolean; forceMain?: boolean; skipPreCommitChecks?: boolean; rootDir?: string }): { status: string; branch: string; commitSha: string; stagedFiles: string[]; journalEntry: WorkflowJournalEntry };
+export declare function pushWorkflowBranch(params?: { remote?: string; forceMain?: boolean; runChecks?: boolean; rootDir?: string }): { status: string; branch: string; remote: string; commitSha: string; prUrl: string | null; journalEntry: WorkflowJournalEntry };
+export declare function mergeWorkflowBranch(params: { sourceBranch: string; targetBranch?: string; squash?: boolean; pushAfterMerge?: boolean; rootDir?: string }): { status: string; sourceBranch: string; targetBranch: string; commitSha: string; pushed: boolean; journalEntry: WorkflowJournalEntry };
+export declare function publishWorkflowRelease(params?: { rootDir?: string; dryRun?: boolean; skipNpm?: boolean }): { status: string; package: string; version: string; tag: string; commitSha?: string; journalEntry?: WorkflowJournalEntry };
+
+
 
 
 

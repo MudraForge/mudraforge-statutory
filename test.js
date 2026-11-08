@@ -63,6 +63,11 @@ import {
     calculatePortfolioEclUtilizationInterest,
     buildEvidenceProvenance,
     runStatutoryWatchtower,
+    validateBranchName,
+    validateCommitMessage,
+    getWorkflowStatus,
+    getWorkflowJournal,
+    appendWorkflowJournal,
     STATUTORY_OUTCOMES_DICTIONARY,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION
@@ -6348,8 +6353,70 @@ async function run() {
         console.log('  [PASS] GST Section 52 (E-Commerce Operator TCS) Calculator & USVM verified');
     }
 
+    // 167. Secure Workflow Engine & CLI GitHub Automation (Rule 18 & Rule 20)
+    {
+        console.log('\n── Test 167: Secure Workflow Engine & CLI GitHub Automation (Rule 18 & Rule 20) ──');
+
+        // 1. Branch Validation (Rule 18)
+        const validBranch = validateBranchName('feat/statutory-crosswalk');
+        if (!validBranch.valid) {
+            throw new Error(`Expected valid branch, got errors: ${validBranch.errors.join(', ')}`);
+        }
+        const invalidMain = validateBranchName('main');
+        if (invalidMain.valid || !invalidMain.errors[0].includes('RULE 18 VIOLATION')) {
+            throw new Error('Branch "main" must be rejected under Rule 18');
+        }
+        const invalidPrefix = validateBranchName('my-feature-branch');
+        if (invalidPrefix.valid) {
+            throw new Error('Branch without allowed prefix must be rejected');
+        }
+
+        // 2. Commit Message & Zero-Emoji Validation (Rule 20)
+        const validCommit = validateCommitMessage('feat(workflow): add automated branch controls');
+        if (!validCommit.valid) {
+            throw new Error(`Expected valid commit, got errors: ${validCommit.errors.join(', ')}`);
+        }
+        const emojiCommit = validateCommitMessage('feat: add rocket ship \u{1F680}');
+        if (emojiCommit.valid || !emojiCommit.errors.some(e => e.includes('RULE 20 VIOLATION'))) {
+            throw new Error('Commit message with emoji must be rejected under Rule 20');
+        }
+        const nonConventional = validateCommitMessage('just updated some files');
+        if (nonConventional.valid) {
+            throw new Error('Non-conventional commit message must be rejected');
+        }
+
+        // 3. Workflow Status & Journal Inspection
+        const status = getWorkflowStatus();
+        if (!status.currentBranch || !status.headSha || !status.journalPath) {
+            throw new Error(`getWorkflowStatus returned malformed object: ${JSON.stringify(status)}`);
+        }
+
+        const testEvent = appendWorkflowJournal({
+            action: 'UNIT_TEST_EVENT',
+            testSuite: 'Test 167',
+            verified: true
+        });
+        if (!testEvent.timestamp || testEvent.action !== 'UNIT_TEST_EVENT') {
+            throw new Error('appendWorkflowJournal failed to write entry');
+        }
+
+        const journalEntries = getWorkflowJournal({ limit: 5 });
+        if (!Array.isArray(journalEntries) || journalEntries.length === 0 || journalEntries[0].action !== 'UNIT_TEST_EVENT') {
+            throw new Error('getWorkflowJournal failed to retrieve latest entry');
+        }
+
+        // 4. CLI Integration: node bin/cli.js workflow --json
+        const cliOutput = execFileSync('node', ['bin/cli.js', 'workflow', '--json'], { encoding: 'utf8' });
+        const cliJson = JSON.parse(cliOutput);
+        if (!cliJson.currentBranch || typeof cliJson.isClean !== 'boolean') {
+            throw new Error(`CLI workflow --json returned unexpected payload: ${cliOutput}`);
+        }
+
+        console.log('[PASS] Secure Workflow Engine & CLI GitHub Automation Verified: Rule 18 branch isolation, Rule 20 zero-emoji enforcement, durable audit journal, and CLI integration confirmed.');
+    }
+
     console.log('\n===========================================================================');
-    console.log('ALL 166 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 167 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

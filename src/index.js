@@ -3127,5 +3127,22 @@ export {
     fromBigIntPaise
 };
 
+export {
+    getWorkflowJournalPath,
+    appendWorkflowJournal,
+    getWorkflowJournal,
+    validateCommitMessage,
+    validateBranchName,
+    getWorkflowStatus,
+    createWorkflowBranch,
+    createWorkflowCommit,
+    pushWorkflowBranch,
+    mergeWorkflowBranch,
+    publishWorkflowRelease,
+    ALLOWED_BRANCH_PREFIXES,
+    CONVENTIONAL_COMMIT_PREFIXES,
+    EMOJI_DETECTION_RE
+} from './workflow.js';
+
 
 

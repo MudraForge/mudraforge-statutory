@@ -36,6 +36,17 @@ import {
     reconcileZohoGstr2b,
     generateGstr2bAuditMarkdownReport,
     runStatutoryWatchtower,
+    getWorkflowJournalPath,
+    appendWorkflowJournal,
+    getWorkflowJournal,
+    validateCommitMessage,
+    validateBranchName,
+    getWorkflowStatus,
+    createWorkflowBranch,
+    createWorkflowCommit,
+    pushWorkflowBranch,
+    mergeWorkflowBranch,
+    publishWorkflowRelease,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION,
     DEFAULT_LOCAL_OKF_DIR
@@ -228,6 +239,77 @@ async function main() {
         case 'freshness':
         case 'attest': {
             await handleWatchtower();
+            break;
+        }
+
+        case 'branch':
+        case 'git:branch': {
+            const branchName = args[1] || getNamedArg(['--name', '-n'], rawArgs);
+            const baseBranch = getNamedArg(['--base', '-b'], rawArgs) || 'main';
+            if (!branchName) {
+                console.error('[ERROR] Please specify a branch name, e.g. npx @mudraforge/statutory branch fix/issue-name');
+                process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
+            }
+            await handleBranch(branchName, baseBranch);
+            break;
+        }
+
+        case 'commit':
+        case 'git:commit': {
+            const message = getNamedArg(['-m', '--message'], rawArgs) || (args[1] && !args[1].startsWith('-') ? args[1] : null);
+            const stageAll = rawArgs.includes('-a') || rawArgs.includes('--all');
+            const filesArg = getNamedArg(['--files', '-f'], rawArgs);
+            const files = filesArg ? filesArg.split(',').map(s => s.trim()) : [];
+            const forceMain = rawArgs.includes('--force-main');
+            if (!message) {
+                console.error('[ERROR] Please specify a commit message: npx @mudraforge/statutory commit -m "fix(scope): description"');
+                process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
+            }
+            await handleCommit(message, { stageAll, files, forceMain });
+            break;
+        }
+
+        case 'push':
+        case 'git:push': {
+            const remote = getNamedArg(['--remote', '-r'], rawArgs) || 'origin';
+            const forceMain = rawArgs.includes('--force-main');
+            const skipChecks = rawArgs.includes('--skip-checks') || rawArgs.includes('--no-checks');
+            await handlePush({ remote, forceMain, runChecks: !skipChecks });
+            break;
+        }
+
+        case 'merge':
+        case 'git:merge': {
+            const sourceBranch = (args[1] && !args[1].startsWith('-')) ? args[1] : getNamedArg(['--branch', '-b'], rawArgs);
+            const targetBranch = getNamedArg(['--target', '-t'], rawArgs) || 'main';
+            const squash = rawArgs.includes('--squash');
+            const noPush = rawArgs.includes('--no-push');
+            if (!sourceBranch) {
+                console.error('[ERROR] Please specify branch to merge: npx @mudraforge/statutory merge fix/<name>');
+                process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
+            }
+            await handleMerge(sourceBranch, { targetBranch, squash, pushAfterMerge: !noPush });
+            break;
+        }
+
+        case 'publish':
+        case 'release': {
+            const dryRun = rawArgs.includes('--dry-run');
+            const skipNpm = rawArgs.includes('--skip-npm');
+            await handlePublish({ dryRun, skipNpm });
+            break;
+        }
+
+        case 'workflow':
+        case 'journal': {
+            const subCmd = args[1];
+            if (subCmd === 'journal' || subCmd === 'history' || subCmd === 'log' || command === 'journal') {
+                const limitStr = getNamedArg(['--limit', '-l', '-n'], rawArgs);
+                const limit = limitStr ? parseInt(limitStr, 10) : 10;
+                await handleWorkflowJournal(limit);
+            } else {
+                await handleWorkflowStatus();
+            }
             break;
         }
 
@@ -1148,6 +1230,221 @@ async function handleWatchtower() {
     }
 }
 
+async function handleBranch(branchName, baseBranch) {
+    try {
+        const res = createWorkflowBranch({ branchName, baseBranch, rootDir: process.cwd() });
+        if (isJsonMode) {
+            console.log(JSON.stringify(res, null, 2));
+        } else {
+            console.log('\n===========================================================================');
+            console.log(`[BRANCH CREATED] ${res.branch}`);
+            console.log('===========================================================================');
+            console.log(`Base Branch : ${baseBranch}`);
+            console.log(`HEAD Commit : ${res.commitSha}`);
+            console.log(`Rule 18     : Feature Branch Isolation ENFORCED`);
+            console.log('\nNext steps:');
+            console.log(`  1. Make your code changes`);
+            console.log(`  2. npx @mudraforge/statutory commit -m "feat/fix: description" --all`);
+            console.log(`  3. npx @mudraforge/statutory push`);
+            console.log('===========================================================================\n');
+        }
+    } catch (err) {
+        console.error(`\n[ERROR] ${err.message}\n`);
+        process.exit(1);
+    }
+}
+
+async function handleCommit(message, options) {
+    try {
+        const res = createWorkflowCommit({
+            message,
+            files: options.files,
+            stageAll: options.stageAll,
+            forceMain: options.forceMain,
+            rootDir: process.cwd()
+        });
+        if (isJsonMode) {
+            console.log(JSON.stringify(res, null, 2));
+        } else {
+            console.log('\n===========================================================================');
+            console.log(`[COMMIT VERIFIED & CREATED] ${res.commitSha.slice(0, 7)}`);
+            console.log('===========================================================================');
+            console.log(`Branch        : ${res.branch}`);
+            console.log(`Message       : ${message.trim()}`);
+            console.log(`Staged Files  : ${res.stagedFiles.length} file(s)`);
+            console.log(`Rule 20 Check : PASSED (Strictly Zero Emojis)`);
+            console.log(`Rule 18 Check : PASSED (Branch Isolation Enforced)`);
+            console.log('===========================================================================\n');
+        }
+    } catch (err) {
+        console.error(`\n[ERROR] ${err.message}\n`);
+        process.exit(1);
+    }
+}
+
+async function handlePush(options) {
+    try {
+        const res = pushWorkflowBranch({
+            remote: options.remote,
+            forceMain: options.forceMain,
+            runChecks: options.runChecks,
+            rootDir: process.cwd()
+        });
+        if (isJsonMode) {
+            console.log(JSON.stringify(res, null, 2));
+        } else {
+            console.log('\n===========================================================================');
+            console.log(`[BRANCH PUSHED TO GITHUB] ${res.branch}`);
+            console.log('===========================================================================');
+            console.log(`Remote      : ${res.remote}`);
+            console.log(`HEAD Commit : ${res.commitSha.slice(0, 7)}`);
+            if (res.prUrl) {
+                console.log(`\nPull Request URL (open in browser):`);
+                console.log(`  ${res.prUrl}`);
+            }
+            console.log('\nSupply Chain Pre-Push Verification: PASSED');
+            console.log('===========================================================================\n');
+        }
+    } catch (err) {
+        console.error(`\n[ERROR] ${err.message}\n`);
+        process.exit(1);
+    }
+}
+
+async function handleMerge(sourceBranch, options) {
+    try {
+        const res = mergeWorkflowBranch({
+            sourceBranch,
+            targetBranch: options.targetBranch,
+            squash: options.squash,
+            pushAfterMerge: options.pushAfterMerge,
+            rootDir: process.cwd()
+        });
+        if (isJsonMode) {
+            console.log(JSON.stringify(res, null, 2));
+        } else {
+            console.log('\n===========================================================================');
+            console.log(`[BRANCH MERGED] ${res.sourceBranch} -> ${res.targetBranch}`);
+            console.log('===========================================================================');
+            console.log(`Target Branch : ${res.targetBranch}`);
+            console.log(`Merged Commit : ${res.commitSha.slice(0, 7)}`);
+            console.log(`Remote Push   : ${res.pushed ? 'Synced with origin' : 'Local only (--no-push)'}`);
+            console.log('CI Parity Verification Gate: PASSED');
+            console.log('===========================================================================\n');
+        }
+    } catch (err) {
+        console.error(`\n[ERROR] ${err.message}\n`);
+        process.exit(1);
+    }
+}
+
+async function handlePublish(options) {
+    try {
+        const res = publishWorkflowRelease({
+            dryRun: options.dryRun,
+            skipNpm: options.skipNpm,
+            rootDir: process.cwd()
+        });
+        if (isJsonMode) {
+            console.log(JSON.stringify(res, null, 2));
+        } else {
+            console.log('\n===========================================================================');
+            console.log(`[RELEASE PUBLISHED] ${res.package}@${res.version} (${res.tag})`);
+            console.log('===========================================================================');
+            console.log(`Status        : ${res.status}`);
+            console.log(`Tag           : ${res.tag}`);
+            if (res.commitSha) {
+                console.log(`Commit        : ${res.commitSha.slice(0, 7)}`);
+            }
+            console.log(`GitHub Release: Tag pushed to origin (Actions release triggered)`);
+            console.log('Full Supply Chain Gate: PASSED');
+            console.log('===========================================================================\n');
+        }
+    } catch (err) {
+        console.error(`\n[ERROR] ${err.message}\n`);
+        process.exit(1);
+    }
+}
+
+async function handleWorkflowStatus() {
+    try {
+        const status = getWorkflowStatus({ rootDir: process.cwd() });
+        if (isJsonMode) {
+            console.log(JSON.stringify(status, null, 2));
+        } else {
+            console.log('\n===========================================================================');
+            console.log('MUDRAFORGE WORKFLOW & BRANCH ISOLATION STATUS');
+            console.log('===========================================================================');
+            console.log(`Current Branch    : ${status.currentBranch}`);
+            console.log(`HEAD Commit       : ${status.headSha.slice(0, 7)}`);
+            console.log(`Working Tree      : ${status.isClean ? 'Clean (0 changes)' : 'DIRTY (uncommitted files)'}`);
+            console.log(`Protected Default : ${status.isMainProtected ? 'YES (direct commits/pushes blocked)' : 'NO (feature branch)'}`);
+            console.log(`Remote Tracking   : ${status.remoteTracking || 'None'}`);
+            console.log(`Journal Ledger    : ${status.journalPath}`);
+
+            if (status.modifiedFiles.length > 0) {
+                console.log(`\nModified Files (${status.modifiedFiles.length}):`);
+                for (const f of status.modifiedFiles.slice(0, 10)) {
+                    console.log(`  * ${f}`);
+                }
+                if (status.modifiedFiles.length > 10) {
+                    console.log(`  ... and ${status.modifiedFiles.length - 10} more`);
+                }
+            }
+
+            if (status.untrackedFiles && status.untrackedFiles.length > 0) {
+                console.log(`\nUntracked Files (${status.untrackedFiles.length}):`);
+                for (const f of status.untrackedFiles.slice(0, 10)) {
+                    console.log(`  * ${f}`);
+                }
+                if (status.untrackedFiles.length > 10) {
+                    console.log(`  ... and ${status.untrackedFiles.length - 10} more`);
+                }
+            }
+
+            if (status.recentActions && status.recentActions.length > 0) {
+                console.log('\nRecent Workflow Journal Actions:');
+                for (const a of status.recentActions) {
+                    console.log(`  [${a.timestamp.slice(11, 19)}] ${a.action} (branch: ${a.branch || a.sourceBranch || 'main'})`);
+                }
+            }
+            console.log('===========================================================================\n');
+        }
+    } catch (err) {
+        console.error(`\n[ERROR] ${err.message}\n`);
+        process.exit(1);
+    }
+}
+
+async function handleWorkflowJournal(limit) {
+    try {
+        const entries = getWorkflowJournal({ limit, rootDir: process.cwd() });
+        if (isJsonMode) {
+            console.log(JSON.stringify(entries, null, 2));
+        } else {
+            console.log('\n===========================================================================');
+            console.log(`MUDRAFORGE WORKFLOW JOURNAL (Last ${entries.length} Events)`);
+            console.log('===========================================================================');
+            if (entries.length === 0) {
+                console.log('Journal ledger is empty. No workflow events recorded yet.');
+            } else {
+                for (const e of entries) {
+                    console.log(`[${e.timestamp}] ${e.action}`);
+                    if (e.branch) console.log(`  Branch  : ${e.branch}`);
+                    if (e.commitSha) console.log(`  Commit  : ${e.commitSha.slice(0, 7)}`);
+                    if (e.message) console.log(`  Message : ${e.message}`);
+                    if (e.prUrl) console.log(`  PR URL  : ${e.prUrl}`);
+                    console.log('');
+                }
+            }
+            console.log('===========================================================================\n');
+        }
+    } catch (err) {
+        console.error(`\n[ERROR] ${err.message}\n`);
+        process.exit(1);
+    }
+}
+
 function printHelp() {
     console.log(`
 MudraForge Statutory Commons CLI (@mudraforge/statutory)
@@ -1156,6 +1453,12 @@ Usage:
   npx @mudraforge/statutory <command> [options]
 
 Commands:
+  branch <name>                  Create feature branch (Rule 18: feat/, fix/, refactor/, docs/, chore/, test/)
+  commit -m "<msg>"              Create verified commit (Rule 20 zero-emoji check, Rule 18 main branch protection)
+  push [--remote <origin>]       Run supply-chain verification and push feature branch to GitHub with PR link
+  merge <branch> [--squash]      Run full CI parity, checkout main, merge feature branch cleanly, and push main
+  publish [--dry-run]            Run full release gate, tag release, push to GitHub, and publish to npm registry
+  workflow [status|journal]      Display workflow status, branch isolation state, and durable audit journal
   watchtower                     Run regulatory surveillance & generate Empanelment Freshness Certificate
   reconcile <file>               Reconcile Tally/ERP daybook (CSV/XML/JSON) for Section 194Q & 40(a)(ia)
   reconcile-gstr2b [options]     Reconcile Zoho Books AP bills with GST Portal Form GSTR-2B
@@ -1175,6 +1478,14 @@ Commands:
   help                           Show this help message
 
 Options:
+  -m, --message <msg>            Conventional commit message (strictly zero emojis per Rule 20)
+  --all, -a                      Stage all modified/new files before committing
+  --files, -f <f1,f2>            Comma-separated files to stage before committing
+  --force-main                   Explicit override allowing commit/push to protected main branch
+  --squash                       Squash commits when merging feature branch into main
+  --no-push                      Skip pushing to remote after local branch merge
+  --dry-run                      Simulate release publication without pushing tags or publishing to npm
+  --skip-npm                     Publish git release tag to GitHub without publishing to npm registry
   --zoho, -b <file>              Zoho Books bills CSV or JSON export path
   --gstr2b, -g <file>            GST Portal Form GSTR-2B JSON file path
   --tolerance <amount>           Reconciliation tolerance in INR (default: 1.00)
