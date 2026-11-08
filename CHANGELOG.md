@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.0.0] - 2026-11-08
+
+### Changed
+- **Commercial IP Protection: Business Source License 1.1 (BSL 1.1)**:
+  - Transitioned package software code, USVM kernel, and calculation tooling to **Business Source License 1.1**.
+  - Software remains 100% free for internal business automation, compliance, development, research, and non-competing AI agents.
+  - Strictly prohibits embedding in competing commercial accounting, ERP, or cloud tax calculation SaaS without an enterprise commercial agreement.
+  - Automatic Change Date set to 2030-04-01 to convert to MIT.
+  - Derived OKF knowledge schemas (`okf/**`) preserved under **Creative Commons Attribution 4.0 (CC BY 4.0)**.
+- **Single USVM Pipeline & Dead Procedural Purge**:
+  - Purged 20 dead/superseded procedural calculators (>4,400 lines) from `src/usvm/domain_math.js`.
+  - Preserved 32 active mathematical models directly wired to USVM domain evaluators.
+  - Verified tree-shaken `evaluateStatutoryAst` export footprint at **40.38 kB min+brotli** (down from 112 kB).
+- **Hardened Evaluation Kernel**:
+  - Added input sanitization for non-object/null `facts` parameters to ensure fail-safe resilience against chaos monkey tests.
+  - Integrated `cleanNumericAmount` currency string sanitization in evaluation VM.
+
 ## [2.15.0] - 2026-11-08
 
 ### Changed

@@ -6,7 +6,7 @@
  * @license MIT
  */
 
-export const STATUTORY_CLIENT_VERSION = '2.15.0';
+export const STATUTORY_CLIENT_VERSION = '3.0.0';
 export const DEFAULT_BASE_URL = 'https://api.mudraforge.in';
 
 // Current RBI Bank Rate (H2 2024 - 2026 baseline): 6.75%
