@@ -1,6 +1,32 @@
+Business Source License 1.1
+
+Parameters
+
+Licensor: MudraForge
+Licensed Work: The @mudraforge/statutory software package, including the Universal Statutory Virtual Machine (USVM) calculation kernel, AST compiler, rule definitions, and domain calculators.
+Additional Use Grant: You may use the Licensed Work for any purpose, including internal business compliance, development, testing, research, and integration into internal AI agents and workflow automation systems, provided that you may not provide the Licensed Work, or any derivative work thereof, as a commercial cloud-hosted statutory calculation service, hosted API, or embed it as a core feature inside a competing commercial software-as-a-service (SaaS) accounting, enterprise resource planning (ERP), or tax filing platform distributed or provided to third parties.
+Change Date: 2030-04-01
+Change License: The MIT License (as specified below)
+
+Text of the License:
+
+The Licensor hereby grants you the right to copy, modify, create derivative works, redistribute, and make non-production use of the Licensed Work. The Licensor also grants you an Additional Use Grant, set forth above, which permits certain production use of the Licensed Work.
+
+Effective on the Change Date, or the fourth anniversary of the first public release of the Licensed Work under this License, whichever is earlier, the Licensor hereby grants to everyone who receives a copy of the Licensed Work a license under the Change License.
+
+You may make non-production use of the Licensed Work. You may also make production use of the Licensed Work, provided such use does not violate the terms of the Additional Use Grant above.
+
+If you violate the terms of this License, all rights granted to you will terminate automatically, and any further use of the Licensed Work will constitute copyright infringement.
+
+To the extent permitted by applicable law, the Licensed Work is provided on an "AS IS" basis. The Licensor DISCLAIMS ALL WARRANTIES, INCLUDING ANY IMPLIED WARRANTIES OF MERCHANTABILITY, NON-INFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE.
+
+---------------------------------------------------------------------------
+Change License:
+---------------------------------------------------------------------------
+
 MIT License
 
-Copyright (c) 2026 MudraForge Technologies
+Copyright (c) 2026 MudraForge
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

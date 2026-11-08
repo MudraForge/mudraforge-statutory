@@ -1,32 +1,28 @@
 # Data Licensing, Provenance & Attribution Policy
 
-`@mudraforge/statutory` adheres to an explicit tripartite licensing model. Open-source software licenses (such as MIT) govern executable code, but do not automatically resolve the legal status of statutory texts, executive gazettes, or derived knowledge representations.
+`@mudraforge/statutory` adheres to an explicit tripartite licensing model. Open-source data and software licenses govern different layers of the package: executable computation code, primary statutory texts, and derived structured knowledge representations.
 
 This document clearly distinguishes between:
-1. **The Software Code & Tooling**
-2. **Primary Government Legal Sources**
-3. **Derived OKF Structured Knowledge & Annotations**
+1. **The Software Code, USVM Kernel & Tooling (Business Source License 1.1)**
+2. **Primary Government Legal Sources (Public Domain / Statutory Exemption)**
+3. **Derived OKF Structured Knowledge & Annotations (CC BY 4.0)**
 
 ---
 
-## 1. Software Code & Tooling (MIT License)
+## 1. Software Code, USVM Kernel & Tooling (Business Source License 1.1)
 
-All executable code, client libraries, CLI binaries, test suites, and validation scripts in this repository are licensed under the **[MIT License](../LICENSE)**:
+All executable code, the Universal Statutory Virtual Machine (USVM) compiler and execution kernel, client libraries, CLI binaries, test suites, and validation scripts in this repository are licensed under the **[Business Source License 1.1 (BSL 1.1)](../LICENSE)**:
 
-- `src/` (Client runtime, resolver, temporal state evaluator)
+- `src/` (Client runtime, USVM execution kernel, compiler, and domain calculators)
 - `bin/` (Command-line interface)
 - `scripts/` (Linter, manifest generator, catalog builder)
 - `test.js` (Regression test suite)
 
-```
-Copyright (c) 2026 MudraForge Technologies
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software...
-```
+### Terms of the BSL 1.1:
+- **Free for Internal & Developer Use**: You may use the software free of charge for internal business operations, compliance, development, testing, research, and integration into internal AI agents and automation systems.
+- **Commercial SaaS Use Limitation**: You may not provide the software, or any derivative work thereof, as a commercial cloud-hosted statutory calculation service, hosted API, or embed it as a core feature inside a competing commercial software-as-a-service (SaaS) accounting, enterprise resource planning (ERP), or tax filing platform distributed or provided to third parties without an Enterprise Commercial License.
+- **Conversion to MIT**: On **April 1, 2030**, the license automatically converts to the **MIT License**.
+- **Commercial Inquiries**: For commercial embedding or OEM licensing, contact `hello@mudraforge.in` or `support@mudraforge.in`.
 
 ---
 
@@ -54,14 +50,14 @@ The intellectual property in:
 - The cross-statute forward-mapping bridges (*Income-tax Act, 1961* to *Income-tax Act, 2025*);
 - The Markdown circular frontmatter conventions and compliance form schemas
 
-is authored by **MudraForge Knowledge Systems Private Limited** and licensed under the **[Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)** license.
+is authored by **MudraForge** and licensed under the **[Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)** license.
 
 ### Attribution Notice
 You are free to share and adapt the structured data for commercial or non-commercial purposes, provided you give appropriate credit:
 
 ```
 Statutory knowledge structure derived from @mudraforge/statutory 
-(MudraForge Knowledge Systems Private Limited), licensed under CC BY 4.0 / MIT.
+(MudraForge), licensed under CC BY 4.0 / BSL 1.1.
 Source Repository: https://github.com/mondeep0123/mudraforge-statutory
 ```
 

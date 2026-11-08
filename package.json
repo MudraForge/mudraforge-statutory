@@ -119,7 +119,7 @@
     "okf"
   ],
   "author": "MudraForge Technologies <engineering@mudraforge.in>",
-  "license": "MIT AND CC-BY-4.0",
+  "license": "BUSL-1.1 AND CC-BY-4.0",
   "devDependencies": {
     "export-size": "^0.9.0"
   }

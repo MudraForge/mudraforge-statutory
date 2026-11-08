@@ -5,7 +5,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@mudraforge/statutory.svg)](https://www.npmjs.com/package/@mudraforge/statutory)
 [![CI](https://github.com/mondeep0123/mudraforge-statutory/actions/workflows/ci.yml/badge.svg)](https://github.com/mondeep0123/mudraforge-statutory/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](./LICENSE)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-0%20(Pure%20Node.js)-success.svg)](https://nodejs.org)
 [![Specification: OKF 0.2](https://img.shields.io/badge/Specification-Google%20OKF%20v0.2-green.svg)](https://cloud.google.com/blog)
 
@@ -305,7 +305,7 @@ To ensure clarity for developers, CAs, and prospective enterprise clients, the o
 
 | Dimension / Layer | Layer 1: Open Substrate (This NPM Package) | Layer 2: Hosted Edge API (Cloudflare Anycast) | Layer 3: Commercial Adesha Runtime (Enterprise Platform) |
 | :--- | :--- | :--- | :--- |
-| **Pricing & License** | **100% Free** (MIT Code / CC BY 4.0 Data) | **Best-Effort Free Beta** (Transitions to Metered) | **Commercial Enterprise SaaS** |
+| **Pricing & License** | **Free for Internal/Dev** (BSL 1.1 Code / CC BY 4.0 Data) | **Best-Effort Free Beta** (Transitions to Metered) | **Commercial Enterprise SaaS** |
 | **Execution Location** | 100% Local Filesystem (0 Network Calls) | Cloudflare Edge (Global 300+ PoPs, typical 20–80ms Anycast latency) | Private Enterprise VPC / On-Premise Worker |
 | **Statutory Knowledge** | Bundled Starter Seed (29 Verified Sections across 5 Domains) | 29 Active Provisions (Roadmap Catalog in expansion) | Full Sovereign Catalog + Custom Private Enterprise Contracts |
 | **Lookup Engine** | Exact code, alias & folder path resolution | System-1 Semantic Intent & Rule Discovery | Multi-tenant RAG & Context Assembler |
@@ -591,6 +591,6 @@ All deep-dive architectural specifications, governance boundaries, quality repor
 
 ## License
 
-- **Software Code & Tools**: Licensed under the **[MIT License](./LICENSE)**.
+- **Software Code, USVM Kernel & Tools**: Licensed under the **[Business Source License 1.1 (BSL 1.1)](./LICENSE)** (Free for internal business and developer use; commercial SaaS embedding requires an enterprise license; converts to MIT on 2030-04-01).
 - **Derived OKF Schemas & Curated Summaries**: Licensed under the **[Creative Commons Attribution 4.0 International (CC BY 4.0)](./docs/DATA_LICENSING.md)**.
 - **Primary Government Gazettes & Statutory Instruments**: Sourced under official public-domain and open government data terms (Republic of India Copyright Act, 1957 Section 52(1)(q) / US Code Title 17 Section 105). See **[DATA_LICENSING.md](./docs/DATA_LICENSING.md)** for details.
