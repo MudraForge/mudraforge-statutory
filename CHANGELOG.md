@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.14.0] - 2026-11-08
+
+### Deprecated
+- **Procedural Calculators Subsystem (`@mudraforge/statutory/calculators`)**:
+  - Formally deprecated all procedural calculator functions in `src/calculators.js` and `types/index.d.ts` in favor of declarative Abstract Syntax Tree (AST) evaluation via the Universal Statutory Virtual Machine (`@mudraforge/statutory/usvm` -> `evaluateStatutoryAst`).
+  - Added JSDoc `@deprecated` annotations across all 43 procedural calculation exports with explicit guidance to migrate to USVM.
+  - Procedural calculation APIs remain 100% backward compatible throughout v2.x and are scheduled for sunset in v3.0.0.
+
+### Changed
+- **Package Distribution Footprint Optimization**:
+  - Excluded internal development artifacts (`docs/`, `conformance/`, `examples/`) from the npm publish tarball (`package.json` `"files"`), reducing unpacked install size by ~440 kB (1.7 MB vs 2.1 MB) and compressed tarball by ~25% (404 kB vs 536 kB).
+  - Aligned `STATUTORY_PACKAGE_VERSION` and `OKF_CORPUS_VERSION` constants in `src/calculators.js` to `2.14.0`.
+  - Pinned verified release Merkle root digest: `sha256-7ffc75e8611a9c966eea756dd544fdae9144e2318d3478633232bb876d05e364`.
+  - Package version bumped to `2.14.0` in accordance with SemVer Rule 7.
+
 ## [2.13.0] - 2026-11-08
 
 ### Added

@@ -16,13 +16,20 @@
  * Advanced enterprise engines (full Form 3CD audit schedule synthesis, Section 234B/C dynamic
  * forecasting, Pillar Two BEPS models, and live banking rail settlement dispatch) are hosted API
  * services and require an Enterprise License (hello@mudraforge.in / support@mudraforge.in).
+ *
+ * @deprecated PROCEDURAL CALCULATORS DEPRECATION NOTICE (v2.14.0):
+ * The procedural calculators in this module are deprecated in favor of declarative
+ * Abstract Syntax Tree (AST) evaluation via the Universal Statutory Virtual Machine
+ * (USVM) in `@mudraforge/statutory/usvm` (`evaluateStatutoryAst`).
+ * Procedural exports are retained for backward compatibility throughout v2.x and
+ * will be sunset in v3.0.
  */
 
 // Canonical OKF v0.2 Release Merkle Roots & Versions
-export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-b17c37b2724aece2a28beaab5720a777ae27e661ac51f1436be6eff3ca5ef64b';
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-7ffc75e8611a9c966eea756dd544fdae9144e2318d3478633232bb876d05e364';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
-export const STATUTORY_PACKAGE_VERSION = '2.11.0';
-export const OKF_CORPUS_VERSION = '2.11.0';
+export const STATUTORY_PACKAGE_VERSION = '2.14.0';
+export const OKF_CORPUS_VERSION = '2.14.0';
 
 // Current RBI Bank Rate (H2 2024 - 2026 baseline): 6.75%
 export const DEFAULT_RBI_BANK_RATE = 0.0675;
@@ -295,6 +302,9 @@ export function roundSection288B(amount) {
  * ─────────────────────────────────────────────────────────────────────────────
  * Formula: Compound interest with monthly rests at 3x RBI Bank Rate.
  * For partial months, applies prorated day-count fractions.
+ */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function calculateMsmeCompoundInterest({
     principal,
@@ -694,6 +704,9 @@ export function calculateMsmeCompoundInterest({
  * - Dispute clock pauses (Section 15 Explanation)
  * - Same FY (before March 31) payment vs crossing FY boundary
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function evaluateSection43bH({
     invoiceDate,
     acceptanceDate = null,
@@ -891,6 +904,9 @@ export function evaluateSection43bH({
  * 3. Explanations 3C & 3D to Section 43B:
  *    - Conversion of unpaid interest into a loan, advance, debenture, or other instrument
  *      does NOT constitute actual payment and remains disallowed.
+ */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function evaluateSection43BStatutoryPayables({
     financialYear = '2025-26',
@@ -1192,6 +1208,9 @@ export function evaluateSection43BStatutoryPayables({
  * - SC Engineering Analysis (2021) automated cloud infra vs human FTS
  * - Form 145 Part A vs Part B (AO order) vs Part C (CA cert)
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function evaluateCrossBorderRemittance({
     amountUsd,
     fxRate = 83.5,
@@ -1366,6 +1385,9 @@ export function evaluateCrossBorderRemittance({
  *   pre-issued for FY 2026-27 under the Income-tax Act, 2025.
  * - Rejects expired certificates (e.g. FY 2025-26 certificates used post-April 2026).
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function evaluateLowerDeductionCertificateValidity({
     effectiveDate = null,
     lowerDeductionCertificate = null,
@@ -1490,6 +1512,9 @@ export function evaluateLowerDeductionCertificateValidity({
     };
 }
 
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function resolveGoverningCertificateSection(params = {}) {
     return evaluateLowerDeductionCertificateValidity(params);
 }
@@ -1564,6 +1589,9 @@ export const AUTHORITATIVE_STATUTORY_RATES = {
  *   Section 194H / Table 8 Item 4 (Commission),
  *   Section 195 / Section 394 (Non-residents).
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function resolveMissingPanPenaltyFloor({
     sectionCode = '194Q',
     tableItem = null,
@@ -1606,6 +1634,9 @@ export function resolveMissingPanPenaltyFloor({
  * 3. Enforces temporal validity window [effectiveFrom, effectiveTo] against transactionDate.
  * 4. Disallows private commercial contracts from modifying statutory withholding rates.
  * 5. Rejects unverified or contradictory rate evidence (fails closed).
+ */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function validateRateEvidence({
     rateInForce = null,
@@ -1759,6 +1790,9 @@ export function validateRateEvidence({
     };
 }
 
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function evaluateSection194Q({
     invoiceAmount,
     priorFyPurchases = 0,
@@ -2221,6 +2255,9 @@ export function evaluateSection194Q({
  * - Finance Act, 2025 Sunset: Omitted/withdrawn effective 1 April 2025.
  *   On or after 1 April 2025, TCS collection is statutorily barred.
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function evaluateSection206C1H({
     receiptAmountInr = 0,
     priorFyReceiptsInr = 0,
@@ -2544,6 +2581,9 @@ export function decodeTaxIdentifier(rawId) {
  * - Section 197 Lower Deduction Certificate with cumulative ceiling tracking.
  * - CBDT Circular No. 23/2017: Excludes separately stated GST.
  * - Income-tax Act, 2025 Transition: Section 393(1) Table 8, Item (i).
+ */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function evaluateSection194C({
     invoiceAmount,
@@ -2892,6 +2932,9 @@ export function normalize194JCategory(rawCategory) {
     return null;
 }
 
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function evaluateSection194J({
     invoiceAmount,
     serviceCategory = 'TECHNICAL_SERVICES', // 'TECHNICAL_SERVICES', 'PROFESSIONAL_SERVICES', 'ROYALTY_FILM', 'ROYALTY_GENERAL', 'DIRECTOR_REMUNERATION', 'NON_COMPETE'
@@ -3171,6 +3214,9 @@ export function evaluateSection194J({
  * - CBDT Circular No. 23/2017: Separately stated GST excluded from TDS.
  * - Income-tax Act, 2025 Transition: Section 393(1) Table 8, Item 5.
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function evaluateSection194I({
     invoiceAmount,
     monthlyRent = null,
@@ -3339,6 +3385,9 @@ export function evaluateSection194I({
  * - CBDT Circular No. 23/2017: Separately stated GST excluded from TDS.
  * - Income-tax Act, 2025 Transition: Section 393(1) Table 8, Item 4.
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function evaluateSection194H({
     invoiceAmount,
     priorFyCommission = 0,
@@ -3503,6 +3552,9 @@ export function evaluateSection194H({
  *   - Section 23 of MSMED Act: Strictly disallowed as deduction in computing taxable income (tax add-back).
  * - Temporal Resolution: Earlier of credit in books or payment disbursement.
  * - Dual-Act Crystallization: Pre-1 April 2026 -> 1961 Act; Post-1 April 2026 -> 2025 Act.
+ */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function evaluateSection194A({
     interestAmount,
@@ -3715,6 +3767,9 @@ export function evaluateSection194A({
  *   - Overrides Section 194Q (buyer TDS) and Section 206C(1H) (seller TCS).
  * - Temporal Resolution: Earlier of credit to account (including clearing) or payment.
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function evaluateSection194O({
     grossSaleAmount,
     directPurchaserPaymentDeemedInr = 0,
@@ -3882,6 +3937,9 @@ export function evaluateSection194O({
  * - Compliance: Form 26QB (30 days from month end), Form 16B (15 days from 26QB).
  * - Dual-Act 2025: Section 393(1) Table 4 Item (q).
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function evaluateSection194IA({
     contractualConsiderationInr,
     stampDutyValueInr = null,
@@ -4045,6 +4103,9 @@ export function evaluateSection194IA({
  * Implements authoritative corporate advance tax installment compliance,
  * 12% & 36% safe harbors for Q1 and Q2, Section 234C sudden income provisos
  * (capital gains, dividends, new business), and Section 234B default interest.
+ */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function calculateAdvanceTaxAndInterest({
     taxYear = '2025-26',
@@ -4352,6 +4413,9 @@ export function calculateAdvanceTaxAndInterest({
  * - Eligible Common Credit: C3 = C2 - (D1 + D2)
  * - Net Eligible Inputs Credit: G = T4 + C3 = C1 - (D1 + D2)
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function calculateRule42InputServiceReversal({
     taxPeriod = 'CURRENT_PERIOD',
     totalItcInr,
@@ -4469,6 +4533,9 @@ export function calculateRule42InputServiceReversal({
  * - Shortfall Reversal: Payable with 18% p.a. interest under Section 50(1) from 1st April of succeeding FY.
  * - Excess Reversal: Reclaimable as credit in Form GSTR-3B Table 4(A)(5) and Table 4(D)(1) before 30th November.
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function reconcileRule42AnnualTrueUp({
     financialYear = '2024-25',
     annualCommonCreditC2Inr,
@@ -4584,6 +4651,9 @@ export function reconcileRule42AnnualTrueUp({
  * - Aggregate monthly common credit: Tr = sum(Tm).
  * - Monthly exempt reversal: Te = (E / F) * Tr (added to output tax liability in Table 4(B)(1)).
  * - Asset conversion: 5% reduction per quarter under Rule 43(1)(c) for exclusive-to-common transitions.
+ */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function calculateRule43CapitalGoodsReversal({
     taxPeriod = 'CURRENT_PERIOD',
@@ -4755,6 +4825,9 @@ export function calculateRule43CapitalGoodsReversal({
 /**
  * UNIFIED ORCHESTRATOR: GST RULE 42 & 43 COMBINED APPORTIONMENT
  * Backward-compatible facade coordinating inputs/services, capital goods, and annual true-ups.
+ */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function calculateGstItcApportionmentRule42_43({
     taxPeriod = null,
@@ -4946,6 +5019,9 @@ export function calculateGstItcApportionmentRule42_43({
  * Implements authoritative 180-day aging, proportional unpaid ITC computation,
  * Section 50(1) 18% annual interest, RCM/Schedule I exemptions, and GSTR-3B Table 4(B)(2) mapping.
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function calculateItcReversalRule37({
     invoiceNumber = 'INV-UNKNOWN',
     invoiceDate,
@@ -5122,6 +5198,9 @@ export function calculateItcReversalRule37({
  * - If delayed past 30th November: 18% annual interest applies u/s 50(1).
  * - Interest-free re-availment permitted once supplier subsequently furnishes GSTR-3B.
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function calculateRule37ASupplierNonFilingReversal({
     financialYear, // e.g. '2024-25'
     invoiceNumber = 'INV-UNKNOWN',
@@ -5224,6 +5303,9 @@ export function calculateRule37ASupplierNonFilingReversal({
  * 1. Accounting Age: Days from invoice date to reporting date (Schedule III brackets).
  * 2. Statutory Overdue Status: Days past Section 15 statutory due date (Appointed Day).
  * 3. MCA Form MSME-1: Bi-annual filing of Micro/Small dues exceeding 45 days.
+ */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function generateMsme1AndScheduleThreeAging({
     asOfDate = new Date().toISOString().slice(0, 10),
@@ -5414,6 +5496,9 @@ export function generateMsme1AndScheduleThreeAging({
  * 3. Section 115JAA MAT Credit: Set-off against normal tax or newly generated.
  * 4. Section 115BAA Concessional Regime: Flat 22% + 10% surcharge + 4% cess = 25.168% effective.
  *    Exempt from Section 115JB MAT u/s 115JB(5A). Forfeits accumulated MAT credit.
+ */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function calculateCorporateTaxMatVsConcessional({
     financialYear = '2025-26',
@@ -5610,6 +5695,9 @@ export function calculateCorporateTaxMatVsConcessional({
  * 3. Export of Services under Section 16 & Section 2(6) cumulative 5 conditions.
  * 4. Letter of Undertaking (LUT) zero-rate export vs tax payment refund.
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function evaluatePlaceOfSupplyAndLut({
     transactionType = 'DOMESTIC_SERVICES',
     supplierStateCode = null,
@@ -5802,6 +5890,9 @@ export function evaluatePlaceOfSupplyAndLut({
  * 4. Rule 10CA(7) Median (50th percentile) primary adjustment if tested margin is outside range.
  * 5. Section 92CE Secondary Adjustment threshold warning (> 1 Cr).
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function calculateTransferPricingAlp({
     transactionDescription = 'International Transaction with Associated Enterprise',
     testedParty = 'Indian Enterprise',
@@ -5936,6 +6027,9 @@ export function calculateTransferPricingAlp({
  * 3. IBC Carve-Out (Sec 79(2)(c)): Preserved for NCLT resolution plans.
  * 4. Section 32(2) Invariant: Unabsorbed depreciation carries forward INDEFINITELY regardless of Section 79.
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function evaluateSection79LossContinuity({
     companyType = 'CLOSELY_HELD_COMPANY',
     isDpiitRecognizedStartup = false,
@@ -6046,6 +6140,9 @@ export function evaluateSection79LossContinuity({
  * - Statutory Safe Harbors:
  *   1. Section 281(1) Proviso (ii): Prior written permission of Assessing Officer (Circular 04/2011).
  *   2. Section 281(1) Proviso (i): Bona fide purchaser for adequate consideration without notice.
+ */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function evaluateSection281TaxClearance({
     assetType = 'IMMOVABLE_PROPERTY', // 'IMMOVABLE_PROPERTY' | 'PLANT_AND_MACHINERY' | 'SHARES_AND_SECURITIES' | 'FIXED_DEPOSIT' | 'OTHER'
@@ -6223,6 +6320,9 @@ export function evaluateSection281TaxClearance({
  * 2. Net Unrealized Gain/Loss routing: P&L vs Other Comprehensive Income (OCI - Cash Flow Hedge Reserve).
  * 3. Ind AS 109 Balance Sheet schedule generation.
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function revalueForeignExchangeIndAs109({
     asOfDate = null,
     reportingCurrency = 'INR',
@@ -6345,6 +6445,9 @@ export function revalueForeignExchangeIndAs109({
  *    - Section 206AB non-filer penalty active pre-1 April 2025; omitted post-1 April 2025 by Finance Act, 2025.
  * 6. Statutory Invariant:
  *    - Always returns isAuthorizedToDisburse: false.
+ */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function evaluateSection194R({
     currentBenefitValueInr,
@@ -6512,6 +6615,9 @@ export function evaluateSection194R({
  * 6. Statutory Invariant:
  *    - Always returns isAuthorizedToDisburse: false.
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function evaluateSection194IB({
     monthlyRentInr,
     tenancyMonthsInYear = 1,
@@ -6635,6 +6741,9 @@ export function evaluateSection194IB({
  *    - Form 26QD challan-cum-statement within 30 days of month-end; Form 16D certificate. No TAN required.
  * 6. Statutory Invariant:
  *    - Always returns isAuthorizedToDisburse: false.
+ */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function evaluateSection194M({
     currentPaymentAmountInr,
@@ -6765,6 +6874,9 @@ export function evaluateSection194M({
  *    - Legal, investment banking, due diligence, valuation fees are expensed immediately in P&L (not capitalized into Goodwill)
  * 6. Generates balanced double-entry vouchers to exact paisa.
  * 7. Enforces statutory invariant: isAuthorizedToDisburse: false.
+ */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function calculateBusinessCombinationsIndAs103(params = {}) {
     const acquisitionId = params.acquisitionId || 'ACQ-01';
@@ -6978,6 +7090,9 @@ export function calculateBusinessCombinationsIndAs103(params = {}) {
 /**
  * Ind AS 115 / IFRS 15 / US GAAP ASC 606: 5-Step Revenue Recognition & Relative SSP Allocation Calculator.
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function calculateRevenueAllocationIndAs115(params = {}) {
     const rawPrice = cleanNumericAmount(params.transactionPrice, { defaultValue: 0 });
     const transactionPrice = roundToPaisa(rawPrice);
@@ -7096,6 +7211,9 @@ export function calculateRevenueAllocationIndAs115(params = {}) {
 
 /**
  * Ind AS 116 / IFRS 16 / US GAAP ASC 842: Right-of-Use (ROU) Asset & Lease Liability Amortization Schedule.
+ */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function calculateLeaseAmortizationIndAs116(params = {}) {
     const monthlyPayment = roundToPaisa(cleanNumericAmount(params.monthlyPaymentInr, { defaultValue: 0 }));
@@ -7228,6 +7346,9 @@ export function calculateLeaseAmortizationIndAs116(params = {}) {
 /**
  * Ind AS 109 / IFRS 9 / US GAAP ASC 326: Expected Credit Loss (ECL) Impairment Calculator.
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function calculateExpectedCreditLossIndAs109(params = {}) {
     const grossTotal = roundToPaisa(cleanNumericAmount(params.grossTradeReceivablesInr, { defaultValue: 0 }));
     const rawBuckets = Array.isArray(params.agingBuckets) ? params.agingBuckets : [];
@@ -7318,6 +7439,9 @@ export function calculateExpectedCreditLossIndAs109(params = {}) {
 
 /**
  * Ind AS 102 / IFRS 2 / US GAAP ASC 718: ESOP Graded Vesting Amortization Calculator.
+ */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function calculateEsopAmortizationIndAs102(params = {}) {
     const totalOptions = Math.max(0, Math.floor(cleanNumericAmount(params.totalOptionsGranted, { defaultValue: 0 })));
@@ -7424,6 +7548,9 @@ export function calculateEsopAmortizationIndAs102(params = {}) {
 /**
  * Ind AS 12 / IAS 12 / US GAAP ASC 740: Income Taxes & Deferred Tax (DTA / DTL) Calculator.
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function calculateDeferredTaxIndAs12(params = {}) {
     const bookProfit = roundToPaisa(cleanNumericAmount(params.accountingProfitBeforeTaxInr, { defaultValue: 0 }));
     const taxRatePercent = cleanNumericAmount(params.enactedTaxRatePercent, { defaultValue: 25.168 });
@@ -7521,6 +7648,9 @@ export function calculateDeferredTaxIndAs12(params = {}) {
 /**
  * Ind AS 37 / IAS 37 / US GAAP ASC 450: Provisions, Contingent Liabilities & Contingent Assets Evaluator.
  */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
 export function evaluateProvisionsAndContingenciesIndAs37(params = {}) {
     const rawItems = Array.isArray(params.exposureItems) ? params.exposureItems : [];
     const asOfDate = params.reportingDate || new Date().toISOString().split('T')[0];
@@ -7610,6 +7740,9 @@ export function evaluateProvisionsAndContingenciesIndAs37(params = {}) {
 
 /**
  * Ind AS 21 / IAS 21 / US GAAP ASC 830: Foreign Currency Monetary Revaluation & FCTR Translation Calculator.
+ */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function calculateForeignCurrencyIndAs21(params = {}) {
     const asOfDate = params.asOfDate || new Date().toISOString().split('T')[0];
@@ -7830,6 +7963,9 @@ export function calculateForeignCurrencyIndAs21(params = {}) {
 
 /**
  * Ind AS 36 / IAS 36 / US GAAP ASC 360 & 350: Impairment of Assets & Cash-Generating Units (CGU).
+ */
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function calculateImpairmentIndAs36(params = {}) {
     const asOfDate = params.asOfDate || new Date().toISOString().split('T')[0];

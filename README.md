@@ -74,6 +74,12 @@ console.log(voucher.isAuthorizedToDisburse); // false (Fiduciary invariant)
 
 ---
 
+> [!NOTE]
+> **v2.14.0 Architecture Notice: USVM Declarative Engine & Procedural Deprecation**  
+> As of v2.14.0, the declarative **Universal Statutory Virtual Machine (`@mudraforge/statutory/usvm`)** is the primary, canonical execution engine for all statutory determination. Legacy procedural calculator functions in `@mudraforge/statutory/calculators` are marked `@deprecated` and will be retired in v3.0.0. In addition, internal development documentation and test suites have been decoupled from the npm tarball, shrinking package size from 536 kB to 404 kB (~25% reduction).
+
+---
+
 ## Overview: Why We Open-Source Adesha's Statutory Substrate
 
 In enterprise finance, no CFO, audit committee, or enterprise risk officer will permit an autonomous AI agent to propose payment instructions or touch the corporate general ledger if its tax withholding and regulatory logic is an opaque, black-box prompt. Large language models hallucinate tax rates, invert statutory obligations, and defend computational errors (*Rule 11: Agreement with the Engine ≠ Agreement with the Law*).

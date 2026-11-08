@@ -194,33 +194,89 @@ export declare class StatutoryClient {
     diff(options?: StatutoryDiffOptions): StatutoryDiffResult;
     verify(targetDir?: string): any;
     doctor(options?: any): Promise<any>;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     calculateCorporateTaxMatVsConcessional(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     evaluatePlaceOfSupplyAndLut(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     calculateTransferPricingAlp(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     evaluateSection79LossContinuity(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     revalueForeignExchangeIndAs109(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     calculateBusinessCombinationsIndAs103(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     calculateImpairmentIndAs36(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     calculateRevenueAllocationIndAs115(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     calculateLeaseAmortizationIndAs116(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     calculateExpectedCreditLossIndAs109(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     calculateEsopAmortizationIndAs102(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     calculateDeferredTaxIndAs12(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     evaluateProvisionsAndContingenciesIndAs37(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     calculateForeignCurrencyIndAs21(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     evaluateSection194A(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     evaluateSection194O(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     evaluateSection194IA(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     evaluateSection194IB(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     evaluateSection194M(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     evaluateSection194R(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     evaluateSection43B(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     evaluateSection281(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     calculateItcReversalRule37(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     calculateRule37ASupplierNonFilingReversal(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     calculateRule42InputServiceReversal(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     reconcileRule42AnnualTrueUp(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     calculateRule43CapitalGoodsReversal(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     calculateGstItcApportionmentRule42_43(payload?: any): any;
     parseTallyDaybookCsv(csvText: string): DaybookVoucherInput[];
     parseTallyDaybookXml(xmlText: string): DaybookVoucherInput[];
@@ -418,44 +474,83 @@ export declare function fromIntegerPaise(paise: number): number;
 export declare function roundToPaisa(amount: number | string): number;
 export declare function roundSection288B(amount: number | string): number;
 export declare function cleanNumericAmount(val: any, options?: CleanNumericAmountOptions): number;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function calculateCorporateTaxMatVsConcessional(payload?: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluatePlaceOfSupplyAndLut(payload?: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function calculateTransferPricingAlp(payload?: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateSection79LossContinuity(payload?: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateSection281TaxClearance(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function revalueForeignExchangeIndAs109(payload?: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function calculateBusinessCombinationsIndAs103(payload?: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function calculateImpairmentIndAs36(payload?: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function calculateRevenueAllocationIndAs115(payload?: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function calculateLeaseAmortizationIndAs116(payload?: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function calculateExpectedCreditLossIndAs109(payload?: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function calculateEsopAmortizationIndAs102(payload?: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function calculateDeferredTaxIndAs12(payload?: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateProvisionsAndContingenciesIndAs37(payload?: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function calculateForeignCurrencyIndAs21(payload?: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function resolveMissingPanPenaltyFloor(params?: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateSection194Q(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateSection194C(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateSection194H(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateSection194I(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateSection194J(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateSection194A(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateSection194O(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateSection194IA(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateSection194IB(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateSection194M(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateSection194R(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateSection43BStatutoryPayables(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function calculateItcReversalRule37(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function calculateRule37ASupplierNonFilingReversal(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateSection206C1H(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateSection43bH(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function calculateMsmeCompoundInterest(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function calculateAdvanceTaxAndInterest(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function calculateRule42InputServiceReversal(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function reconcileRule42AnnualTrueUp(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function calculateRule43CapitalGoodsReversal(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function calculateGstItcApportionmentRule42_43(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateCrossBorderRemittance(payload: any): any;
 export declare function getRbiBankRateForDate(dateString?: string): number;
 export declare const DEFAULT_RBI_BANK_RATE: number;
