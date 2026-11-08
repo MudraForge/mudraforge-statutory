@@ -1,0 +1,29 @@
+{
+  "sectionId": "ITA1961_SEC206C1G",
+  "version": "1.0.0",
+  "title": "TCS on Foreign Remittances under LRS and Overseas Tour Packages",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 206C(1G)",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 394(1), Table 2",
+  "triggerPolicy": {
+    "type": "PAYMENT_ONLY",
+    "events": [
+      "REMITTANCE_COLLECTION"
+    ],
+    "statutoryBasis": "Section 206C(1G) upon receipt of amount from remitter"
+  },
+  "computation": {
+    "archetype": "TCS_REMITTANCE_LRS_206C1G",
+    "thresholdInr": 700000,
+    "tourPackageRateTier1Bps": 500,
+    "tourPackageRateTier2Bps": 2000,
+    "educationLoanRateBps": 50,
+    "educationMedicalOtherRateBps": 500,
+    "otherRemittanceRateBps": 2000
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

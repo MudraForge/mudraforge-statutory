@@ -28,8 +28,8 @@
 // Canonical OKF v0.2 Release Merkle Roots & Versions
 export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-7ffc75e8611a9c966eea756dd544fdae9144e2318d3478633232bb876d05e364';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
-export const STATUTORY_PACKAGE_VERSION = '2.14.0';
-export const OKF_CORPUS_VERSION = '2.14.0';
+export const STATUTORY_PACKAGE_VERSION = '2.15.0';
+export const OKF_CORPUS_VERSION = '2.15.0';
 
 // Current RBI Bank Rate (H2 2024 - 2026 baseline): 6.75%
 export const DEFAULT_RBI_BANK_RATE = 0.0675;
@@ -8174,3 +8174,615 @@ export function calculateImpairmentIndAs36(params = {}) {
 
 
 
+
+/**
+ * @deprecated Use `evaluateStatutoryAst` from `@mudraforge/statutory/usvm` with rule `ITA1961_SEC194S`.
+ * DETERMINISTIC STATUTORY CALCULATOR: Section 194S (TDS on Virtual Digital Assets / Crypto)
+ */
+export function evaluateSection194S({
+    considerationInr,
+    cumulativePriorConsiderationInr = 0,
+    isSpecifiedPerson = false,
+    hasPan = true,
+    isPanInoperative = false,
+    isSellerResident = true,
+    transactionDate = null,
+    creditDate = null,
+    paymentDate = null
+} = {}) {
+    const rawAmt = Math.max(0, assertMandatoryNumeric(considerationInr, 'considerationInr', 'evaluateSection194S'));
+    const priorAmt = Math.max(0, cleanNumericAmount(cumulativePriorConsiderationInr));
+    const totalCumulative = roundToPaisa(priorAmt + rawAmt);
+
+    if (!isSellerResident) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'GOVERNED_BY_SECTION_195',
+            applicableTdsRatePercent: null,
+            taxableBaseInr: null,
+            calculatedTdsInr: null,
+            isAuthorizedToDisburse: false,
+            governingLaw: 'Income-tax Act, 1961 Section 195 (Cross-Border)',
+            statutoryRationale: 'Transferor is a non-resident. Withholding is governed by Section 195 DTAA framework, not Section 194S.'
+        };
+    }
+
+    const thresholdCeiling = isSpecifiedPerson ? 50000 : 10000;
+    if (totalCumulative <= thresholdCeiling) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'EXEMPT_BELOW_THRESHOLD',
+            applicableTdsRatePercent: 0,
+            taxableBaseInr: 0,
+            calculatedTdsInr: 0,
+            currentPaymentInr: rawAmt,
+            cumulativePriorPaymentsInr: priorAmt,
+            totalCumulativeInr: totalCumulative,
+            thresholdCeilingInr: thresholdCeiling,
+            netPayableToPayeeInr: rawAmt,
+            isAuthorizedToDisburse: false,
+            governingLaw: 'Income-tax Act, 1961 Section 194S(1)',
+            statutoryRationale: `Cumulative consideration (INR ${totalCumulative.toLocaleString('en-IN')}) does not exceed statutory threshold of INR ${thresholdCeiling.toLocaleString('en-IN')}. No tax deduction required.`
+        };
+    }
+
+    let taxableBase = priorAmt < thresholdCeiling ? roundToPaisa(totalCumulative - thresholdCeiling) : rawAmt;
+    let applicableRate = 1.0;
+    let rateDescription = 'Section 194S standard rate (1%)';
+
+    if (!hasPan || isPanInoperative) {
+        applicableRate = 20.0;
+        rateDescription = 'Section 206AA penal rate (20%) due to missing or inoperative PAN';
+    }
+
+    const calculatedTds = roundToPaisa((taxableBase * applicableRate) / 100);
+    const netPayable = roundToPaisa(Math.max(0, rawAmt - calculatedTds));
+
+    return {
+        status: 'SUCCESS',
+        statutoryDetermination: 'DEDUCTION_MANDATORY',
+        applicableTdsRatePercent: applicableRate,
+        taxableBaseInr: taxableBase,
+        calculatedTdsInr: calculatedTds,
+        currentPaymentInr: rawAmt,
+        cumulativePriorPaymentsInr: priorAmt,
+        totalCumulativeInr: totalCumulative,
+        thresholdCeilingInr: thresholdCeiling,
+        netPayableToPayeeInr: netPayable,
+        complianceRequirements: {
+            challanCumStatementForm: isSpecifiedPerson ? 'Form 26QE' : 'Form 26Q',
+            tdsCertificateForm: isSpecifiedPerson ? 'Form 16E' : 'Form 16A',
+            challanFilingCutoff: 'Within 30 days from end of month'
+        },
+        governingLaw: `Income-tax Act, 1961 Section 194S read with ${rateDescription}`,
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `VDA consideration exceeds INR ${thresholdCeiling.toLocaleString('en-IN')}. Taxable base INR ${taxableBase.toLocaleString('en-IN')} taxed at ${applicableRate}% = INR ${calculatedTds.toLocaleString('en-IN')}. Net payable: INR ${netPayable.toLocaleString('en-IN')}.`
+    };
+}
+
+/**
+ * @deprecated Use `evaluateStatutoryAst` from `@mudraforge/statutory/usvm` with rule `ITA1961_SEC194BA`.
+ * DETERMINISTIC STATUTORY CALCULATOR: Section 194BA (TDS on Winnings from Online Games)
+ */
+export function evaluateSection194BA({
+    netWinningsInr = null,
+    withdrawalAmountInr = null,
+    totalDepositsInr = 0,
+    openingBalanceInr = 0,
+    closingBalanceInr = 0,
+    totalPriorWithdrawalsInr = 0,
+    hasPan = true,
+    isPanInoperative = false,
+    transactionDate = null
+} = {}) {
+    let computedNetWinnings = 0;
+    if (netWinningsInr !== null && netWinningsInr !== undefined) {
+        computedNetWinnings = cleanNumericAmount(netWinningsInr);
+    } else {
+        const withdrawal = Math.max(0, cleanNumericAmount(withdrawalAmountInr));
+        const priorWithdrawals = Math.max(0, cleanNumericAmount(totalPriorWithdrawalsInr));
+        const closing = Math.max(0, cleanNumericAmount(closingBalanceInr));
+        const deposits = Math.max(0, cleanNumericAmount(totalDepositsInr));
+        const opening = Math.max(0, cleanNumericAmount(openingBalanceInr));
+        computedNetWinnings = roundToPaisa((withdrawal + priorWithdrawals + closing) - (deposits + opening));
+    }
+
+    if (computedNetWinnings <= 0) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'EXEMPT_ZERO_OR_NEGATIVE_NET_WINNINGS',
+            applicableTdsRatePercent: 0,
+            taxableBaseInr: 0,
+            calculatedTdsInr: 0,
+            netWinningsInr: computedNetWinnings,
+            isAuthorizedToDisburse: false,
+            governingLaw: 'Income-tax Act, 1961 Section 194BA read with Rule 133',
+            statutoryRationale: 'Net winnings are zero or negative. No tax deduction is applicable.'
+        };
+    }
+
+    let applicableRate = 30.0;
+    let rateDescription = 'Section 194BA statutory rate (30% on net online gaming winnings)';
+
+    if (!hasPan || isPanInoperative) {
+        applicableRate = 30.0;
+        rateDescription = 'Section 194BA/206AA statutory rate (30% applies regardless of PAN)';
+    }
+
+    const calculatedTds = roundToPaisa((computedNetWinnings * applicableRate) / 100);
+    const netPayout = roundToPaisa(Math.max(0, computedNetWinnings - calculatedTds));
+
+    return {
+        status: 'SUCCESS',
+        statutoryDetermination: 'DEDUCTION_MANDATORY',
+        applicableTdsRatePercent: applicableRate,
+        taxableBaseInr: computedNetWinnings,
+        calculatedTdsInr: calculatedTds,
+        netWinningsInr: computedNetWinnings,
+        netPayableToUserInr: netPayout,
+        complianceRequirements: {
+            statementForm: 'Form 26Q (Quarterly)',
+            tdsCertificateForm: 'Form 16A',
+            remittanceCutoff: '7th of subsequent month (30th April for March)'
+        },
+        governingLaw: `Income-tax Act, 1961 Section 194BA read with ${rateDescription}`,
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Net winnings of INR ${computedNetWinnings.toLocaleString('en-IN')} taxed at ${applicableRate}% = INR ${calculatedTds.toLocaleString('en-IN')}. Net payout: INR ${netPayout.toLocaleString('en-IN')}.`
+    };
+}
+
+/**
+ * @deprecated Use `evaluateStatutoryAst` from `@mudraforge/statutory/usvm` with rule `ITA1961_SEC194N`.
+ * DETERMINISTIC STATUTORY CALCULATOR: Section 194N (TDS on High-Value Cash Withdrawals)
+ */
+export function evaluateSection194N({
+    withdrawalAmountInr,
+    cumulativePriorWithdrawalsInr = 0,
+    isNonFilerPast3Years = false,
+    isExemptEntity = false,
+    transactionDate = null
+} = {}) {
+    const rawAmt = Math.max(0, assertMandatoryNumeric(withdrawalAmountInr, 'withdrawalAmountInr', 'evaluateSection194N'));
+    const priorAmt = Math.max(0, cleanNumericAmount(cumulativePriorWithdrawalsInr));
+    const totalCumulative = roundToPaisa(priorAmt + rawAmt);
+
+    if (isExemptEntity) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'EXEMPT_ENTITY_FOURTH_PROVISO',
+            applicableTdsRatePercent: 0,
+            taxableBaseInr: 0,
+            calculatedTdsInr: 0,
+            isAuthorizedToDisburse: false,
+            governingLaw: 'Income-tax Act, 1961 Section 194N Fourth Proviso',
+            statutoryRationale: 'Entity is exempt from Section 194N (Government, banking company, co-operative society, business correspondent, white-label ATM operator).'
+        };
+    }
+
+    const ONE_CRORE = 10000000;
+    const TWENTY_LAKHS = 2000000;
+
+    let calculatedTds = 0;
+    let applicableRate = 0;
+    let taxableBase = 0;
+    let rateDescription = '';
+
+    if (!isNonFilerPast3Years) {
+        if (totalCumulative <= ONE_CRORE) {
+            return {
+                status: 'SUCCESS',
+                statutoryDetermination: 'EXEMPT_BELOW_THRESHOLD',
+                applicableTdsRatePercent: 0,
+                taxableBaseInr: 0,
+                calculatedTdsInr: 0,
+                currentWithdrawalInr: rawAmt,
+                cumulativePriorWithdrawalsInr: priorAmt,
+                totalCumulativeInr: totalCumulative,
+                thresholdCeilingInr: ONE_CRORE,
+                isAuthorizedToDisburse: false,
+                governingLaw: 'Income-tax Act, 1961 Section 194N(1)',
+                statutoryRationale: `Cumulative cash withdrawals (INR ${totalCumulative.toLocaleString('en-IN')}) do not exceed INR 1 Crore. No TDS required.`
+            };
+        }
+
+        taxableBase = priorAmt >= ONE_CRORE ? rawAmt : roundToPaisa(totalCumulative - ONE_CRORE);
+        applicableRate = 2.0;
+        calculatedTds = roundToPaisa((taxableBase * applicableRate) / 100);
+        rateDescription = '2% on cash withdrawal in excess of INR 1 Crore (First Proviso)';
+    } else {
+        if (totalCumulative <= TWENTY_LAKHS) {
+            return {
+                status: 'SUCCESS',
+                statutoryDetermination: 'EXEMPT_BELOW_THRESHOLD_NON_FILER',
+                applicableTdsRatePercent: 0,
+                taxableBaseInr: 0,
+                calculatedTdsInr: 0,
+                currentWithdrawalInr: rawAmt,
+                cumulativePriorWithdrawalsInr: priorAmt,
+                totalCumulativeInr: totalCumulative,
+                thresholdCeilingInr: TWENTY_LAKHS,
+                isAuthorizedToDisburse: false,
+                governingLaw: 'Income-tax Act, 1961 Section 194N Second Proviso',
+                statutoryRationale: `Cumulative cash withdrawals for non-filer (INR ${totalCumulative.toLocaleString('en-IN')}) do not exceed INR 20 Lakhs. No TDS required.`
+            };
+        }
+
+        let tier1Taxable = 0;
+        let tier2Taxable = 0;
+        const effectiveStart = priorAmt;
+        const effectiveEnd = totalCumulative;
+
+        if (effectiveEnd > TWENTY_LAKHS) {
+            const start1 = Math.max(TWENTY_LAKHS, effectiveStart);
+            const end1 = Math.min(ONE_CRORE, effectiveEnd);
+            if (end1 > start1) tier1Taxable = end1 - start1;
+        }
+
+        if (effectiveEnd > ONE_CRORE) {
+            const start2 = Math.max(ONE_CRORE, effectiveStart);
+            const end2 = effectiveEnd;
+            if (end2 > start2) tier2Taxable = end2 - start2;
+        }
+
+        const tdsTier1 = roundToPaisa((tier1Taxable * 2.0) / 100);
+        const tdsTier2 = roundToPaisa((tier2Taxable * 5.0) / 100);
+        calculatedTds = roundToPaisa(tdsTier1 + tdsTier2);
+        taxableBase = roundToPaisa(tier1Taxable + tier2Taxable);
+        applicableRate = tier2Taxable > 0 ? (tier1Taxable > 0 ? 5.0 : 5.0) : 2.0;
+        rateDescription = `Non-filer tiered rates: 2% on INR ${tier1Taxable.toLocaleString('en-IN')} (20L-1Cr) + 5% on INR ${tier2Taxable.toLocaleString('en-IN')} (>1Cr)`;
+    }
+
+    const netCashDisbursed = roundToPaisa(Math.max(0, rawAmt - calculatedTds));
+
+    return {
+        status: 'SUCCESS',
+        statutoryDetermination: 'DEDUCTION_MANDATORY',
+        applicableTdsRatePercent: applicableRate,
+        taxableBaseInr: taxableBase,
+        calculatedTdsInr: calculatedTds,
+        currentWithdrawalInr: rawAmt,
+        cumulativePriorWithdrawalsInr: priorAmt,
+        totalCumulativeInr: totalCumulative,
+        netCashDisbursedInr: netCashDisbursed,
+        governingLaw: `Income-tax Act, 1961 Section 194N (${rateDescription})`,
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Cumulative withdrawals (INR ${totalCumulative.toLocaleString('en-IN')}) exceed statutory threshold. TDS of INR ${calculatedTds.toLocaleString('en-IN')} deducted. Net cash disbursed: INR ${netCashDisbursed.toLocaleString('en-IN')}.`
+    };
+}
+
+/**
+ * @deprecated Use `evaluateStatutoryAst` from `@mudraforge/statutory/usvm` with rule `ITA1961_SEC194DA`.
+ * DETERMINISTIC STATUTORY CALCULATOR: Section 194DA (TDS on Life Insurance Policy Payouts)
+ */
+export function evaluateSection194DA({
+    payoutAmountInr,
+    totalPremiumsPaidInr = 0,
+    cumulativePriorPayoutsInr = 0,
+    isExemptUnderSection10_10D = false,
+    hasPan = true,
+    isPanInoperative = false,
+    transactionDate = null
+} = {}) {
+    const rawAmt = Math.max(0, assertMandatoryNumeric(payoutAmountInr, 'payoutAmountInr', 'evaluateSection194DA'));
+    const premiumsPaid = Math.max(0, cleanNumericAmount(totalPremiumsPaidInr));
+    const priorAmt = Math.max(0, cleanNumericAmount(cumulativePriorPayoutsInr));
+    const totalCumulative = roundToPaisa(priorAmt + rawAmt);
+
+    if (isExemptUnderSection10_10D) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'EXEMPT_SECTION_10_10D',
+            applicableTdsRatePercent: 0,
+            taxableBaseInr: 0,
+            calculatedTdsInr: 0,
+            netPayableInr: rawAmt,
+            isAuthorizedToDisburse: false,
+            governingLaw: 'Income-tax Act, 1961 Section 10(10D)',
+            statutoryRationale: 'Life insurance payout is fully exempt under Section 10(10D). No tax deduction is applicable.'
+        };
+    }
+
+    const THRESHOLD = 100000;
+    if (totalCumulative < THRESHOLD) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'EXEMPT_BELOW_THRESHOLD',
+            applicableTdsRatePercent: 0,
+            taxableBaseInr: 0,
+            calculatedTdsInr: 0,
+            currentPayoutInr: rawAmt,
+            totalCumulativeInr: totalCumulative,
+            thresholdCeilingInr: THRESHOLD,
+            netPayableInr: rawAmt,
+            isAuthorizedToDisburse: false,
+            governingLaw: 'Income-tax Act, 1961 Section 194DA Proviso',
+            statutoryRationale: `Aggregate life insurance payout in financial year (INR ${totalCumulative.toLocaleString('en-IN')}) is below INR 1 Lakh. No TDS required.`
+        };
+    }
+
+    const netIncome = Math.max(0, roundToPaisa(rawAmt - premiumsPaid));
+    if (netIncome <= 0) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'EXEMPT_NO_INCOME_COMPONENT',
+            applicableTdsRatePercent: 0,
+            taxableBaseInr: 0,
+            calculatedTdsInr: 0,
+            netPayableInr: rawAmt,
+            isAuthorizedToDisburse: false,
+            governingLaw: 'Income-tax Act, 1961 Section 194DA Explanation',
+            statutoryRationale: 'Premiums paid equal or exceed payout amount. No net income component exists.'
+        };
+    }
+
+    let applicableRate = 5.0;
+    let rateDescription = 'Section 194DA standard rate (5% on net income component)';
+
+    if (!hasPan || isPanInoperative) {
+        applicableRate = 20.0;
+        rateDescription = 'Section 206AA penal rate (20% on net income component due to missing/inoperative PAN)';
+    }
+
+    const calculatedTds = roundToPaisa((netIncome * applicableRate) / 100);
+    const netPayable = roundToPaisa(Math.max(0, rawAmt - calculatedTds));
+
+    return {
+        status: 'SUCCESS',
+        statutoryDetermination: 'DEDUCTION_MANDATORY',
+        applicableTdsRatePercent: applicableRate,
+        taxableBaseInr: netIncome,
+        calculatedTdsInr: calculatedTds,
+        grossPayoutInr: rawAmt,
+        premiumsPaidInr: premiumsPaid,
+        netPayableInr: netPayable,
+        governingLaw: `Income-tax Act, 1961 Section 194DA read with ${rateDescription}`,
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Non-exempt insurance payout of INR ${rawAmt.toLocaleString('en-IN')} has net income component of INR ${netIncome.toLocaleString('en-IN')}. Taxed at ${applicableRate}% = INR ${calculatedTds.toLocaleString('en-IN')}. Net payable: INR ${netPayable.toLocaleString('en-IN')}.`
+    };
+}
+
+/**
+ * @deprecated Use `evaluateStatutoryAst` from `@mudraforge/statutory/usvm` with rule `ITA1961_SEC194K`.
+ * DETERMINISTIC STATUTORY CALCULATOR: Section 194K (TDS on Mutual Fund Income)
+ */
+export function evaluateSection194K({
+    incomeAmountInr,
+    cumulativePriorIncomeInr = 0,
+    isCapitalGainDistribution = false,
+    hasPan = true,
+    isPanInoperative = false,
+    transactionDate = null
+} = {}) {
+    const rawAmt = Math.max(0, assertMandatoryNumeric(incomeAmountInr, 'incomeAmountInr', 'evaluateSection194K'));
+    const priorAmt = Math.max(0, cleanNumericAmount(cumulativePriorIncomeInr));
+    const totalCumulative = roundToPaisa(priorAmt + rawAmt);
+
+    if (isCapitalGainDistribution) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'EXEMPT_CAPITAL_GAINS_EXCLUSION',
+            applicableTdsRatePercent: 0,
+            taxableBaseInr: 0,
+            calculatedTdsInr: 0,
+            netPayableInr: rawAmt,
+            isAuthorizedToDisburse: false,
+            governingLaw: 'Income-tax Act, 1961 Section 194K First Proviso',
+            statutoryRationale: 'Section 194K excludes capital gains from transfer/redemption of mutual fund units. No tax deduction under this section.'
+        };
+    }
+
+    const THRESHOLD = 5000;
+    if (totalCumulative <= THRESHOLD) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'EXEMPT_BELOW_THRESHOLD',
+            applicableTdsRatePercent: 0,
+            taxableBaseInr: 0,
+            calculatedTdsInr: 0,
+            currentIncomeInr: rawAmt,
+            totalCumulativeInr: totalCumulative,
+            thresholdCeilingInr: THRESHOLD,
+            netPayableInr: rawAmt,
+            isAuthorizedToDisburse: false,
+            governingLaw: 'Income-tax Act, 1961 Section 194K Second Proviso',
+            statutoryRationale: `Cumulative mutual fund income in financial year (INR ${totalCumulative.toLocaleString('en-IN')}) does not exceed statutory ceiling of INR 5,000. No TDS required.`
+        };
+    }
+
+    let applicableRate = 10.0;
+    let rateDescription = 'Section 194K standard rate (10%)';
+
+    if (!hasPan || isPanInoperative) {
+        applicableRate = 20.0;
+        rateDescription = 'Section 206AA penal rate (20% due to missing/inoperative PAN)';
+    }
+
+    const calculatedTds = roundToPaisa((rawAmt * applicableRate) / 100);
+    const netPayable = roundToPaisa(Math.max(0, rawAmt - calculatedTds));
+
+    return {
+        status: 'SUCCESS',
+        statutoryDetermination: 'DEDUCTION_MANDATORY',
+        applicableTdsRatePercent: applicableRate,
+        taxableBaseInr: rawAmt,
+        calculatedTdsInr: calculatedTds,
+        grossIncomeInr: rawAmt,
+        netPayableInr: netPayable,
+        governingLaw: `Income-tax Act, 1961 Section 194K read with ${rateDescription}`,
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Mutual fund income exceeds INR 5,000 ceiling. Current distribution of INR ${rawAmt.toLocaleString('en-IN')} taxed at ${applicableRate}% = INR ${calculatedTds.toLocaleString('en-IN')}. Net payable: INR ${netPayable.toLocaleString('en-IN')}.`
+    };
+}
+
+/**
+ * @deprecated Use `evaluateStatutoryAst` from `@mudraforge/statutory/usvm` with rule `ITA1961_SEC206C1G`.
+ * DETERMINISTIC STATUTORY CALCULATOR: Section 206C(1G) (TCS on Foreign Remittances under LRS and Tour Packages)
+ */
+export function evaluateSection206C1G({
+    remittanceAmountInr,
+    cumulativePriorRemittancesInr = 0,
+    remittanceType = 'OTHER_REMITTANCE',
+    hasPan = true,
+    isPanInoperative = false,
+    transactionDate = null
+} = {}) {
+    const rawAmt = Math.max(0, assertMandatoryNumeric(remittanceAmountInr, 'remittanceAmountInr', 'evaluateSection206C1G'));
+    const priorAmt = Math.max(0, cleanNumericAmount(cumulativePriorRemittancesInr));
+    const totalCumulative = roundToPaisa(priorAmt + rawAmt);
+
+    const THRESHOLD = 700000;
+    const type = String(remittanceType).toUpperCase();
+
+    let calculatedTcs = 0;
+    let applicableRate = 0;
+    let taxableBase = 0;
+    let rateDescription = '';
+
+    if (type === 'OVERSEAS_TOUR_PACKAGE') {
+        let tier1 = 0;
+        let tier2 = 0;
+        const effectiveStart = priorAmt;
+        const effectiveEnd = totalCumulative;
+        const start1 = effectiveStart;
+        const end1 = Math.min(THRESHOLD, effectiveEnd);
+        if (end1 > start1) tier1 = end1 - start1;
+
+        if (effectiveEnd > THRESHOLD) {
+            const start2 = Math.max(THRESHOLD, effectiveStart);
+            const end2 = effectiveEnd;
+            if (end2 > start2) tier2 = end2 - start2;
+        }
+
+        const tcsTier1 = roundToPaisa((tier1 * 5.0) / 100);
+        const tcsTier2 = roundToPaisa((tier2 * 20.0) / 100);
+        calculatedTcs = roundToPaisa(tcsTier1 + tcsTier2);
+        taxableBase = rawAmt;
+        applicableRate = tier2 > 0 ? (tier1 > 0 ? 20.0 : 20.0) : 5.0;
+        rateDescription = `Overseas tour package: 5% on INR ${tier1.toLocaleString('en-IN')} + 20% on INR ${tier2.toLocaleString('en-IN')} (>7L)`;
+    } else {
+        if (totalCumulative <= THRESHOLD) {
+            return {
+                status: 'SUCCESS',
+                statutoryDetermination: 'EXEMPT_BELOW_LRS_THRESHOLD',
+                applicableTcsRatePercent: 0,
+                taxableBaseInr: 0,
+                calculatedTcsInr: 0,
+                currentRemittanceInr: rawAmt,
+                totalCumulativeInr: totalCumulative,
+                thresholdCeilingInr: THRESHOLD,
+                totalPayableByRemitterInr: rawAmt,
+                isAuthorizedToDisburse: false,
+                governingLaw: 'Income-tax Act, 1961 Section 206C(1G) Proviso',
+                statutoryRationale: `Cumulative LRS remittances in FY (INR ${totalCumulative.toLocaleString('en-IN')}) do not exceed INR 7 Lakhs threshold. No TCS applicable.`
+            };
+        }
+
+        taxableBase = priorAmt >= THRESHOLD ? rawAmt : roundToPaisa(totalCumulative - THRESHOLD);
+
+        if (type === 'EDUCATION_LOAN') {
+            applicableRate = 0.5;
+            rateDescription = '0.5% on excess over INR 7 Lakhs (Education remittance funded by Section 80E loan)';
+        } else if (type === 'EDUCATION_OR_MEDICAL') {
+            applicableRate = 5.0;
+            rateDescription = '5% on excess over INR 7 Lakhs (Education or medical treatment remittance)';
+        } else {
+            applicableRate = 20.0;
+            rateDescription = '20% on excess over INR 7 Lakhs (General LRS remittance amended w.e.f. 1 Oct 2023)';
+        }
+
+        if (!hasPan || isPanInoperative) {
+            applicableRate = Math.max(applicableRate, 20.0);
+            rateDescription = `${rateDescription} - Penal rate (20%) due to missing/inoperative PAN`;
+        }
+
+        calculatedTcs = roundToPaisa((taxableBase * applicableRate) / 100);
+    }
+
+    const totalPayableByRemitter = roundToPaisa(rawAmt + calculatedTcs);
+
+    return {
+        status: 'SUCCESS',
+        statutoryDetermination: 'COLLECTION_MANDATORY',
+        applicableTcsRatePercent: applicableRate,
+        taxableBaseInr: taxableBase,
+        calculatedTcsInr: calculatedTcs,
+        remittanceAmountInr: rawAmt,
+        totalPayableByRemitterInr: totalPayableByRemitter,
+        governingLaw: `Income-tax Act, 1961 Section 206C(1G) (${rateDescription})`,
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `LRS remittance taxable base INR ${taxableBase.toLocaleString('en-IN')} subject to TCS of ${applicableRate}% = INR ${calculatedTcs.toLocaleString('en-IN')}. Total collected from remitter: INR ${totalPayableByRemitter.toLocaleString('en-IN')}.`
+    };
+}
+
+/**
+ * @deprecated Use `evaluateStatutoryAst` from `@mudraforge/statutory/usvm` with rule `CGST2017_SEC52_TCS_ECOMMERCE`.
+ * DETERMINISTIC STATUTORY CALCULATOR: GST Section 52 (TCS by E-Commerce Operators)
+ */
+export function evaluateSection52GstTcs({
+    grossTaxableSuppliesInr,
+    returnedSuppliesInr = 0,
+    isInterState = false,
+    isSec9_5SpecifiedService = false,
+    transactionDate = null
+} = {}) {
+    const grossSupplies = Math.max(0, assertMandatoryNumeric(grossTaxableSuppliesInr, 'grossTaxableSuppliesInr', 'evaluateSection52GstTcs'));
+    const returns = Math.max(0, cleanNumericAmount(returnedSuppliesInr));
+
+    if (isSec9_5SpecifiedService) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'EXEMPT_SECTION_9_5_SUPPLY',
+            applicableTcsRatePercent: 0,
+            taxableBaseInr: 0,
+            calculatedTcsInr: 0,
+            isAuthorizedToDisburse: false,
+            governingLaw: 'CGST Act, 2017 Section 52(1) Explanation (Section 9(5) excluded)',
+            statutoryRationale: 'Services notified under Section 9(5) are subject to direct reverse charge by ECO, and excluded from Section 52 TCS.'
+        };
+    }
+
+    const netValue = Math.max(0, roundToPaisa(grossSupplies - returns));
+    if (netValue <= 0) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'EXEMPT_NET_VALUE_ZERO',
+            applicableTcsRatePercent: 0,
+            taxableBaseInr: 0,
+            calculatedTcsInr: 0,
+            netValueInr: netValue,
+            isAuthorizedToDisburse: false,
+            governingLaw: 'CGST Act, 2017 Section 52(1)',
+            statutoryRationale: 'Net value of taxable supplies after adjusting sales returns is zero or negative. No TCS applicable.'
+        };
+    }
+
+    const totalRate = 1.0;
+    const calculatedTcs = roundToPaisa((netValue * totalRate) / 100);
+    const cgstTcs = isInterState ? 0 : roundToPaisa(calculatedTcs / 2);
+    const sgstTcs = isInterState ? 0 : roundToPaisa(calculatedTcs - cgstTcs);
+    const igstTcs = isInterState ? calculatedTcs : 0;
+    const netDisbursedToSupplier = roundToPaisa(Math.max(0, grossSupplies - calculatedTcs));
+
+    return {
+        status: 'SUCCESS',
+        statutoryDetermination: 'COLLECTION_MANDATORY',
+        applicableTcsRatePercent: totalRate,
+        taxableBaseInr: netValue,
+        calculatedTcsInr: calculatedTcs,
+        bifurcation: {
+            cgstInr: cgstTcs,
+            sgstInr: sgstTcs,
+            igstInr: igstTcs
+        },
+        grossSuppliesInr: grossSupplies,
+        returnedSuppliesInr: returns,
+        netDisbursedToSupplierInr: netDisbursedToSupplier,
+        complianceRequirements: {
+            monthlyReturnForm: 'GSTR-8',
+            filingCutoff: '10th of subsequent calendar month'
+        },
+        governingLaw: 'CGST Act, 2017 Section 52 / SGST Act Section 52 / IGST Act Section 20',
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `E-commerce net supplies of INR ${netValue.toLocaleString('en-IN')} subject to 1% TCS = INR ${calculatedTcs.toLocaleString('en-IN')}. Net disbursed to supplier: INR ${netDisbursedToSupplier.toLocaleString('en-IN')}. File Form GSTR-8 by 10th.`
+    };
+}

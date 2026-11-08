@@ -1,0 +1,27 @@
+{
+  "sectionId": "ITA1961_SEC194K",
+  "version": "1.0.0",
+  "title": "TDS on Mutual Fund Units Income",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194K",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 16",
+  "triggerPolicy": {
+    "type": "EARLIER_OF",
+    "events": [
+      "BOOK_CREDIT",
+      "PAYMENT_DISBURSEMENT"
+    ],
+    "statutoryBasis": "Section 194K earlier of credit or payment"
+  },
+  "computation": {
+    "archetype": "TDS_MUTUAL_FUNDS_194K",
+    "standardRateBps": 1000,
+    "penalRateMissingPanBps": 2000,
+    "thresholdInr": 5000
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

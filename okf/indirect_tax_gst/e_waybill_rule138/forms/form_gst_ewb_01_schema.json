@@ -1,0 +1,124 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FormGstEwb01ConsignmentSchema",
+  "description": "Statutory validation schema for FORM GST EWB-01 (Part A and Part B) under Rule 138 of CGST Rules, 2017",
+  "type": "object",
+  "required": [
+    "supplyType",
+    "subSupplyType",
+    "docType",
+    "docNo",
+    "docDate",
+    "fromGstin",
+    "toGstin",
+    "fromPincode",
+    "toPincode",
+    "totalValue",
+    "cgstValue",
+    "sgstValue",
+    "igstValue",
+    "cessValue",
+    "transDistanceKm"
+  ],
+  "properties": {
+    "supplyType": {
+      "type": "string",
+      "enum": ["O", "I"],
+      "description": "Outward (O) or Inward (I)"
+    },
+    "subSupplyType": {
+      "type": "string",
+      "enum": ["1", "2", "3", "4", "5", "6", "7", "8", "9"],
+      "description": "Supply (1), Import (2), Export (3), Job Work (4), For Own Use (5), Job work Returns (6), Sales Return (7), Others (8), Line Sales (9)"
+    },
+    "docType": {
+      "type": "string",
+      "enum": ["INV", "BIL", "BOE", "CHL", "OTH"],
+      "description": "Tax Invoice (INV), Bill of Supply (BIL), Bill of Entry (BOE), Delivery Challan (CHL), Others (OTH)"
+    },
+    "docNo": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16,
+      "description": "Invoice or Document Number"
+    },
+    "docDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Document Date (YYYY-MM-DD)"
+    },
+    "fromGstin": {
+      "type": "string",
+      "pattern": "^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$",
+      "description": "15-character GSTIN of Supplier or URP for unregistered"
+    },
+    "toGstin": {
+      "type": "string",
+      "pattern": "^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$",
+      "description": "15-character GSTIN of Recipient or URP for unregistered"
+    },
+    "fromPincode": {
+      "type": "integer",
+      "minimum": 100000,
+      "maximum": 999999
+    },
+    "toPincode": {
+      "type": "integer",
+      "minimum": 100000,
+      "maximum": 999999
+    },
+    "totalValue": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Total consignment invoice value in INR"
+    },
+    "cgstValue": {
+      "type": "number",
+      "minimum": 0
+    },
+    "sgstValue": {
+      "type": "number",
+      "minimum": 0
+    },
+    "igstValue": {
+      "type": "number",
+      "minimum": 0
+    },
+    "cessValue": {
+      "type": "number",
+      "minimum": 0
+    },
+    "transDistanceKm": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5000,
+      "description": "Transit distance in kilometers"
+    },
+    "transporterId": {
+      "type": "string",
+      "description": "15-digit Transporter ID (TRANSIN) or GSTIN"
+    },
+    "transporterName": {
+      "type": "string"
+    },
+    "transDocNo": {
+      "type": "string",
+      "description": "Lorry Receipt (LR) / Goods Receipt (GR) / Railway Receipt / Airway Bill number"
+    },
+    "transDocDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "vehicleNo": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}[0-9]{1,2}[A-Z]{0,3}[0-9]{4}$",
+      "description": "Standard Indian motor vehicle registration format"
+    },
+    "vehicleType": {
+      "type": "string",
+      "enum": ["R", "O"],
+      "default": "R",
+      "description": "Regular Cargo (R) or Over Dimensional Cargo (O)"
+    }
+  }
+}

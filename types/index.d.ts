@@ -256,6 +256,27 @@ export declare class StatutoryClient {
     evaluateSection194R(payload?: any): any;
     /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 
+    evaluateSection194S(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
+    evaluateSection194BA(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
+    evaluateSection194N(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
+    evaluateSection194DA(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
+    evaluateSection194K(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
+    evaluateSection206C1G(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
+    evaluateSection52GstTcs(payload?: any): any;
+    /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+
     evaluateSection43B(payload?: any): any;
     /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 
@@ -528,6 +549,20 @@ export declare function evaluateSection194IB(payload: any): any;
 export declare function evaluateSection194M(payload: any): any;
 /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateSection194R(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+export declare function evaluateSection194S(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+export declare function evaluateSection194BA(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+export declare function evaluateSection194N(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+export declare function evaluateSection194DA(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+export declare function evaluateSection194K(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+export declare function evaluateSection206C1G(payload: any): any;
+/** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
+export declare function evaluateSection52GstTcs(payload: any): any;
 /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */
 export declare function evaluateSection43BStatutoryPayables(payload: any): any;
 /** @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' instead. */

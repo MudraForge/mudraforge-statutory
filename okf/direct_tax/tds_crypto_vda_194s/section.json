@@ -1,0 +1,47 @@
+{
+  "sectionId": "ITA1961_SEC194S",
+  "sectionCode": "194S",
+  "aliases": [
+    "Section 194S",
+    "TDS on Crypto",
+    "TDS on Virtual Digital Assets",
+    "VDA TDS"
+  ],
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194S",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 12",
+  "title": "TDS on Payment of Consideration for Transfer of Virtual Digital Assets (Crypto / VDA)",
+  "effectivePeriod": {
+    "validFrom": "2022-07-01",
+    "validTo": "2026-03-31"
+  },
+  "plainTextSummary": "Requires deduction of income-tax at source at 1% by any person paying consideration to a resident transferor of a virtual digital asset (VDA). Annual cumulative thresholds are INR 50,000 for specified persons (individuals/HUFs) and INR 10,000 for all other persons.",
+  "keyStatutoryThresholds": [
+    {
+      "label": "Specified Persons Threshold (Individual/HUF)",
+      "amountInr": 50000,
+      "statutoryBasis": "Section 194S(1) Proviso"
+    },
+    {
+      "label": "General Threshold",
+      "amountInr": 10000,
+      "statutoryBasis": "Section 194S(1) Proviso"
+    }
+  ],
+  "officialCitations": [
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "CBDT Circular No. 13 of 2022",
+      "subject": "Guidelines for Removal of Difficulties under Section 194S",
+      "officialUrl": "https://incometaxindia.gov.in/communications/circular/circular-13-2022.pdf"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Form 26QE / Form 26Q Challan-cum-Statement",
+    "Form 16E / Form 16A TDS Certificate",
+    "Valid Permanent Account Number (PAN)"
+  ],
+  "tier": "CORE_STATUTORY",
+  "version": "0.2.0"
+}

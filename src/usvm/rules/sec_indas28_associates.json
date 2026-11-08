@@ -1,0 +1,20 @@
+{
+  "sectionId": "INDAS28_INVESTMENTS_IN_ASSOCIATES",
+  "version": "1.0.0",
+  "governingStatute": "Companies (Indian Accounting Standards) Rules, 2015",
+  "statutorySection": "Ind AS 28 / IAS 28",
+  "successorStatute": "Ind AS 28",
+  "successorSection": "Ind AS 28",
+  "triggerPolicy": {
+    "type": "FISCAL_YEAR_END",
+    "description": "Equity Method Accounting for Investments in Associates & Joint Ventures"
+  },
+  "computation": {
+    "archetype": "INVESTMENTS_ASSOCIATES_INDAS28",
+    "equityMethodMandated": true
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

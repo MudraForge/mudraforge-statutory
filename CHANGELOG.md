@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.15.0] - 2026-11-08
+
+### Added
+- **Full USVM Section Migration & Declarative Rule Expansion**:
+  - Expanded declarative USVM AST rule repository with 16 newly validated rules in `src/usvm/rules/` covering 9 Enterprise Ind AS Accounting Standards (Ind AS 7, 16, 19, 2, 28, 33, 38, 110, 113) and 7 Direct Tax and GST Statutory Provisions (194S, 194BA, 194N, 194DA, 194K, 206C(1G), Section 52 GST TCS). Total USVM rules: 64 rules.
+  - Added 16 new declarative math archetypes to `statutory_ast_schema.js` and pure domain evaluators in `usvm_domain_evaluators.js`.
+  - Added 7 deterministic statutory calculators in `src/calculators.js` (`evaluateSection194S`, `evaluateSection194BA`, `evaluateSection194N`, `evaluateSection194DA`, `evaluateSection194K`, `evaluateSection206C1G`, `evaluateSection52GstTcs`) with JSDoc `@deprecated` markers.
+- **Corpus Expansion to 55 Canonical Sections (OKF v0.2)**:
+  - Synced 9 full OKF section packages with `section.json`, authoritative circulars, and form compliance schemas:
+    - Direct Tax: `salary_tds_sec192_sec392`, `tds_crypto_vda_194s`, `tds_online_gaming_194ba`, `tds_cash_withdrawals_194n`, `tds_life_insurance_194da`, `tds_mutual_funds_194k`, `tcs_remittance_lrs_206c_1g`.
+    - Indirect Tax (GST): `e_waybill_rule138`, `gst_tcs_ecommerce_sec52`.
+  - Total OKF Corpus now comprises 55 sections across 5 canonical domains, 61 authoritative circulars, 56 compliance forms, and 202 primary deep citations with 100% integrity.
+- **Root Trust Anchor & Cryptographic Merkle Manifest**:
+  - Pinned verified release Merkle root digest: `sha256-7b97e2739f7738b281de94574e7443f4f26ad16ab88dc2f55803c3ddd90dce00`.
+
 ## [2.14.0] - 2026-11-08
 
 ### Deprecated

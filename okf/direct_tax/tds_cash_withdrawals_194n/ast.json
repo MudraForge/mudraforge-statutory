@@ -1,0 +1,28 @@
+{
+  "sectionId": "ITA1961_SEC194N",
+  "version": "1.0.0",
+  "title": "TDS on High-Value Cash Withdrawals",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194N",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 14",
+  "triggerPolicy": {
+    "type": "PAYMENT_ONLY",
+    "events": [
+      "CASH_WITHDRAWAL"
+    ],
+    "statutoryBasis": "Section 194N on cash withdrawal event"
+  },
+  "computation": {
+    "archetype": "TDS_CASH_WITHDRAWAL_194N",
+    "thresholdNormalFilerInr": 10000000,
+    "rateNormalFilerBps": 200,
+    "thresholdNonFilerTier1Inr": 2000000,
+    "rateNonFilerTier1Bps": 200,
+    "rateNonFilerTier2Bps": 500
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

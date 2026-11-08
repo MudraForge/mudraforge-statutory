@@ -1,0 +1,20 @@
+{
+  "sectionId": "INDAS2_INVENTORIES",
+  "version": "1.0.0",
+  "governingStatute": "Companies (Indian Accounting Standards) Rules, 2015",
+  "statutorySection": "Ind AS 2 / IAS 2",
+  "successorStatute": "Ind AS 2",
+  "successorSection": "Ind AS 2",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "description": "Inventory Valuation at Lower of Cost and Net Realizable Value (NRV)"
+  },
+  "computation": {
+    "archetype": "INVENTORY_VALUATION_INDAS2",
+    "lifoProhibited": true
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

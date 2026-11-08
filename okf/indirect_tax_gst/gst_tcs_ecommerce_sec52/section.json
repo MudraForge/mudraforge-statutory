@@ -1,0 +1,47 @@
+{
+  "sectionId": "CGST2017_SEC52_TCS_ECOMMERCE",
+  "sectionCode": "CGST_SEC52",
+  "aliases": [
+    "Section 52",
+    "GST TCS",
+    "E-Commerce TCS",
+    "GSTR-8 TCS"
+  ],
+  "governingStatute": "Central Goods and Services Tax Act, 2017",
+  "statutorySection": "Section 52",
+  "successorStatute": "CGST Act, 2017",
+  "successorSection": "Section 52",
+  "title": "TCS Collection by Electronic Commerce Operators (ECO)",
+  "effectivePeriod": {
+    "validFrom": "2018-10-01",
+    "validTo": "OPEN_ENDED"
+  },
+  "plainTextSummary": "Mandates electronic commerce operators to collect tax at source at 1% (0.5% CGST + 0.5% SGST or 1% IGST) on the net value of taxable supplies made through their platform where the consideration is collected by the operator.",
+  "keyStatutoryThresholds": [
+    {
+      "label": "Statutory Rate (Intra-State)",
+      "amountInr": 0,
+      "statutoryBasis": "Section 52(1) (0.5% CGST + 0.5% SGST)"
+    },
+    {
+      "label": "Statutory Rate (Inter-State)",
+      "amountInr": 0,
+      "statutoryBasis": "Section 52(1) read with IGST Act Section 20 (1.0% IGST)"
+    }
+  ],
+  "officialCitations": [
+    {
+      "authority": "Central Board of Indirect Taxes and Customs (CBIC)",
+      "instrument": "Notification No. 52/2018 - Central Tax",
+      "subject": "Tax Collection at Source (TCS) by Electronic Commerce Operators under Section 52",
+      "officialUrl": "https://cbic.gov.in/resources/htdocs-cbec/gst/notct-52-2018.pdf"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Form GSTR-8 Monthly Statement",
+    "Supplier GSTIN Validation & Reconciliation",
+    "Sales Returns Ledger"
+  ],
+  "tier": "CORE_STATUTORY",
+  "version": "0.2.0"
+}

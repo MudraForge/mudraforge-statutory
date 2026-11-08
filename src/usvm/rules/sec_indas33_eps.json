@@ -1,0 +1,20 @@
+{
+  "sectionId": "INDAS33_EARNINGS_PER_SHARE",
+  "version": "1.0.0",
+  "governingStatute": "Companies (Indian Accounting Standards) Rules, 2015",
+  "statutorySection": "Ind AS 33 / IAS 33",
+  "successorStatute": "Ind AS 33",
+  "successorSection": "Ind AS 33",
+  "triggerPolicy": {
+    "type": "FISCAL_YEAR_END",
+    "description": "Basic and Diluted Earnings Per Share Computation"
+  },
+  "computation": {
+    "archetype": "EARNINGS_PER_SHARE_INDAS33",
+    "treasuryStockMethod": true
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

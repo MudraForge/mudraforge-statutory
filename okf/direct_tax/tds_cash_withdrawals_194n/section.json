@@ -1,0 +1,46 @@
+{
+  "sectionId": "ITA1961_SEC194N",
+  "sectionCode": "194N",
+  "aliases": [
+    "Section 194N",
+    "TDS on Cash Withdrawal",
+    "High Value Cash Withdrawal TDS"
+  ],
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194N",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 14",
+  "title": "TDS on High-Value Cash Withdrawals Exceeding One Crore / Twenty Lakhs",
+  "effectivePeriod": {
+    "validFrom": "2019-09-01",
+    "validTo": "2026-03-31"
+  },
+  "plainTextSummary": "Requires banks, co-operative societies, and post offices to deduct 2% TDS on cash withdrawals exceeding INR 1 Crore in aggregate in a financial year. For non-filers of income tax returns, 2% applies between INR 20 Lakhs and INR 1 Crore, and 5% applies on excess over INR 1 Crore.",
+  "keyStatutoryThresholds": [
+    {
+      "label": "Normal Filer Annual Threshold",
+      "amountInr": 10000000,
+      "statutoryBasis": "Section 194N(1)"
+    },
+    {
+      "label": "Non-Filer Lower Threshold",
+      "amountInr": 2000000,
+      "statutoryBasis": "Section 194N Second Proviso"
+    }
+  ],
+  "officialCitations": [
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "CBDT Notification No. 70/2019",
+      "subject": "Exemptions and Guidelines for Deduction of Tax at Source under Section 194N",
+      "officialUrl": "https://incometaxindia.gov.in/communications/notification/notification_70_2019.pdf"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Bank Cash Ledger",
+    "ITR Verification ITBA Portal Check",
+    "Exemption Certificate for White-Label ATMs"
+  ],
+  "tier": "CORE_STATUTORY",
+  "version": "0.2.0"
+}

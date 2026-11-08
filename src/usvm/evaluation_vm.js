@@ -54,7 +54,14 @@ import {
     evaluateSlumpSaleSection50B,
     evaluateBusinessCombinationsIndAs103Usvm,
     evaluateImpairmentIndAs36Usvm,
-    evaluateShareBasedPaymentsIndAs102Usvm
+    evaluateShareBasedPaymentsIndAs102Usvm,
+    evaluateSection194SUsvm,
+    evaluateSection194BAUsvm,
+    evaluateSection194NUsvm,
+    evaluateSection194DAUsvm,
+    evaluateSection194KUsvm,
+    evaluateSection206C1GUsvm,
+    evaluateSection52GstTcsUsvm
 } from './usvm_domain_evaluators.js';
 
 /**
@@ -389,6 +396,27 @@ export function evaluateStatutoryAst(ruleAst, facts = {}) {
     }
     if (archetype === 'SHARE_BASED_PAYMENTS_INDAS102') {
         return evaluateShareBasedPaymentsIndAs102Usvm(ruleAst, facts, trace);
+    }
+    if (archetype === 'TDS_VDA_CRYPTO_194S') {
+        return evaluateSection194SUsvm(ruleAst, facts, trace);
+    }
+    if (archetype === 'TDS_ONLINE_GAMING_194BA') {
+        return evaluateSection194BAUsvm(ruleAst, facts, trace);
+    }
+    if (archetype === 'TDS_CASH_WITHDRAWAL_194N') {
+        return evaluateSection194NUsvm(ruleAst, facts, trace);
+    }
+    if (archetype === 'TDS_LIFE_INSURANCE_194DA') {
+        return evaluateSection194DAUsvm(ruleAst, facts, trace);
+    }
+    if (archetype === 'TDS_MUTUAL_FUNDS_194K') {
+        return evaluateSection194KUsvm(ruleAst, facts, trace);
+    }
+    if (archetype === 'TCS_REMITTANCE_LRS_206C1G') {
+        return evaluateSection206C1GUsvm(ruleAst, facts, trace);
+    }
+    if (archetype === 'GST_TCS_ECOMMERCE_SEC52') {
+        return evaluateSection52GstTcsUsvm(ruleAst, facts, trace);
     }
 
     // 5. Ingress Invoice Consideration Quantization

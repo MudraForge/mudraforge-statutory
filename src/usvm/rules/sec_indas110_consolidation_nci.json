@@ -1,0 +1,20 @@
+{
+  "sectionId": "INDAS110_CONSOLIDATION_NCI",
+  "version": "1.0.0",
+  "governingStatute": "Companies (Indian Accounting Standards) Rules, 2015",
+  "statutorySection": "Ind AS 110 / IFRS 10",
+  "successorStatute": "Ind AS 110",
+  "successorSection": "Ind AS 110",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "description": "Consolidated Financial Statements & Non-Controlling Interest (NCI)"
+  },
+  "computation": {
+    "archetype": "CONSOLIDATION_NCI_INDAS110",
+    "controlAssessmentMandated": true
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "sectionId": "INDAS7_STATEMENT_OF_CASH_FLOWS",
+  "version": "1.0.0",
+  "governingStatute": "Companies (Indian Accounting Standards) Rules, 2015",
+  "statutorySection": "Ind AS 7 / IAS 7",
+  "successorStatute": "Ind AS 7",
+  "successorSection": "Ind AS 7",
+  "triggerPolicy": {
+    "type": "FISCAL_YEAR_END",
+    "description": "Statement of Cash Flows Classification (Operating, Investing, Financing)"
+  },
+  "computation": {
+    "archetype": "CASH_FLOWS_INDAS7",
+    "directIndirectMethodAllowed": true
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

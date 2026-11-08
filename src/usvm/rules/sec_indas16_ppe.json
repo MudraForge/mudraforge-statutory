@@ -1,0 +1,20 @@
+{
+  "sectionId": "INDAS16_PROPERTY_PLANT_EQUIPMENT",
+  "version": "1.0.0",
+  "governingStatute": "Companies (Indian Accounting Standards) Rules, 2015",
+  "statutorySection": "Ind AS 16 / IAS 16",
+  "successorStatute": "Ind AS 16",
+  "successorSection": "Ind AS 16",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "description": "Property, Plant and Equipment Component Depreciation & Initial Cost Capitalization"
+  },
+  "computation": {
+    "archetype": "PPE_DEPRECIATION_INDAS16",
+    "componentAccountingMandated": true
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

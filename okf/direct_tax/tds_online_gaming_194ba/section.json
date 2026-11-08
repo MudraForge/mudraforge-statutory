@@ -1,0 +1,42 @@
+{
+  "sectionId": "ITA1961_SEC194BA",
+  "sectionCode": "194BA",
+  "aliases": [
+    "Section 194BA",
+    "TDS on Online Gaming",
+    "Net Winnings TDS",
+    "Online Games Tax"
+  ],
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194BA",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 13",
+  "title": "TDS on Net Winnings from Online Games",
+  "effectivePeriod": {
+    "validFrom": "2023-04-01",
+    "validTo": "2026-03-31"
+  },
+  "plainTextSummary": "Mandates 30% TDS on net winnings in any user account of online gaming platforms, computed at the time of withdrawal or at the end of the financial year under Rule 133.",
+  "keyStatutoryThresholds": [
+    {
+      "label": "Minimum Monetary Threshold",
+      "amountInr": 0,
+      "statutoryBasis": "Section 194BA(1) (Taxable on first rupee of net winnings)"
+    }
+  ],
+  "officialCitations": [
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "CBDT Circular No. 5 of 2023",
+      "subject": "Guidelines for Deduction of Tax at Source under Section 194BA on Online Gaming Winnings",
+      "officialUrl": "https://incometaxindia.gov.in/communications/circular/circular-5-2023.pdf"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Form 26Q Quarterly Return",
+    "Form 16A TDS Certificate",
+    "Player KYC & PAN Verification"
+  ],
+  "tier": "CORE_STATUTORY",
+  "version": "0.2.0"
+}

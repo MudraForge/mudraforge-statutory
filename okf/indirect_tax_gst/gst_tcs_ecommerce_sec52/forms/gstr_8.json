@@ -1,0 +1,6 @@
+{
+  "formName": "GSTR-8",
+  "title": "Statement for tax collection at source under section 52",
+  "frequency": "MONTHLY",
+  "dueDays": 10
+}

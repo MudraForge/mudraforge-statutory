@@ -1,0 +1,23 @@
+{
+  "sectionId": "ITACT1961_SEC192",
+  "version": "1.0.0",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 192",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 392",
+  "triggerPolicy": {
+    "type": "PAYMENT_ONLY",
+    "description": "Monthly payroll disbursement average rate withholding"
+  },
+  "computation": {
+    "archetype": "SALARY_SLAB_PROGRESSIVE_TDS",
+    "standardDeductionInr": 75000,
+    "rebate87ACeilingInr": 700000,
+    "cessPercent": 4
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  },
+  "transitionalCutoverDate": "2026-04-01"
+}

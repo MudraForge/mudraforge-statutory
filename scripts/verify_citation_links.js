@@ -44,6 +44,8 @@ export const AUTHORITATIVE_DOMAIN_WHITELIST = new Set([
     'www.incometax.gov.in',
 
     // Indirect Tax (GST) / CBIC & GST Council
+    'cbic.gov.in',
+    'www.cbic.gov.in',
     'cbic-gst.gov.in',
     'taxinformation.cbic.gov.in',
     'www.cbic-gst.gov.in',

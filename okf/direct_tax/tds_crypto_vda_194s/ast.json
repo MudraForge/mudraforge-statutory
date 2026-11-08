@@ -1,0 +1,28 @@
+{
+  "sectionId": "ITA1961_SEC194S",
+  "version": "1.0.0",
+  "title": "TDS on Virtual Digital Assets (Crypto / VDA Transfer)",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194S",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 12",
+  "triggerPolicy": {
+    "type": "EARLIER_OF",
+    "events": [
+      "BOOK_CREDIT",
+      "PAYMENT_DISBURSEMENT"
+    ],
+    "statutoryBasis": "Section 194S(1) earlier of credit or payment"
+  },
+  "computation": {
+    "archetype": "TDS_VDA_CRYPTO_194S",
+    "standardRateBps": 100,
+    "penalRateMissingPanBps": 2000,
+    "thresholdSpecifiedPersonInr": 50000,
+    "thresholdGeneralInr": 10000
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "sectionId": "ITA1961_SEC206C1G",
+  "sectionCode": "206C(1G)",
+  "aliases": [
+    "Section 206C(1G)",
+    "TCS on Foreign Remittance",
+    "LRS TCS",
+    "Overseas Tour Package TCS"
+  ],
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 206C(1G)",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 394(1), Table 2",
+  "title": "TCS on Foreign Remittance under Liberalised Remittance Scheme (LRS) & Overseas Tour Packages",
+  "effectivePeriod": {
+    "validFrom": "2020-10-01",
+    "validTo": "2026-03-31"
+  },
+  "plainTextSummary": "Authorised dealers collect tax at source on foreign remittances under LRS exceeding INR 7 Lakhs (0.5% for education loan, 5% for medical/education, 20% for other remittances) and on overseas tour program packages (5% up to INR 7 Lakhs and 20% on excess).",
+  "keyStatutoryThresholds": [
+    {
+      "label": "LRS Annual Exemption Threshold",
+      "amountInr": 700000,
+      "statutoryBasis": "Section 206C(1G) First Proviso"
+    }
+  ],
+  "officialCitations": [
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "CBDT Circular No. 10 of 2023",
+      "subject": "Clarification regarding Tax Collection at Source (TCS) on Liberalised Remittance Scheme (LRS) and Overseas Tour Program Packages under Section 206C(1G)",
+      "officialUrl": "https://incometaxindia.gov.in/communications/circular/circular-10-2023.pdf"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "LRS Declaration Form A2",
+    "Overseas Tour Booking Voucher",
+    "Form 27EQ Quarterly Statement"
+  ],
+  "tier": "CORE_STATUTORY",
+  "version": "0.2.0"
+}

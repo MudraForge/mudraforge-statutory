@@ -1,0 +1,26 @@
+{
+  "sectionId": "ITA1961_SEC194BA",
+  "version": "1.0.0",
+  "title": "TDS on Winnings from Online Games",
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194BA",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 13",
+  "triggerPolicy": {
+    "type": "PAYMENT_ONLY",
+    "events": [
+      "WITHDRAWAL",
+      "FINANCIAL_YEAR_END"
+    ],
+    "statutoryBasis": "Section 194BA(1) on net winnings at withdrawal or year-end"
+  },
+  "computation": {
+    "archetype": "TDS_ONLINE_GAMING_194BA",
+    "standardRateBps": 3000,
+    "penalRateMissingPanBps": 3000
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "INCOME_TAX_ACT_1961_SEC288B"
+  }
+}

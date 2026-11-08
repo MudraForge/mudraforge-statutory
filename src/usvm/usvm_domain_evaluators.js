@@ -38,7 +38,14 @@ import {
     evaluateProvisionsAndContingenciesIndAs37,
     calculateForeignCurrencyIndAs21,
     calculateImpairmentIndAs36,
-    calculateBusinessCombinationsIndAs103
+    calculateBusinessCombinationsIndAs103,
+    evaluateSection194S,
+    evaluateSection194BA,
+    evaluateSection194N,
+    evaluateSection194DA,
+    evaluateSection194K,
+    evaluateSection206C1G,
+    evaluateSection52GstTcs
 } from '../calculators.js';
 
 import {
@@ -1009,6 +1016,177 @@ export function evaluateShareBasedPaymentsIndAs102Usvm(ruleAst, facts, trace = [
         currentMarketPriceInr: facts.currentMarketPriceInr || 150
     });
 
+    return {
+        ...res,
+        ruleId: ruleAst.sectionId,
+        ruleVersion: ruleAst.version,
+        governingStatute: ruleAst.governingStatute,
+        governingSection: ruleAst.statutorySection,
+        isAuthorizedToDisburse: false,
+        executionTrace: trace
+    };
+}
+
+/**
+ * Evaluates Section 194S TDS on Virtual Digital Assets (Crypto / VDA).
+ */
+export function evaluateSection194SUsvm(ruleAst, facts, trace = []) {
+    trace.push('USVM evaluating Section 194S TDS on Virtual Digital Assets');
+    const res = evaluateSection194S({
+        considerationInr: facts.considerationInr || facts.invoiceAmount || facts.grossAmountInr || 0,
+        cumulativePriorConsiderationInr: facts.cumulativePriorConsiderationInr || facts.priorConsiderationInr || 0,
+        isSpecifiedPerson: facts.isSpecifiedPerson || false,
+        hasPan: facts.hasPan !== undefined ? facts.hasPan : (facts.payee?.isPanValid !== undefined ? facts.payee.isPanValid : true),
+        isPanInoperative: facts.isPanInoperative || false,
+        isSellerResident: facts.isSellerResident !== undefined ? facts.isSellerResident : true,
+        transactionDate: facts.transactionDate || facts.effectiveDate || null
+    });
+    return {
+        ...res,
+        ruleId: ruleAst.sectionId,
+        ruleVersion: ruleAst.version,
+        governingStatute: ruleAst.governingStatute,
+        governingSection: ruleAst.statutorySection,
+        isAuthorizedToDisburse: false,
+        executionTrace: trace
+    };
+}
+
+/**
+ * Evaluates Section 194BA TDS on Winnings from Online Games.
+ */
+export function evaluateSection194BAUsvm(ruleAst, facts, trace = []) {
+    trace.push('USVM evaluating Section 194BA TDS on Online Gaming Winnings');
+    const res = evaluateSection194BA({
+        netWinningsInr: facts.netWinningsInr,
+        withdrawalAmountInr: facts.withdrawalAmountInr || facts.grossAmountInr || facts.invoiceAmount,
+        totalDepositsInr: facts.totalDepositsInr || 0,
+        openingBalanceInr: facts.openingBalanceInr || 0,
+        closingBalanceInr: facts.closingBalanceInr || 0,
+        totalPriorWithdrawalsInr: facts.totalPriorWithdrawalsInr || 0,
+        hasPan: facts.hasPan !== undefined ? facts.hasPan : (facts.payee?.isPanValid !== undefined ? facts.payee.isPanValid : true),
+        isPanInoperative: facts.isPanInoperative || false,
+        transactionDate: facts.transactionDate || null
+    });
+    return {
+        ...res,
+        ruleId: ruleAst.sectionId,
+        ruleVersion: ruleAst.version,
+        governingStatute: ruleAst.governingStatute,
+        governingSection: ruleAst.statutorySection,
+        isAuthorizedToDisburse: false,
+        executionTrace: trace
+    };
+}
+
+/**
+ * Evaluates Section 194N TDS on High-Value Cash Withdrawals.
+ */
+export function evaluateSection194NUsvm(ruleAst, facts, trace = []) {
+    trace.push('USVM evaluating Section 194N TDS on Cash Withdrawals');
+    const res = evaluateSection194N({
+        withdrawalAmountInr: facts.withdrawalAmountInr || facts.grossAmountInr || facts.invoiceAmount || 0,
+        cumulativePriorWithdrawalsInr: facts.cumulativePriorWithdrawalsInr || facts.priorWithdrawalsInr || 0,
+        isNonFilerPast3Years: facts.isNonFilerPast3Years || false,
+        isExemptEntity: facts.isExemptEntity || false,
+        transactionDate: facts.transactionDate || null
+    });
+    return {
+        ...res,
+        ruleId: ruleAst.sectionId,
+        ruleVersion: ruleAst.version,
+        governingStatute: ruleAst.governingStatute,
+        governingSection: ruleAst.statutorySection,
+        isAuthorizedToDisburse: false,
+        executionTrace: trace
+    };
+}
+
+/**
+ * Evaluates Section 194DA TDS on Life Insurance Policy Payouts.
+ */
+export function evaluateSection194DAUsvm(ruleAst, facts, trace = []) {
+    trace.push('USVM evaluating Section 194DA TDS on Life Insurance Payouts');
+    const res = evaluateSection194DA({
+        payoutAmountInr: facts.payoutAmountInr || facts.grossAmountInr || facts.invoiceAmount || 0,
+        totalPremiumsPaidInr: facts.totalPremiumsPaidInr || facts.premiumsPaidInr || 0,
+        cumulativePriorPayoutsInr: facts.cumulativePriorPayoutsInr || 0,
+        isExemptUnderSection10_10D: facts.isExemptUnderSection10_10D || false,
+        hasPan: facts.hasPan !== undefined ? facts.hasPan : (facts.payee?.isPanValid !== undefined ? facts.payee.isPanValid : true),
+        isPanInoperative: facts.isPanInoperative || false,
+        transactionDate: facts.transactionDate || null
+    });
+    return {
+        ...res,
+        ruleId: ruleAst.sectionId,
+        ruleVersion: ruleAst.version,
+        governingStatute: ruleAst.governingStatute,
+        governingSection: ruleAst.statutorySection,
+        isAuthorizedToDisburse: false,
+        executionTrace: trace
+    };
+}
+
+/**
+ * Evaluates Section 194K TDS on Mutual Fund Income.
+ */
+export function evaluateSection194KUsvm(ruleAst, facts, trace = []) {
+    trace.push('USVM evaluating Section 194K TDS on Mutual Fund Income');
+    const res = evaluateSection194K({
+        incomeAmountInr: facts.incomeAmountInr || facts.grossAmountInr || facts.invoiceAmount || 0,
+        cumulativePriorIncomeInr: facts.cumulativePriorIncomeInr || 0,
+        isCapitalGainDistribution: facts.isCapitalGainDistribution || false,
+        hasPan: facts.hasPan !== undefined ? facts.hasPan : (facts.payee?.isPanValid !== undefined ? facts.payee.isPanValid : true),
+        isPanInoperative: facts.isPanInoperative || false,
+        transactionDate: facts.transactionDate || null
+    });
+    return {
+        ...res,
+        ruleId: ruleAst.sectionId,
+        ruleVersion: ruleAst.version,
+        governingStatute: ruleAst.governingStatute,
+        governingSection: ruleAst.statutorySection,
+        isAuthorizedToDisburse: false,
+        executionTrace: trace
+    };
+}
+
+/**
+ * Evaluates Section 206C(1G) TCS on LRS Foreign Remittances.
+ */
+export function evaluateSection206C1GUsvm(ruleAst, facts, trace = []) {
+    trace.push('USVM evaluating Section 206C(1G) TCS on Foreign Remittances');
+    const res = evaluateSection206C1G({
+        remittanceAmountInr: facts.remittanceAmountInr || facts.grossAmountInr || facts.invoiceAmount || 0,
+        cumulativePriorRemittancesInr: facts.cumulativePriorRemittancesInr || 0,
+        remittanceType: facts.remittanceType || 'OTHER_REMITTANCE',
+        hasPan: facts.hasPan !== undefined ? facts.hasPan : (facts.payee?.isPanValid !== undefined ? facts.payee.isPanValid : true),
+        isPanInoperative: facts.isPanInoperative || false,
+        transactionDate: facts.transactionDate || null
+    });
+    return {
+        ...res,
+        ruleId: ruleAst.sectionId,
+        ruleVersion: ruleAst.version,
+        governingStatute: ruleAst.governingStatute,
+        governingSection: ruleAst.statutorySection,
+        isAuthorizedToDisburse: false,
+        executionTrace: trace
+    };
+}
+
+/**
+ * Evaluates GST Section 52 TCS by E-Commerce Operators.
+ */
+export function evaluateSection52GstTcsUsvm(ruleAst, facts, trace = []) {
+    trace.push('USVM evaluating GST Section 52 TCS by E-Commerce Operators');
+    const res = evaluateSection52GstTcs({
+        grossTaxableSuppliesInr: facts.grossTaxableSuppliesInr || facts.taxableAmountInr || facts.grossAmountInr || facts.invoiceAmount || 0,
+        returnedSuppliesInr: facts.returnedSuppliesInr || 0,
+        isInterState: facts.isInterState || false,
+        isSec9_5SpecifiedService: facts.isSec9_5SpecifiedService || false,
+        transactionDate: facts.transactionDate || null
+    });
     return {
         ...res,
         ruleId: ruleAst.sectionId,

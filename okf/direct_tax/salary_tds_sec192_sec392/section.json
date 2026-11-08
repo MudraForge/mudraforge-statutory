@@ -1,0 +1,80 @@
+{
+  "sectionId": "ITA1961_SEC192_ITA2025_SEC392",
+  "sectionCode": "192-392",
+  "aliases": [
+    "192",
+    "392",
+    "sec192",
+    "sec392",
+    "salary tds",
+    "tds on salary",
+    "section 192",
+    "section 392",
+    "form 24q",
+    "form 16",
+    "form 12bb"
+  ],
+  "governingStatute": "Income-tax Act, 1961 (Act No. 43 of 1961)",
+  "statutorySection": "Section 192 read with Section 115BAC",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 392(1) read with Section 392(2), (3), (4)",
+  "title": "Deduction of tax at source (TDS) on Salaries and Dual-Act Transition",
+  "effectivePeriod": {
+    "validFrom": "1962-04-01",
+    "validTo": "OPEN_ENDED"
+  },
+  "plainTextSummary": "Under Section 192 of the Income-tax Act, 1961, any person responsible for paying any income chargeable under the head 'Salaries' shall, at the time of payment, deduct income-tax on the amount payable at the average rate of income-tax computed on the basis of the rates in force for the financial year in which payment is made, on the estimated income of the employee under of this head. Pursuant to Section 115BAC(1A) as amended by Finance Act, 2023 and CBDT Circular No. 04/2023, the New Tax Regime is the statutory default regime for salary TDS deduction unless the employee explicitly intimates opting out for the Old Tax Regime. The standard deduction under Section 16(ia) is ₹75,000 for the New Tax Regime (raised by Finance (No. 2) Act, 2024 w.e.f. AY 2025-26) and ₹50,000 for the Old Tax Regime. Effective 1 April 2026, the Income-tax Act, 2025 comes into force, transitioning salary TDS to Section 392(1) (while non-salary payments are consolidated into Section 393 tables). Annual certificates transition from Form 16 to Form 130, and employee investment evidence under Rule 26C Form 12BB transitions to declarations under Section 392(4).",
+  "keyStatutoryThresholds": {
+    "defaultTaxRegime": "Section 115BAC(1A) New Tax Regime is default unless employee intimates opt-out",
+    "standardDeductionNewRegimeInr": 75000,
+    "standardDeductionOldRegimeInr": 50000,
+    "rebate87AThresholdNewRegimeInr": 700000,
+    "rebate87AThresholdOldRegimeInr": 500000,
+    "newRegimeTaxSlabsAy2025_26": [
+      { "slabMin": 0, "slabMax": 300000, "ratePercent": 0 },
+      { "slabMin": 300000, "slabMax": 700000, "ratePercent": 5 },
+      { "slabMin": 700000, "slabMax": 1000000, "ratePercent": 10 },
+      { "slabMin": 1000000, "slabMax": 1200000, "ratePercent": 15 },
+      { "slabMin": 1200000, "slabMax": 1500000, "ratePercent": 20 },
+      { "slabMin": 1500000, "slabMax": null, "ratePercent": 30 }
+    ],
+    "oldRegimeTaxSlabs": [
+      { "slabMin": 0, "slabMax": 250000, "ratePercent": 0 },
+      { "slabMin": 250000, "slabMax": 500000, "ratePercent": 5 },
+      { "slabMin": 500000, "slabMax": 1000000, "ratePercent": 20 },
+      { "slabMin": 1000000, "slabMax": null, "ratePercent": 30 }
+    ],
+    "healthAndEducationCessPercent": 4,
+    "epfWageCeilingStandardInr": 15000,
+    "epfEmployeeRatePercent": 12,
+    "epfEmployerRatePercent": 12,
+    "esicWageCeilingStandardInr": 21000,
+    "esicEmployeeRatePercent": 0.75,
+    "esicEmployerRatePercent": 3.25,
+    "dualActSuccessorTransitionDate": "2026-04-01",
+    "dualActSuccessorSection": "Section 392(1) of Income-tax Act, 2025"
+  },
+  "officialCitations": [
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "Circular No. 04/2023",
+      "subject": "Clarification regarding deduction of tax at source under section 192 read with sub-section (1A) of section 115BAC of the Income-tax Act, 1961",
+      "officialUrl": "https://incometaxindia.gov.in/communications/circular/circular-no-4-2023.pdf"
+    },
+    {
+      "authority": "Ministry of Finance",
+      "instrument": "Finance (No. 2) Act, 2024",
+      "subject": "Enhancement of standard deduction to ₹75,000 under Section 16(ia) for New Tax Regime Section 115BAC and revision of tax slabs w.e.f. AY 2025-26",
+      "officialUrl": "https://incometaxindia.gov.in/pages/acts/finance-acts.aspx"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Employee Tax Regime Intimation (New Tax Regime Section 115BAC default vs. Old Tax Regime opt-in)",
+    "Form 12BB employee claims declaration (HRA rent receipts & landlord PAN, LTA, Chapter VI-A proofs)",
+    "Monthly gross salary register with component-wise basic, DA, HRA, and special allowance",
+    "Quarterly statement of deduction of tax under Section 192 in Form 24Q (Annexure I & II)",
+    "Annual TDS Certificate issued to employee in Form 16 (Part A and Part B)"
+  ],
+  "tier": "PUBLIC_COMMONS_FREE",
+  "version": "0.2.0"
+}

@@ -1,0 +1,41 @@
+{
+  "sectionId": "ITA1961_SEC194K",
+  "sectionCode": "194K",
+  "aliases": [
+    "Section 194K",
+    "TDS on Mutual Funds",
+    "Mutual Fund Dividend TDS"
+  ],
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194K",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 16",
+  "title": "TDS on Income in Respect of Units of Mutual Fund",
+  "effectivePeriod": {
+    "validFrom": "2020-04-01",
+    "validTo": "2026-03-31"
+  },
+  "plainTextSummary": "Deduction of 10% tax at source on income distributed in respect of units of a mutual fund or Administrator of specified undertaking where aggregate income in a financial year exceeds INR 5,000. Capital gains on redemption are excluded.",
+  "keyStatutoryThresholds": [
+    {
+      "label": "Annual Exemption Threshold",
+      "amountInr": 5000,
+      "statutoryBasis": "Section 194K Second Proviso"
+    }
+  ],
+  "officialCitations": [
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "CBDT Circular No. 8 of 2020",
+      "subject": "Deduction of Tax at Source on Income in respect of Units of Mutual Funds under Section 194K",
+      "officialUrl": "https://incometaxindia.gov.in/communications/circular/circular-8-2020.pdf"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Mutual Fund Distribution Statement",
+    "PAN Verification",
+    "Form 16A"
+  ],
+  "tier": "CORE_STATUTORY",
+  "version": "0.2.0"
+}

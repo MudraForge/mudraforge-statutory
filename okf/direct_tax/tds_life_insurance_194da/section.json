@@ -1,0 +1,41 @@
+{
+  "sectionId": "ITA1961_SEC194DA",
+  "sectionCode": "194DA",
+  "aliases": [
+    "Section 194DA",
+    "TDS on Life Insurance Payout",
+    "Insurance Maturity TDS"
+  ],
+  "governingStatute": "Income-tax Act, 1961",
+  "statutorySection": "Section 194DA",
+  "successorStatute": "Income-tax Act, 2025",
+  "successorSection": "Section 393(1), Table 1, Sl. No. 15",
+  "title": "TDS on Payments under Life Insurance Policy",
+  "effectivePeriod": {
+    "validFrom": "2014-10-01",
+    "validTo": "2026-03-31"
+  },
+  "plainTextSummary": "Deduction of 5% tax at source on the net income component (payout less total premiums paid) of life insurance policy maturity payouts exceeding INR 1,00,000 where the policy is not exempt under Section 10(10D).",
+  "keyStatutoryThresholds": [
+    {
+      "label": "Exemption Ceiling",
+      "amountInr": 100000,
+      "statutoryBasis": "Section 194DA Proviso"
+    }
+  ],
+  "officialCitations": [
+    {
+      "authority": "Central Board of Direct Taxes (CBDT)",
+      "instrument": "CBDT Circular No. 15 of 2023",
+      "subject": "Guidelines for Deduction of Tax at Source on Life Insurance Policy Payouts under Section 194DA and Section 10(10D)",
+      "officialUrl": "https://incometaxindia.gov.in/communications/circular/circular-15-2023.pdf"
+    }
+  ],
+  "requiredDocumentChecklist": [
+    "Policy Document & Premium Payment Receipts",
+    "Section 10(10D) Exemption Evaluation",
+    "Form 16A"
+  ],
+  "tier": "CORE_STATUTORY",
+  "version": "0.2.0"
+}

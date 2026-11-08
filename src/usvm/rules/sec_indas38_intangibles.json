@@ -1,0 +1,20 @@
+{
+  "sectionId": "INDAS38_INTANGIBLE_ASSETS",
+  "version": "1.0.0",
+  "governingStatute": "Companies (Indian Accounting Standards) Rules, 2015",
+  "statutorySection": "Ind AS 38 / IAS 38",
+  "successorStatute": "Ind AS 38",
+  "successorSection": "Ind AS 38",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "description": "Intangibles Capitalization Boundary (PIRATE Criteria & R&D Segregation)"
+  },
+  "computation": {
+    "archetype": "INTANGIBLES_CAPITALIZATION_INDAS38",
+    "researchCostsExpensed": true
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

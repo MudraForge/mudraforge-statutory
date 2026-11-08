@@ -1,0 +1,27 @@
+{
+  "sectionId": "CGST2017_SEC52_TCS_ECOMMERCE",
+  "version": "1.0.0",
+  "title": "GST TCS Collection by E-Commerce Operators",
+  "governingStatute": "Central Goods and Services Tax Act, 2017",
+  "statutorySection": "Section 52",
+  "successorStatute": "CGST Act, 2017",
+  "successorSection": "Section 52",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "events": [
+      "NET_SUPPLY_RECONCILIATION"
+    ],
+    "statutoryBasis": "Section 52(1) monthly net taxable supply collection"
+  },
+  "computation": {
+    "archetype": "GST_TCS_ECOMMERCE_SEC52",
+    "totalRateBps": 100,
+    "cgstRateBps": 50,
+    "sgstRateBps": 50,
+    "igstRateBps": 100
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}

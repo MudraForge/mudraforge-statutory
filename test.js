@@ -57,6 +57,14 @@ import {
     evaluateSection194IB,
     evaluateSection194M,
     evaluateSection194R,
+    evaluateSection194S,
+    evaluateSection194BA,
+    evaluateSection194N,
+    evaluateSection194DA,
+    evaluateSection194K,
+    evaluateSection206C1G,
+    evaluateSection52GstTcs,
+    evaluateStatutoryAst,
     evaluateSection43BStatutoryPayables,
     calculateItcReversalRule37,
     calculateRule37ASupplierNonFilingReversal,
@@ -1655,7 +1663,7 @@ async function run() {
         cwd: path.resolve('.')
     });
     const parsedList = JSON.parse(cliListOutput);
-    if (!Array.isArray(parsedList.sections) || parsedList.total !== 46) {
+    if (!Array.isArray(parsedList.sections) || parsedList.total !== 55) {
         throw new Error('CLI list --json failed');
     }
 
@@ -5530,16 +5538,16 @@ async function run() {
     if (watchtowerReport.status !== 'SUCCESS') {
         throw new Error(`Watchtower returned failure status: ${JSON.stringify(watchtowerReport.checks)}`);
     }
-    if (watchtowerReport.checks.schemaValidation.sectionsScanned !== 46) {
-        throw new Error(`Expected 46 sections scanned, got ${watchtowerReport.checks.schemaValidation.sectionsScanned}`);
+    if (watchtowerReport.checks.schemaValidation.sectionsScanned !== 55) {
+        throw new Error(`Expected 55 sections scanned, got ${watchtowerReport.checks.schemaValidation.sectionsScanned}`);
     }
-    if (watchtowerReport.checks.schemaValidation.circularsScanned !== 52) {
-        throw new Error(`Expected 52 circulars scanned, got ${watchtowerReport.checks.schemaValidation.circularsScanned}`);
+    if (watchtowerReport.checks.schemaValidation.circularsScanned !== 61) {
+        throw new Error(`Expected 61 circulars scanned, got ${watchtowerReport.checks.schemaValidation.circularsScanned}`);
     }
-    if (watchtowerReport.checks.schemaValidation.formsScanned !== 47) {
-        throw new Error(`Expected 47 forms scanned, got ${watchtowerReport.checks.schemaValidation.formsScanned}`);
+    if (watchtowerReport.checks.schemaValidation.formsScanned !== 56) {
+        throw new Error(`Expected 56 forms scanned, got ${watchtowerReport.checks.schemaValidation.formsScanned}`);
     }
-    if (watchtowerReport.checks.citationIntegrity.failedCitations !== 0 || watchtowerReport.checks.citationIntegrity.validCitations !== 182) {
+    if (watchtowerReport.checks.citationIntegrity.failedCitations !== 0 || watchtowerReport.checks.citationIntegrity.validCitations !== 202) {
         throw new Error(`Citation integrity failed: ${watchtowerReport.checks.citationIntegrity.validCitations} valid, ${watchtowerReport.checks.citationIntegrity.failedCitations} failed`);
     }
     if (!watchtowerReport.checks.merkleImmutability.matchesPinnedRoot) {
@@ -5575,7 +5583,7 @@ async function run() {
         throw new Error(`CLI watchtower returned malformed output: ${cliOutput}`);
     }
 
-    console.log(`[PASS] Regulatory Watchtower Verified: All 46 sections, 52 circulars, 47 forms, 182 deep citations, and 9 regulatory horizons attested at 100.0% empanelment score.`);
+    console.log(`[PASS] Regulatory Watchtower Verified: All 55 sections, 61 circulars, 56 forms, 202 deep citations, and 9 regulatory horizons attested at 100.0% empanelment score.`);
 
     // ── Test 154: Notification No. 07/2025 Composition Rent Exclusion & Multi-Invoice Portfolio ECL Utilization ──
     console.log('\n── Test 154: Notification No. 07/2025 Composition Rent Exclusion & Multi-Invoice Portfolio ECL Utilization ──');
@@ -6398,6 +6406,151 @@ async function run() {
     }
 
     console.log('[PASS] Statutory Identity & Temporal Threshold Boundary Matrix Verified: Table 1 Sl. Nos., ₹1 below, exact equality, ₹1 above, director sitting fees, banking vs commercial interest, multi-month rent, and alias resolution confirmed.');
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // NEW STATUTORY PROVISIONS & USVM DECLARATIVE AST EXECUTION
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[SECTION] Verifying 7 New Statutory Provisions & USVM Declarative Execution...');
+
+    const loadUsvmRule = (fileName) => {
+        return JSON.parse(fs.readFileSync(path.resolve('src/usvm/rules', fileName), 'utf8'));
+    };
+
+    // 1. Section 194S (TDS on Virtual Digital Assets / Crypto)
+    {
+        const rule194s = loadUsvmRule('sec_194s_crypto_vda.json');
+        const resExempt = evaluateSection194S({ considerationInr: 8000, isSpecifiedPerson: false });
+        if (resExempt.statutoryDetermination !== 'EXEMPT_BELOW_THRESHOLD' || resExempt.calculatedTdsInr !== 0) {
+            throw new Error('Section 194S below threshold must be exempt');
+        }
+        const resUsvm = evaluateStatutoryAst(rule194s, { considerationInr: 100000, isSpecifiedPerson: false });
+        if (resUsvm.status !== 'SUCCESS' || resUsvm.applicableTdsRatePercent !== 1.0 || resUsvm.calculatedTdsInr !== 900 || resUsvm.isAuthorizedToDisburse !== false) {
+            throw new Error(`Section 194S USVM calculation failed: got ${JSON.stringify(resUsvm)}`);
+        }
+        const resNoPan = evaluateSection194S({ considerationInr: 100000, hasPan: false, isSpecifiedPerson: false });
+        if (resNoPan.applicableTdsRatePercent !== 20.0 || resNoPan.calculatedTdsInr !== 18000) {
+            throw new Error('Section 194S missing PAN penalty rate failed');
+        }
+        console.log('  [PASS] Section 194S (Crypto / VDA) Calculator & USVM verified');
+    }
+
+    // 2. Section 194BA (TDS on Net Winnings from Online Games)
+    {
+        const rule194ba = loadUsvmRule('sec_194ba_online_gaming.json');
+        const resUsvm = evaluateStatutoryAst(rule194ba, {
+            withdrawalAmountInr: 100000,
+            totalDepositsInr: 40000,
+            openingBalanceInr: 0,
+            closingBalanceInr: 0
+        });
+        if (resUsvm.status !== 'SUCCESS' || resUsvm.applicableTdsRatePercent !== 30.0 || resUsvm.taxableBaseInr !== 60000 || resUsvm.calculatedTdsInr !== 18000 || resUsvm.isAuthorizedToDisburse !== false) {
+            throw new Error(`Section 194BA USVM calculation failed: got ${JSON.stringify(resUsvm)}`);
+        }
+        console.log('  [PASS] Section 194BA (Online Gaming Net Winnings) Calculator & USVM verified');
+    }
+
+    // 3. Section 194N (TDS on High-Value Cash Withdrawals)
+    {
+        const rule194n = loadUsvmRule('sec_194n_cash_withdrawals.json');
+        const resNormal = evaluateStatutoryAst(rule194n, {
+            withdrawalAmountInr: 12000000,
+            cumulativePriorWithdrawalsInr: 0,
+            isNonFilerPast3Years: false
+        });
+        if (resNormal.status !== 'SUCCESS' || resNormal.applicableTdsRatePercent !== 2.0 || resNormal.taxableBaseInr !== 2000000 || resNormal.calculatedTdsInr !== 40000 || resNormal.isAuthorizedToDisburse !== false) {
+            throw new Error(`Section 194N normal USVM calculation failed: got ${JSON.stringify(resNormal)}`);
+        }
+        const resNonFiler = evaluateSection194N({
+            withdrawalAmountInr: 15000000,
+            cumulativePriorWithdrawalsInr: 0,
+            isNonFilerPast3Years: true
+        });
+        if (resNonFiler.status !== 'SUCCESS' || resNonFiler.calculatedTdsInr !== 410000) {
+            throw new Error(`Section 194N non-filer calculation failed: got ${resNonFiler.calculatedTdsInr}`);
+        }
+        console.log('  [PASS] Section 194N (High-Value Cash Withdrawals) Calculator & USVM verified');
+    }
+
+    // 4. Section 194DA (TDS on Life Insurance Policy Payouts)
+    {
+        const rule194da = loadUsvmRule('sec_194da_life_insurance.json');
+        const res10D = evaluateSection194DA({ payoutAmountInr: 1000000, isExemptUnderSection10_10D: true });
+        if (res10D.statutoryDetermination !== 'EXEMPT_SECTION_10_10D' || res10D.calculatedTdsInr !== 0) {
+            throw new Error('Section 194DA exempt under 10(10D) failed');
+        }
+        const resUsvm = evaluateStatutoryAst(rule194da, {
+            payoutAmountInr: 500000,
+            totalPremiumsPaidInr: 300000,
+            isExemptUnderSection10_10D: false
+        });
+        if (resUsvm.status !== 'SUCCESS' || resUsvm.applicableTdsRatePercent !== 5.0 || resUsvm.taxableBaseInr !== 200000 || resUsvm.calculatedTdsInr !== 10000 || resUsvm.isAuthorizedToDisburse !== false) {
+            throw new Error(`Section 194DA USVM calculation failed: got ${JSON.stringify(resUsvm)}`);
+        }
+        console.log('  [PASS] Section 194DA (Life Insurance Payouts) Calculator & USVM verified');
+    }
+
+    // 5. Section 194K (TDS on Income in Respect of Units of Mutual Funds)
+    {
+        const rule194k = loadUsvmRule('sec_194k_mutual_funds.json');
+        const resCapGain = evaluateSection194K({ incomeAmountInr: 50000, isCapitalGainDistribution: true });
+        if (resCapGain.statutoryDetermination !== 'EXEMPT_CAPITAL_GAINS_EXCLUSION') {
+            throw new Error('Section 194K capital gains exclusion failed');
+        }
+        const resBelow = evaluateSection194K({ incomeAmountInr: 4000 });
+        if (resBelow.statutoryDetermination !== 'EXEMPT_BELOW_THRESHOLD') {
+            throw new Error('Section 194K below threshold failed');
+        }
+        const resUsvm = evaluateStatutoryAst(rule194k, {
+            incomeAmountInr: 25000,
+            isCapitalGainDistribution: false
+        });
+        if (resUsvm.status !== 'SUCCESS' || resUsvm.applicableTdsRatePercent !== 10.0 || resUsvm.calculatedTdsInr !== 2500 || resUsvm.isAuthorizedToDisburse !== false) {
+            throw new Error(`Section 194K USVM calculation failed: got ${JSON.stringify(resUsvm)}`);
+        }
+        console.log('  [PASS] Section 194K (Mutual Fund Income) Calculator & USVM verified');
+    }
+
+    // 6. Section 206C(1G) (TCS on Foreign Remittances under LRS)
+    {
+        const rule206c1g = loadUsvmRule('sec_206c1g_lrs_remittance.json');
+        const resTour = evaluateStatutoryAst(rule206c1g, {
+            remittanceAmountInr: 1000000,
+            remittanceType: 'OVERSEAS_TOUR_PACKAGE'
+        });
+        if (resTour.status !== 'SUCCESS' || resTour.calculatedTcsInr !== 95000 || resTour.isAuthorizedToDisburse !== false) {
+            throw new Error(`Section 206C(1G) tour USVM failed: got ${JSON.stringify(resTour)}`);
+        }
+        const resGeneral = evaluateSection206C1G({
+            remittanceAmountInr: 1200000,
+            remittanceType: 'OTHER_REMITTANCE'
+        });
+        if (resGeneral.taxableBaseInr !== 500000 || resGeneral.calculatedTcsInr !== 100000) {
+            throw new Error(`Section 206C(1G) general remittance failed: got ${JSON.stringify(resGeneral)}`);
+        }
+        console.log('  [PASS] Section 206C(1G) (LRS Remittance & Tour Packages) Calculator & USVM verified');
+    }
+
+    // 7. CGST Section 52 (TCS by E-Commerce Operators)
+    {
+        const ruleSec52 = loadUsvmRule('sec_gst_tcs_ecommerce_sec52.json');
+        const resIntra = evaluateStatutoryAst(ruleSec52, {
+            grossTaxableSuppliesInr: 1000000,
+            returnedSuppliesInr: 100000,
+            isInterState: false
+        });
+        if (resIntra.status !== 'SUCCESS' || resIntra.applicableTcsRatePercent !== 1.0 || resIntra.taxableBaseInr !== 900000 || resIntra.calculatedTcsInr !== 9000 || resIntra.bifurcation.cgstInr !== 4500 || resIntra.bifurcation.sgstInr !== 4500 || resIntra.isAuthorizedToDisburse !== false) {
+            throw new Error(`Section 52 GST TCS intra-state failed: got ${JSON.stringify(resIntra)}`);
+        }
+        const resInter = evaluateSection52GstTcs({
+            grossTaxableSuppliesInr: 500000,
+            returnedSuppliesInr: 0,
+            isInterState: true
+        });
+        if (resInter.calculatedTcsInr !== 5000 || resInter.bifurcation.igstInr !== 5000) {
+            throw new Error(`Section 52 GST TCS inter-state failed: got ${JSON.stringify(resInter)}`);
+        }
+        console.log('  [PASS] GST Section 52 (E-Commerce Operator TCS) Calculator & USVM verified');
+    }
 
     console.log('\n===========================================================================');
     console.log('ALL 166 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');

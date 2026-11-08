@@ -54,6 +54,13 @@ import {
     evaluateSection194IB,
     evaluateSection194M,
     evaluateSection194R,
+    evaluateSection194S,
+    evaluateSection194BA,
+    evaluateSection194N,
+    evaluateSection194DA,
+    evaluateSection194K,
+    evaluateSection206C1G,
+    evaluateSection52GstTcs,
     evaluateSection43BStatutoryPayables,
     calculateItcReversalRule37,
     calculateRule37ASupplierNonFilingReversal,
@@ -121,7 +128,7 @@ export { STATUTORY_CLIENT_VERSION, DEFAULT_BASE_URL };
 /**
  * Current verified Merkle root digest for the active OKF v0.2 corpus.
  */
-export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-7ffc75e8611a9c966eea756dd544fdae9144e2318d3478633232bb876d05e364';
+export const CURRENT_RELEASE_MERKLE_ROOT = 'sha256-7b97e2739f7738b281de94574e7443f4f26ad16ab88dc2f55803c3ddd90dce00';
 export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
 
 /**
@@ -129,6 +136,7 @@ export const MERKLE_ROOT_OKF_V2 = CURRENT_RELEASE_MERKLE_ROOT;
  * Prevents unauthorized bundle substitution attacks even if an attacker controls the remote endpoint.
  */
 export const PINNED_RELEASE_ROOTS = new Set([
+    'sha256-7b97e2739f7738b281de94574e7443f4f26ad16ab88dc2f55803c3ddd90dce00', // feat/usvm-full-section-migration (55 Canonical Sections across 5 Domains, 64 USVM ASTs)
     'sha256-7ffc75e8611a9c966eea756dd544fdae9144e2318d3478633232bb876d05e364', // feat/usvm-declarative-architecture (46 Declarative ASTs across 5 canonical domains)
     'sha256-318004673a779499e82fd7316c7a6728f3bcdaf449bb4a557b6bd685b899dee3', // fix/public-okf-table1-sl-nos-and-temporal-thresholds (Section 393 Table 1 Sl Nos & 2025 Act thresholds)
     'sha256-b17c37b2724aece2a28beaab5720a777ae27e661ac51f1436be6eff3ca5ef64b', // feat/okf-accounting-domain-expansion (46 Sections across 5 Domains, 52 Circulars, 47 Forms)
@@ -2046,6 +2054,55 @@ export class StatutoryClient {
     }
 
     /**
+     * Section 194S: Deduction of tax at source on payment for transfer of virtual digital assets (Crypto / VDA).
+     */
+    evaluateSection194S(payload) {
+        return evaluateSection194S(payload);
+    }
+
+    /**
+     * Section 194BA: Deduction of tax at source on net winnings from online games.
+     */
+    evaluateSection194BA(payload) {
+        return evaluateSection194BA(payload);
+    }
+
+    /**
+     * Section 194N: Deduction of tax at source on cash withdrawals exceeding statutory limits.
+     */
+    evaluateSection194N(payload) {
+        return evaluateSection194N(payload);
+    }
+
+    /**
+     * Section 194DA: Deduction of tax at source on life insurance policy payouts.
+     */
+    evaluateSection194DA(payload) {
+        return evaluateSection194DA(payload);
+    }
+
+    /**
+     * Section 194K: Deduction of tax at source on income in respect of units of mutual funds.
+     */
+    evaluateSection194K(payload) {
+        return evaluateSection194K(payload);
+    }
+
+    /**
+     * Section 206C(1G): Tax collection at source on Liberalised Remittance Scheme (LRS) and overseas tour packages.
+     */
+    evaluateSection206C1G(payload) {
+        return evaluateSection206C1G(payload);
+    }
+
+    /**
+     * CGST Section 52: Tax collection at source by electronic commerce operators.
+     */
+    evaluateSection52GstTcs(payload) {
+        return evaluateSection52GstTcs(payload);
+    }
+
+    /**
      * Section 43B / Section 36(1)(va): Statutory payables disallowance & Supreme Court Checkmate Doctrine.
      */
     evaluateSection43B(payload) {
@@ -3383,6 +3440,13 @@ export {
     evaluateSection194IB,
     evaluateSection194M,
     evaluateSection194R,
+    evaluateSection194S,
+    evaluateSection194BA,
+    evaluateSection194N,
+    evaluateSection194DA,
+    evaluateSection194K,
+    evaluateSection206C1G,
+    evaluateSection52GstTcs,
     evaluateSection43BStatutoryPayables,
     calculateItcReversalRule37,
     calculateRule37ASupplierNonFilingReversal,

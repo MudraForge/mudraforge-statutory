@@ -1,0 +1,24 @@
+{
+  "sectionId": "INDAS113_FAIR_VALUE_MEASUREMENT",
+  "version": "1.0.0",
+  "governingStatute": "Companies (Indian Accounting Standards) Rules, 2015",
+  "statutorySection": "Ind AS 113 / IFRS 13",
+  "successorStatute": "Ind AS 113",
+  "successorSection": "Ind AS 113",
+  "triggerPolicy": {
+    "type": "TRANSACTION_DATE",
+    "description": "Fair Value Measurement 3-Level Hierarchy Classification"
+  },
+  "computation": {
+    "archetype": "FAIR_VALUE_HIERARCHY_INDAS113",
+    "hierarchyLevels": [
+      "LEVEL_1",
+      "LEVEL_2",
+      "LEVEL_3"
+    ]
+  },
+  "rounding": {
+    "transactionLine": "COMMERCIAL_PAISA",
+    "assessmentTotal": "COMMERCIAL_PAISA"
+  }
+}
