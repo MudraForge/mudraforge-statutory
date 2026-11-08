@@ -1441,6 +1441,9 @@ async function handleMerge(sourceBranch, options) {
                 }
             } else if (ciStatus.status === 'SUCCESS') {
                 console.log(`[REMOTE CI PASSED] All ${ciStatus.passed} remote GitHub Actions checks passed on origin/${sourceBranch}.`);
+            } else if (ciStatus.status === 'RATE_LIMITED') {
+                console.warn(`[WARN] ${ciStatus.message}`);
+                console.warn('Proceeding with full local CI parity verification.');
             }
         }
 

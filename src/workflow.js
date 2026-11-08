@@ -604,14 +604,36 @@ export async function getRemoteCIStatus(options = {}) {
 
     const url = `https://api.github.com/repos/${owner}/${repo}/commits/${sha}/check-runs`;
     try {
-        const resp = await fetch(url, {
-            headers: {
-                'User-Agent': 'mudraforge-statutory-cli',
-                'Accept': 'application/vnd.github.v3+json'
-            }
-        });
+        const headers = {
+            'User-Agent': 'mudraforge-statutory-cli',
+            'Accept': 'application/vnd.github.v3+json'
+        };
+        const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+        if (token) {
+            headers['Authorization'] = `token ${token}`;
+        }
+
+        const resp = await fetch(url, { headers });
 
         if (!resp.ok) {
+            if (resp.status === 403) {
+                return {
+                    status: 'RATE_LIMITED',
+                    owner,
+                    repo,
+                    branch,
+                    commitSha: sha,
+                    total: 0,
+                    passed: 0,
+                    inProgress: 0,
+                    queued: 0,
+                    allCompleted: false,
+                    allPassed: false,
+                    failures: [],
+                    successes: [],
+                    message: 'GitHub API unauthenticated rate limit exceeded (60 req/hr). Set GITHUB_TOKEN or check status in browser.'
+                };
+            }
             if (resp.status === 422) {
                 return {
                     status: 'NOT_PUSHED',
