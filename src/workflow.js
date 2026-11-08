@@ -69,7 +69,8 @@ export function findGitRootDir(startDir = process.cwd()) {
  * @returns {string}
  */
 export function getWorkflowJournalPath(rootDir = DEFAULT_ROOT_DIR) {
-    const dir = path.join(rootDir, '.mudraforge');
+    const gitRoot = findGitRootDir(rootDir);
+    const dir = path.join(gitRoot, '.mudraforge');
     if (!fs.existsSync(dir)) {
         try {
             fs.mkdirSync(dir, { recursive: true });
@@ -86,7 +87,7 @@ export function getWorkflowJournalPath(rootDir = DEFAULT_ROOT_DIR) {
  * @returns {Object}
  */
 export function appendWorkflowJournal(event, options = {}) {
-    const rootDir = options.rootDir || DEFAULT_ROOT_DIR;
+    const rootDir = findGitRootDir(options.rootDir || process.cwd());
     const journalPath = getWorkflowJournalPath(rootDir);
     const entry = {
         timestamp: new Date().toISOString(),
@@ -111,7 +112,7 @@ export function appendWorkflowJournal(event, options = {}) {
  * @returns {Array<Object>}
  */
 export function getWorkflowJournal(options = {}) {
-    const rootDir = options.rootDir || DEFAULT_ROOT_DIR;
+    const rootDir = findGitRootDir(options.rootDir || process.cwd());
     const journalPath = getWorkflowJournalPath(rootDir);
     if (!fs.existsSync(journalPath)) {
         return [];
