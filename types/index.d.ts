@@ -907,6 +907,32 @@ export declare function createWorkflowCommit(params: { message: string; files?: 
 export declare function pushWorkflowBranch(params?: { remote?: string; forceMain?: boolean; runChecks?: boolean; rootDir?: string }): { status: string; branch: string; remote: string; commitSha: string; prUrl: string | null; journalEntry: WorkflowJournalEntry };
 export declare function mergeWorkflowBranch(params: { sourceBranch: string; targetBranch?: string; squash?: boolean; pushAfterMerge?: boolean; rootDir?: string }): { status: string; sourceBranch: string; targetBranch: string; commitSha: string; pushed: boolean; journalEntry: WorkflowJournalEntry };
 export declare function publishWorkflowRelease(params?: { rootDir?: string; dryRun?: boolean; skipNpm?: boolean }): { status: string; package: string; version: string; tag: string; commitSha?: string; journalEntry?: WorkflowJournalEntry };
+export declare function getRemoteRepoInfo(remote?: string, cwd?: string): { owner: string; repo: string } | null;
+export declare function getRemoteCIStatus(options?: { branch?: string; commitSha?: string; remote?: string; rootDir?: string }): Promise<{
+    status: string;
+    owner?: string;
+    repo?: string;
+    branch?: string;
+    commitSha?: string;
+    total?: number;
+    passed?: number;
+    inProgress?: number;
+    queued?: number;
+    allCompleted?: boolean;
+    allPassed?: boolean;
+    failures?: Array<{ name: string; conclusion: string; html_url?: string; title?: string | null; summary?: string | null }>;
+    successes?: Array<{ name: string; conclusion: string; html_url?: string }>;
+    message?: string;
+}>;
+export declare function waitForRemoteCI(options?: {
+    branch?: string;
+    commitSha?: string;
+    remote?: string;
+    rootDir?: string;
+    timeoutMs?: number;
+    pollIntervalMs?: number;
+    onProgress?: (status: any, attempt: number) => void;
+}): Promise<any>;
 
 
 

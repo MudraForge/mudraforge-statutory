@@ -63,6 +63,26 @@ export function findGitRootDir(startDir = process.cwd()) {
 }
 
 /**
+ * Extracts owner and repository name from git remote URL.
+ * Supports canonical HTTPS and SSH GitHub remote formats.
+ *
+ * @param {string} [remote='origin']
+ * @param {string} [cwd=DEFAULT_ROOT_DIR]
+ * @returns {{ owner: string, repo: string } | null}
+ */
+export function getRemoteRepoInfo(remote = 'origin', cwd = DEFAULT_ROOT_DIR) {
+    let repoUrl = '';
+    try {
+        repoUrl = runGit(['remote', 'get-url', remote], cwd);
+    } catch (_) {
+        return null;
+    }
+    const match = repoUrl.match(/^(?:https?:\/\/(?:[a-zA-Z0-9-]+\.)*github\.com\/|git@github\.com:)([\w.-]+)\/([\w.-]+?)(?:\.git)?$/);
+    if (!match) return null;
+    return { owner: match[1], repo: match[2] };
+}
+
+/**
  * Resolves the path to the durable MudraForge workflow journal.
  *
  * @param {string} [rootDir]
@@ -480,6 +500,174 @@ export function pushWorkflowBranch(params = {}) {
         commitSha: headSha,
         prUrl,
         journalEntry: event
+    };
+}
+
+/**
+ * Checks GitHub Actions remote CI status for a commit or branch.
+ * Queries the official GitHub Check Runs API for the repository.
+ *
+ * @param {Object} options
+ * @param {string} [options.branch] - Branch name
+ * @param {string} [options.commitSha] - Commit SHA (defaults to remote HEAD of branch)
+ * @param {string} [options.remote='origin'] - Remote name
+ * @param {string} [options.rootDir] - Repository root
+ * @returns {Promise<Object>}
+ */
+export async function getRemoteCIStatus(options = {}) {
+    const cwd = findGitRootDir(options.rootDir || process.cwd());
+    const remote = options.remote || 'origin';
+    const repoInfo = getRemoteRepoInfo(remote, cwd);
+    if (!repoInfo) {
+        return { status: 'UNKNOWN_REMOTE', message: 'Not a recognized GitHub remote repository.' };
+    }
+
+    const { owner, repo } = repoInfo;
+    let branch = options.branch;
+    if (!branch) {
+        try {
+            branch = runGit(['rev-parse', '--abbrev-ref', 'HEAD'], cwd);
+        } catch (_) {}
+    }
+
+    let sha = options.commitSha;
+    if (!sha && branch) {
+        try {
+            const lsOut = runGit(['ls-remote', remote, `refs/heads/${branch}`], cwd);
+            if (lsOut) {
+                sha = lsOut.split(/\s+/)[0];
+            }
+        } catch (_) {}
+        if (!sha) {
+            try {
+                sha = runGit(['rev-parse', 'HEAD'], cwd);
+            } catch (_) {}
+        }
+    }
+
+    if (!sha) {
+        return { status: 'NOT_FOUND', message: 'Could not determine commit SHA for remote CI status.' };
+    }
+
+    const url = `https://api.github.com/repos/${owner}/${repo}/commits/${sha}/check-runs`;
+    try {
+        const resp = await fetch(url, {
+            headers: {
+                'User-Agent': 'mudraforge-statutory-cli',
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+
+        if (!resp.ok) {
+            return {
+                status: 'HTTP_ERROR',
+                httpStatus: resp.status,
+                message: `GitHub API error: ${resp.status} ${resp.statusText}`
+            };
+        }
+
+        const data = await resp.json();
+        const checkRuns = data.check_runs || [];
+
+        let passed = 0;
+        let inProgress = 0;
+        let queued = 0;
+        const failures = [];
+        const successes = [];
+
+        for (const run of checkRuns) {
+            if (run.status === 'completed') {
+                if (['success', 'neutral', 'skipped'].includes(run.conclusion)) {
+                    passed++;
+                    successes.push({ name: run.name, conclusion: run.conclusion, html_url: run.html_url });
+                } else {
+                    failures.push({
+                        name: run.name,
+                        conclusion: run.conclusion,
+                        html_url: run.html_url,
+                        title: run.output?.title || null,
+                        summary: run.output?.summary || null
+                    });
+                }
+            } else if (run.status === 'in_progress') {
+                inProgress++;
+            } else if (run.status === 'queued') {
+                queued++;
+            }
+        }
+
+        const total = checkRuns.length;
+        const allCompleted = total > 0 && inProgress === 0 && queued === 0;
+        const allPassed = allCompleted && failures.length === 0;
+
+        let status = 'NO_CHECKS';
+        if (total > 0) {
+            if (failures.length > 0) {
+                status = 'FAILURE';
+            } else if (!allCompleted) {
+                status = 'IN_PROGRESS';
+            } else {
+                status = 'SUCCESS';
+            }
+        }
+
+        return {
+            status,
+            owner,
+            repo,
+            branch,
+            commitSha: sha,
+            total,
+            passed,
+            inProgress,
+            queued,
+            allCompleted,
+            allPassed,
+            failures,
+            successes
+        };
+    } catch (err) {
+        return { status: 'NETWORK_ERROR', message: err.message };
+    }
+}
+
+/**
+ * Polls remote CI status until all checks complete, a failure occurs, or timeout.
+ *
+ * @param {Object} options
+ * @param {number} [options.timeoutMs=120000] - Max wait time in ms
+ * @param {number} [options.pollIntervalMs=4000] - Polling interval in ms
+ * @param {Function} [options.onProgress] - Optional progress callback
+ * @returns {Promise<Object>}
+ */
+export async function waitForRemoteCI(options = {}) {
+    const {
+        timeoutMs = 120000,
+        pollIntervalMs = 4000,
+        onProgress = null
+    } = options;
+
+    const startTime = Date.now();
+    let attempt = 0;
+
+    while (Date.now() - startTime < timeoutMs) {
+        attempt++;
+        const res = await getRemoteCIStatus(options);
+
+        if (onProgress && typeof onProgress === 'function') {
+            onProgress(res, attempt);
+        }
+
+        if (res.status === 'SUCCESS' || res.status === 'FAILURE' || res.status === 'HTTP_ERROR' || res.status === 'UNKNOWN_REMOTE') {
+            return res;
+        }
+
+        await new Promise(r => setTimeout(r, pollIntervalMs));
+    }
+
+    return {
+        status: 'TIMEOUT',
+        message: `Remote CI wait timed out after ${Math.round(timeoutMs / 1000)} seconds.`
     };
 }
 

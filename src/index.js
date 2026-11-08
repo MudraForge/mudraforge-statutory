@@ -3139,6 +3139,9 @@ export {
     pushWorkflowBranch,
     mergeWorkflowBranch,
     publishWorkflowRelease,
+    getRemoteRepoInfo,
+    getRemoteCIStatus,
+    waitForRemoteCI,
     ALLOWED_BRANCH_PREFIXES,
     CONVENTIONAL_COMMIT_PREFIXES,
     EMOJI_DETECTION_RE

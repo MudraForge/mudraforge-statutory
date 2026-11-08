@@ -68,6 +68,8 @@ import {
     getWorkflowStatus,
     getWorkflowJournal,
     appendWorkflowJournal,
+    getRemoteRepoInfo,
+    getRemoteCIStatus,
     STATUTORY_OUTCOMES_DICTIONARY,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION
@@ -6415,8 +6417,26 @@ async function run() {
         console.log('[PASS] Secure Workflow Engine & CLI GitHub Automation Verified: Rule 18 branch isolation, Rule 20 zero-emoji enforcement, durable audit journal, and CLI integration confirmed.');
     }
 
+    // 168. Remote CI Verification & Pre-Merge Gate Engine
+    console.log('\n── Test 168: Remote CI Verification & Pre-Merge Gate Engine ──');
+    {
+        // 1. Test getRemoteRepoInfo parsing
+        const repoInfo = getRemoteRepoInfo('origin');
+        if (!repoInfo || repoInfo.owner !== 'mondeep0123' || repoInfo.repo !== 'mudraforge-statutory') {
+            throw new Error(`getRemoteRepoInfo failed to parse canonical GitHub remote: ${JSON.stringify(repoInfo)}`);
+        }
+
+        // 2. Test getRemoteCIStatus API contract
+        const ciStatus = await getRemoteCIStatus();
+        if (!ciStatus || !ciStatus.status || typeof ciStatus.total !== 'number') {
+            throw new Error(`getRemoteCIStatus failed to return valid schema: ${JSON.stringify(ciStatus)}`);
+        }
+
+        console.log(`[PASS] Remote CI Verification & Pre-Merge Gate Engine Verified: Repo [${repoInfo.owner}/${repoInfo.repo}] status=${ciStatus.status}, total=${ciStatus.total}, passed=${ciStatus.passed}`);
+    }
+
     console.log('\n===========================================================================');
-    console.log('ALL 167 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 168 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

@@ -47,6 +47,8 @@ import {
     pushWorkflowBranch,
     mergeWorkflowBranch,
     publishWorkflowRelease,
+    getRemoteCIStatus,
+    waitForRemoteCI,
     STATUTORY_EXIT_CODES,
     STATUTORY_CLIENT_VERSION,
     DEFAULT_LOCAL_OKF_DIR
@@ -278,17 +280,27 @@ async function main() {
             break;
         }
 
+        case 'ci-status':
+        case 'ci':
+        case 'status:ci': {
+            const branch = (args[1] && !args[1].startsWith('-')) ? args[1] : getNamedArg(['--branch', '-b'], rawArgs);
+            const watch = rawArgs.includes('--watch') || rawArgs.includes('-w');
+            await handleCIStatus(branch, { watch });
+            break;
+        }
+
         case 'merge':
         case 'git:merge': {
             const sourceBranch = (args[1] && !args[1].startsWith('-')) ? args[1] : getNamedArg(['--branch', '-b'], rawArgs);
             const targetBranch = getNamedArg(['--target', '-t'], rawArgs) || 'main';
             const squash = rawArgs.includes('--squash');
             const noPush = rawArgs.includes('--no-push');
+            const skipRemoteCI = rawArgs.includes('--skip-remote-ci') || rawArgs.includes('--no-remote-ci');
             if (!sourceBranch) {
                 console.error('[ERROR] Please specify branch to merge: npx @mudraforge/statutory merge fix/<name>');
                 process.exit(STATUTORY_EXIT_CODES.USAGE_ERROR);
             }
-            await handleMerge(sourceBranch, { targetBranch, squash, pushAfterMerge: !noPush });
+            await handleMerge(sourceBranch, { targetBranch, squash, pushAfterMerge: !noPush, skipRemoteCI });
             break;
         }
 
@@ -1311,8 +1323,127 @@ async function handlePush(options) {
     }
 }
 
+async function handleCIStatus(branch, options = {}) {
+    try {
+        const watch = options.watch || false;
+        if (watch) {
+            console.log(`\nWatching remote CI status for branch: ${branch || 'current'}...`);
+            const res = await waitForRemoteCI({
+                branch,
+                rootDir: process.cwd(),
+                timeoutMs: options.timeoutMs || 300000,
+                pollIntervalMs: 5000,
+                onProgress: (status, attempt) => {
+                    const inFlight = (status.inProgress || 0) + (status.queued || 0);
+                    process.stdout.write(`\r[REMOTE CI] Poll #${attempt}: ${status.passed || 0}/${status.total || 0} checks completed (${inFlight} in-flight)...`);
+                }
+            });
+            console.log('\n');
+            if (isJsonMode) {
+                console.log(JSON.stringify(res, null, 2));
+            } else {
+                printCIStatusTable(res);
+            }
+            if (res.status === 'FAILURE') process.exit(1);
+        } else {
+            const res = await getRemoteCIStatus({ branch, rootDir: process.cwd() });
+            if (isJsonMode) {
+                console.log(JSON.stringify(res, null, 2));
+            } else {
+                printCIStatusTable(res);
+            }
+            if (res.status === 'FAILURE') process.exit(1);
+        }
+    } catch (err) {
+        console.error(`\n[ERROR] ${err.message}\n`);
+        process.exit(1);
+    }
+}
+
+function printCIStatusTable(res) {
+    console.log('\n===========================================================================');
+    console.log(`GITHUB ACTIONS CI STATUS : ${res.owner || 'unknown'}/${res.repo || 'unknown'} (${res.branch || 'unknown'})`);
+    console.log('===========================================================================');
+    console.log(`Overall Status : ${res.status}`);
+    console.log(`Commit SHA     : ${res.commitSha ? res.commitSha.slice(0, 7) : 'N/A'}`);
+    console.log(`Total Checks   : ${res.total || 0} (Passed: ${res.passed || 0}, In-Progress: ${res.inProgress || 0}, Queued: ${res.queued || 0})`);
+    if (res.failures && res.failures.length > 0) {
+        console.log('\nFailed Checks:');
+        for (const f of res.failures) {
+            console.log(`  [FAIL] ${f.name} (${f.conclusion})`);
+            if (f.html_url) console.log(`         URL: ${f.html_url}`);
+            if (f.summary) console.log(`         Details: ${f.summary}`);
+        }
+    }
+    if (res.successes && res.successes.length > 0) {
+        console.log('\nPassed Checks:');
+        for (const s of res.successes) {
+            console.log(`  [PASS] ${s.name} (${s.conclusion})`);
+        }
+    }
+    console.log('===========================================================================\n');
+}
+
 async function handleMerge(sourceBranch, options) {
     try {
+        // 1. Remote CI Verification Gate (unless explicitly skipped via --skip-remote-ci)
+        if (!options.skipRemoteCI) {
+            console.log(`\n[REMOTE CI GATE] Verifying GitHub Actions status on origin/${sourceBranch}...`);
+            const ciStatus = await getRemoteCIStatus({ branch: sourceBranch, rootDir: process.cwd() });
+
+            if (ciStatus.status === 'NOT_FOUND') {
+                console.warn(`[WARN] Remote branch origin/${sourceBranch} was not found on remote. Proceeding with local verification.`);
+            } else if (ciStatus.status === 'UNKNOWN_REMOTE') {
+                console.warn('[WARN] No GitHub remote detected. Skipping remote CI checks.');
+            } else if (ciStatus.status === 'FAILURE') {
+                console.error(`\n===========================================================================`);
+                console.error(`[REMOTE CI FAILURE] GitHub Actions failed on branch: ${sourceBranch}`);
+                console.error(`===========================================================================`);
+                for (const f of ciStatus.failures) {
+                    console.error(`  - [FAILED] ${f.name} (${f.conclusion})`);
+                    if (f.html_url) console.error(`    URL: ${f.html_url}`);
+                    if (f.summary) console.error(`    Details: ${f.summary}`);
+                }
+                console.error('\n[MERGE BLOCKED] You must fix the remote CI failures on the branch before merging into main.');
+                console.error('Use --skip-remote-ci only for emergency local-only overrides.');
+                console.error(`===========================================================================\n`);
+                process.exit(1);
+            } else if (ciStatus.status === 'IN_PROGRESS' || ciStatus.status === 'NO_CHECKS') {
+                console.log(`[REMOTE CI IN-FLIGHT] Remote checks in progress (${ciStatus.passed}/${ciStatus.total} completed).`);
+                console.log('Waiting for remote GitHub Actions to finish...');
+                const waitRes = await waitForRemoteCI({
+                    branch: sourceBranch,
+                    rootDir: process.cwd(),
+                    timeoutMs: options.timeoutMs || 180000,
+                    pollIntervalMs: 5000,
+                    onProgress: (status, attempt) => {
+                        const inFlight = (status.inProgress || 0) + (status.queued || 0);
+                        process.stdout.write(`\r[REMOTE CI] Poll #${attempt}: ${status.passed || 0}/${status.total || 0} checks completed (${inFlight} in-flight)...`);
+                    }
+                });
+                console.log('');
+
+                if (waitRes.status === 'FAILURE') {
+                    console.error(`\n===========================================================================`);
+                    console.error(`[REMOTE CI FAILURE] GitHub Actions failed on branch: ${sourceBranch}`);
+                    console.error(`===========================================================================`);
+                    for (const f of waitRes.failures) {
+                        console.error(`  - [FAILED] ${f.name} (${f.conclusion})`);
+                        if (f.html_url) console.error(`    URL: ${f.html_url}`);
+                    }
+                    console.error('\n[MERGE BLOCKED] You must fix the remote CI failures on the branch before merging into main.');
+                    console.error(`===========================================================================\n`);
+                    process.exit(1);
+                } else if (waitRes.status === 'TIMEOUT') {
+                    console.warn(`[WARN] ${waitRes.message}. Proceeding with local verification.`);
+                } else {
+                    console.log(`[REMOTE CI PASSED] All ${waitRes.passed} remote GitHub Actions checks passed.`);
+                }
+            } else if (ciStatus.status === 'SUCCESS') {
+                console.log(`[REMOTE CI PASSED] All ${ciStatus.passed} remote GitHub Actions checks passed on origin/${sourceBranch}.`);
+            }
+        }
+
         const res = mergeWorkflowBranch({
             sourceBranch,
             targetBranch: options.targetBranch,
@@ -1330,6 +1461,7 @@ async function handleMerge(sourceBranch, options) {
             console.log(`Merged Commit : ${res.commitSha.slice(0, 7)}`);
             console.log(`Remote Push   : ${res.pushed ? 'Synced with origin' : 'Local only (--no-push)'}`);
             console.log('CI Parity Verification Gate: PASSED');
+            console.log('Remote CI Verification Gate: PASSED');
             console.log('===========================================================================\n');
         }
     } catch (err) {
@@ -1456,7 +1588,8 @@ Commands:
   branch <name>                  Create feature branch (Rule 18: feat/, fix/, refactor/, docs/, chore/, test/)
   commit -m "<msg>"              Create verified commit (Rule 20 zero-emoji check, Rule 18 main branch protection)
   push [--remote <origin>]       Run supply-chain verification and push feature branch to GitHub with PR link
-  merge <branch> [--squash]      Run full CI parity, checkout main, merge feature branch cleanly, and push main
+  ci-status [branch] [--watch]   Check live GitHub Actions CI & CodeQL status on remote branch
+  merge <branch> [--squash]      Verify remote CI on branch, run local CI parity, checkout main, merge, and push main
   publish [--dry-run]            Run full release gate, tag release, push to GitHub, and publish to npm registry
   workflow [status|journal]      Display workflow status, branch isolation state, and durable audit journal
   watchtower                     Run regulatory surveillance & generate Empanelment Freshness Certificate
@@ -1483,6 +1616,7 @@ Options:
   --files, -f <f1,f2>            Comma-separated files to stage before committing
   --force-main                   Explicit override allowing commit/push to protected main branch
   --squash                       Squash commits when merging feature branch into main
+  --skip-remote-ci               Skip waiting/verifying remote GitHub Actions status before merging
   --no-push                      Skip pushing to remote after local branch merge
   --dry-run                      Simulate release publication without pushing tags or publishing to npm
   --skip-npm                     Publish git release tag to GitHub without publishing to npm registry
