@@ -11,6 +11,7 @@
  */
 
 import { validateStatutoryAst } from './schemas/statutory_ast_schema.js';
+import { cleanNumericAmount } from '../numeric.js';
 import {
     toBigIntPaise,
     fromBigIntPaise,
@@ -40,6 +41,7 @@ import {
     evaluateCompositionLevySection10,
     evaluateCreditDebitNotesSection34,
     evaluateExportLutSection16,
+    evaluateSection43BPayablesUsvm,
     evaluateEInvoicingRule48_4,
     evaluateEWayBillRule138,
     evaluateGstTdsSection51,
@@ -352,6 +354,9 @@ export function evaluateStatutoryAst(ruleAst, facts = {}) {
     if (archetype === 'EXPORT_LUT_ZERO_RATED_SEC16') {
         return evaluateExportLutSection16(ruleAst, facts, trace);
     }
+    if (archetype === 'STATUTORY_PAYABLES_SEC43B') {
+        return evaluateSection43BPayablesUsvm(ruleAst, facts, trace);
+    }
     if (archetype === 'EINVOICING_MANDATE_RULE48_4') {
         return evaluateEInvoicingRule48_4(ruleAst, facts, trace);
     }
@@ -427,10 +432,10 @@ export function evaluateStatutoryAst(ruleAst, facts = {}) {
         currentInvoicePaise = BigInt(facts.lineItem.grossAmountPaisa);
         rawInvoiceInr = fromBigIntPaise(currentInvoicePaise);
     } else {
-        rawInvoiceInr = Number(facts.invoiceAmount ?? facts.grossAmountInr ?? 0);
-        const gstAmountInr = Number(facts.gstAmountInr || 0);
+        rawInvoiceInr = cleanNumericAmount(facts.invoiceAmount ?? facts.grossAmountInr ?? 0);
+        const gstAmountInr = cleanNumericAmount(facts.gstAmountInr || 0);
         const isAdvancePayment = Boolean(facts.isAdvancePayment);
-        const creditNoteInr = Number(facts.creditNoteInr || 0);
+        const creditNoteInr = cleanNumericAmount(facts.creditNoteInr || 0);
         const creditNoteTiming = facts.creditNoteTiming || 'BEFORE_TAX_DEDUCTION';
 
         // CBDT Circular No. 13 of 2021 Question 1: GST excluded when separately indicated & not advance
@@ -452,7 +457,7 @@ export function evaluateStatutoryAst(ruleAst, facts = {}) {
     if (facts.aggregateSnapshot?.aggregatePaisa !== undefined) {
         priorPurchasesPaise = BigInt(facts.aggregateSnapshot.aggregatePaisa);
     } else {
-        const priorPurchasesInr = Number(
+        const priorPurchasesInr = cleanNumericAmount(
             facts.priorPurchasesInCurrentFyInr ??
             facts.currentFyPriorPurchasesInr ??
             facts.priorFyPurchases ??

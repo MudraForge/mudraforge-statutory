@@ -34,6 +34,17 @@
       }
     },
     {
+      "id": "GUARD_FORM_15G_15H",
+      "field": "hasForm15G15H",
+      "operator": "EQ",
+      "value": true,
+      "onMatch": {
+        "action": "HALT_EXEMPT",
+        "disposition": "EXEMPT_FORM_15G_15H_NIL_DEDUCTION",
+        "reason": "Section 194A declaration under Form 15G/15H submitted and valid."
+      }
+    },
+    {
       "id": "GUARD_MISSING_PAN_206AA",
       "field": "payee.isPanValid",
       "operator": "EQ",

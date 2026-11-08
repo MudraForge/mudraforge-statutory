@@ -678,309 +678,6 @@ export function evaluateSection43bH({
 /**
  * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
-export function evaluateSection43BStatutoryPayables({
-    financialYear = '2025-26',
-    assessmentYear = null,
-    itrFilingDueDate = '2026-10-31', // Section 139(1) due date for assessees subject to tax audit
-    payables = []
-} = {}) {
-    const defaultAy = assessmentYear || (() => {
-        const parts = String(financialYear).split('-');
-        if (parts.length === 2 && !isNaN(Number(parts[0]))) {
-            const startYr = Number(parts[0]);
-            return `${startYr + 1}-${String(startYr + 2).slice(-2)}`;
-        }
-        return '2026-27';
-    })();
-
-    if (!Array.isArray(payables) || payables.length === 0) {
-        return {
-            status: 'SUCCESS',
-            statutoryDetermination: 'NO_PAYABLES_EVALUATED',
-            financialYear,
-            assessmentYear: defaultAy,
-            itrFilingDueDate,
-            totalPayablesCount: 0,
-            summary: {
-                totalIncurredInr: 0,
-                totalAllowedInr: 0,
-                totalDisallowedInr: 0,
-                totalTimingDifferencesInr: 0,
-                totalPermanentDisallowancesInr: 0,
-                form3CdClause26DisallowanceInr: 0,
-                form3CdClause20bDisallowanceInr: 0
-            },
-            evaluatedPayables: [],
-            isAuthorizedToDisburse: false,
-            statutoryRationale: 'No statutory payable items submitted for Section 43B / 36(1)(va) evaluation.'
-        };
-    }
-
-    const evaluatedPayables = [];
-    let totalIncurredInr = 0;
-    let totalAllowedInr = 0;
-    let totalDisallowedInr = 0;
-    let totalTimingDifferencesInr = 0;
-    let totalPermanentDisallowancesInr = 0;
-    let form3CdClause26DisallowanceInr = 0;
-    let form3CdClause20bDisallowanceInr = 0;
-
-    const clauseBreakdown = {};
-
-    payables.forEach((item, idx) => {
-        const payableId = item.payableId || `PAY-${String(idx + 1).padStart(3, '0')}`;
-        const rawClause = String(item.clause || '43B(a)').trim();
-        const normalizedClause = rawClause.toLowerCase().includes('36')
-            ? '36(1)(va)'
-            : rawClause.toUpperCase(); // e.g. '43B(A)', '43B(B)', '43B(C)', etc.
-        const description = item.description || `Statutory Liability under ${normalizedClause}`;
-        const amountInr = roundToPaisa(Math.max(0, Number(item.amountInr) || 0));
-        const statutoryDueDate = item.statutoryDueDate ? String(item.statutoryDueDate).trim() : null;
-        const paidDate = item.paidDate ? String(item.paidDate).trim() : null;
-        const paidAmountInr = paidDate
-            ? roundToPaisa(item.paidAmountInr !== undefined && item.paidAmountInr !== null
-                ? Math.max(0, Number(item.paidAmountInr) || 0)
-                : amountInr)
-            : 0;
-        const isInterestConvertedToLoan = Boolean(item.isInterestConvertedToLoan);
-
-        totalIncurredInr = roundToPaisa(totalIncurredInr + amountInr);
-
-        if (!clauseBreakdown[normalizedClause]) {
-            clauseBreakdown[normalizedClause] = {
-                incurredInr: 0,
-                allowedInr: 0,
-                disallowedInr: 0
-            };
-        }
-        clauseBreakdown[normalizedClause].incurredInr = roundToPaisa(clauseBreakdown[normalizedClause].incurredInr + amountInr);
-
-        // ── CATEGORY 1: EMPLOYEE WELFARE CONTRIBUTIONS (Section 36(1)(va)) ──
-        if (normalizedClause === '36(1)(va)') {
-            // Checkmate Doctrine: Must be deposited on or before statutory due date under EPF/ESIC regulations
-            const effectiveDueDate = statutoryDueDate || '2026-04-15';
-            const isOnTime = Boolean(paidDate && paidDate <= effectiveDueDate);
-
-            if (isOnTime) {
-                const allowedAmt = roundToPaisa(Math.min(paidAmountInr, amountInr));
-                const disallowedAmt = roundToPaisa(amountInr - allowedAmt);
-
-                totalAllowedInr = roundToPaisa(totalAllowedInr + allowedAmt);
-                clauseBreakdown[normalizedClause].allowedInr = roundToPaisa(clauseBreakdown[normalizedClause].allowedInr + allowedAmt);
-
-                if (disallowedAmt > 0) {
-                    totalDisallowedInr = roundToPaisa(totalDisallowedInr + disallowedAmt);
-                    totalPermanentDisallowancesInr = roundToPaisa(totalPermanentDisallowancesInr + disallowedAmt);
-                    form3CdClause20bDisallowanceInr = roundToPaisa(form3CdClause20bDisallowanceInr + disallowedAmt);
-                    clauseBreakdown[normalizedClause].disallowedInr = roundToPaisa(clauseBreakdown[normalizedClause].disallowedInr + disallowedAmt);
-                }
-
-                evaluatedPayables.push({
-                    payableId,
-                    clause: normalizedClause,
-                    description,
-                    amountInr,
-                    statutoryDueDate: effectiveDueDate,
-                    paidDate,
-                    paidAmountInr,
-                    isAllowed: disallowedAmt === 0,
-                    allowedAmountInr: allowedAmt,
-                    disallowedAmountInr: disallowedAmt,
-                    disallowanceType: disallowedAmt > 0 ? 'PERMANENT_ADD_BACK' : 'NONE',
-                    governingRule: 'Section 36(1)(va) read with Section 2(24)(x) & Checkmate Doctrine',
-                    taxAuditReporting: {
-                        form: 'Form 3CD',
-                        clause: 'Clause 20(b)',
-                        status: disallowedAmt > 0 ? 'PARTIAL_DISALLOWANCE_REPORTABLE' : 'COMPLIANT'
-                    },
-                    statutoryOutcome: disallowedAmt > 0 ? 'DISALLOWED_PERMANENT_CHECKMATE' : 'ALLOWED',
-                    statutoryAction: disallowedAmt > 0
-                        ? `Unpaid portion of INR ${disallowedAmt.toLocaleString('en-IN')} permanently disallowed under Section 36(1)(va).`
-                        : `Employee contribution deposited on or before statutory due date (${effectiveDueDate}). Fully deductible under Section 36(1)(va).`
-                });
-            } else {
-                // Late deposit or unpaid -> Permanent Disallowance under Checkmate Services (2022)
-                totalDisallowedInr = roundToPaisa(totalDisallowedInr + amountInr);
-                totalPermanentDisallowancesInr = roundToPaisa(totalPermanentDisallowancesInr + amountInr);
-                form3CdClause20bDisallowanceInr = roundToPaisa(form3CdClause20bDisallowanceInr + amountInr);
-                clauseBreakdown[normalizedClause].disallowedInr = roundToPaisa(clauseBreakdown[normalizedClause].disallowedInr + amountInr);
-
-                evaluatedPayables.push({
-                    payableId,
-                    clause: normalizedClause,
-                    description,
-                    amountInr,
-                    statutoryDueDate: effectiveDueDate,
-                    paidDate,
-                    paidAmountInr,
-                    isAllowed: false,
-                    allowedAmountInr: 0,
-                    disallowedAmountInr: amountInr,
-                    disallowanceType: 'PERMANENT_ADD_BACK',
-                    governingRule: 'Section 36(1)(va) read with Section 2(24)(x) & Supreme Court ruling in Checkmate Services (2022) 448 ITR 518 (SC)',
-                    taxAuditReporting: {
-                        form: 'Form 3CD',
-                        clause: 'Clause 20(b)',
-                        status: 'MANDATORY_PERMANENT_DISALLOWANCE'
-                    },
-                    statutoryOutcome: 'DISALLOWED_PERMANENT_CHECKMATE',
-                    statutoryAction: paidDate
-                        ? `Deposited after statutory due date (${paidDate} > ${effectiveDueDate}). Under Supreme Court Checkmate Doctrine read with Explanation 5 to Section 36(1)(va) and Section 2(24)(x), late deposit of employee contribution is permanently disallowed. Cannot be claimed under Section 43B or in any subsequent year.`
-                        : `Unpaid employee contribution past statutory due date (${effectiveDueDate}). Permanently disallowed under Section 36(1)(va) read with Section 2(24)(x).`
-                });
-            }
-        }
-        // ── CATEGORY 2: EMPLOYER STATUTORY PAYABLES (Section 43B(a) to 43B(g)) ──
-        else {
-            // Check Explanation 3C & 3D for loan conversion
-            if (isInterestConvertedToLoan) {
-                totalDisallowedInr = roundToPaisa(totalDisallowedInr + amountInr);
-                totalTimingDifferencesInr = roundToPaisa(totalTimingDifferencesInr + amountInr);
-                form3CdClause26DisallowanceInr = roundToPaisa(form3CdClause26DisallowanceInr + amountInr);
-                clauseBreakdown[normalizedClause].disallowedInr = roundToPaisa(clauseBreakdown[normalizedClause].disallowedInr + amountInr);
-
-                evaluatedPayables.push({
-                    payableId,
-                    clause: normalizedClause,
-                    description,
-                    amountInr,
-                    itrFilingDueDate,
-                    paidDate,
-                    paidAmountInr,
-                    isAllowed: false,
-                    allowedAmountInr: 0,
-                    disallowedAmountInr: amountInr,
-                    disallowanceType: 'TIMING_DIFFERENCE_ADD_BACK',
-                    governingRule: 'Section 43B Explanations 3C & 3D (No actual payment via debt restructuring)',
-                    taxAuditReporting: {
-                        form: 'Form 3CD',
-                        clause: 'Clause 26',
-                        status: 'DISALLOWANCE_REPORTABLE'
-                    },
-                    statutoryOutcome: 'DISALLOWED_INTEREST_CONVERSION',
-                    statutoryAction: 'Conversion of unpaid interest into a loan, advance, debenture, or funded interest term loan does NOT constitute actual payment under Explanation 3C/3D to Section 43B. Disallowed until actual cash/bank outflow occurs.'
-                });
-            } else {
-                // First Proviso evaluation: Paid on or before Section 139(1) due date
-                const isPaidBeforeItrDue = Boolean(paidDate && paidDate <= itrFilingDueDate);
-
-                if (isPaidBeforeItrDue) {
-                    const allowedAmt = roundToPaisa(Math.min(paidAmountInr, amountInr));
-                    const disallowedAmt = roundToPaisa(amountInr - allowedAmt);
-
-                    totalAllowedInr = roundToPaisa(totalAllowedInr + allowedAmt);
-                    clauseBreakdown[normalizedClause].allowedInr = roundToPaisa(clauseBreakdown[normalizedClause].allowedInr + allowedAmt);
-
-                    if (disallowedAmt > 0) {
-                        totalDisallowedInr = roundToPaisa(totalDisallowedInr + disallowedAmt);
-                        totalTimingDifferencesInr = roundToPaisa(totalTimingDifferencesInr + disallowedAmt);
-                        form3CdClause26DisallowanceInr = roundToPaisa(form3CdClause26DisallowanceInr + disallowedAmt);
-                        clauseBreakdown[normalizedClause].disallowedInr = roundToPaisa(clauseBreakdown[normalizedClause].disallowedInr + disallowedAmt);
-                    }
-
-                    evaluatedPayables.push({
-                        payableId,
-                        clause: normalizedClause,
-                        description,
-                        amountInr,
-                        itrFilingDueDate,
-                        paidDate,
-                        paidAmountInr,
-                        isAllowed: disallowedAmt === 0,
-                        allowedAmountInr: allowedAmt,
-                        disallowedAmountInr: disallowedAmt,
-                        disallowanceType: disallowedAmt > 0 ? 'TIMING_DIFFERENCE_ADD_BACK' : 'NONE',
-                        governingRule: 'Section 43B First Proviso (Actual payment before return filing cutoff)',
-                        taxAuditReporting: {
-                            form: 'Form 3CD',
-                            clause: 'Clause 26',
-                            status: disallowedAmt > 0 ? 'PARTIAL_DISALLOWANCE_REPORTABLE' : 'COMPLIANT'
-                        },
-                        statutoryOutcome: disallowedAmt > 0 ? 'DISALLOWED_TIMING_DIFFERENCE' : 'ALLOWED_FIRST_PROVISO',
-                        statutoryAction: disallowedAmt > 0
-                            ? `Unpaid balance of INR ${disallowedAmt.toLocaleString('en-IN')} disallowed in current FY; allowable upon actual payment in subsequent FY.`
-                            : `Paid on or before Section 139(1) return filing due date (${paidDate} <= ${itrFilingDueDate}). Fully deductible in current financial year (${financialYear}) under Section 43B First Proviso.`
-                    });
-                } else {
-                    // Late payment or unpaid -> Timing Difference Disallowance under Section 43B
-                    totalDisallowedInr = roundToPaisa(totalDisallowedInr + amountInr);
-                    totalTimingDifferencesInr = roundToPaisa(totalTimingDifferencesInr + amountInr);
-                    form3CdClause26DisallowanceInr = roundToPaisa(form3CdClause26DisallowanceInr + amountInr);
-                    clauseBreakdown[normalizedClause].disallowedInr = roundToPaisa(clauseBreakdown[normalizedClause].disallowedInr + amountInr);
-
-                    evaluatedPayables.push({
-                        payableId,
-                        clause: normalizedClause,
-                        description,
-                        amountInr,
-                        itrFilingDueDate,
-                        paidDate,
-                        paidAmountInr,
-                        isAllowed: false,
-                        allowedAmountInr: 0,
-                        disallowedAmountInr: amountInr,
-                        disallowanceType: 'TIMING_DIFFERENCE_ADD_BACK',
-                        governingRule: 'Section 43B (Payment not made on or before Section 139(1) due date)',
-                        taxAuditReporting: {
-                            form: 'Form 3CD',
-                            clause: 'Clause 26',
-                            status: 'MANDATORY_DISALLOWANCE_REPORTABLE'
-                        },
-                        statutoryOutcome: 'DISALLOWED_TIMING_DIFFERENCE',
-                        statutoryAction: paidDate
-                            ? `Paid after Section 139(1) return filing due date (${paidDate} > ${itrFilingDueDate}). Strictly DISALLOWED in current FY (${financialYear}) and carried forward as deductible in the subsequent FY of actual disbursement.`
-                            : `Unpaid as of Section 139(1) return filing due date (${itrFilingDueDate}). Disallowed in current FY (${financialYear}); will become deductible upon actual payment in subsequent financial year.`
-                    });
-                }
-            }
-        }
-    });
-
-    let overallDetermination = 'ALL_PAYABLES_QUALIFIED';
-    if (totalPermanentDisallowancesInr > 0 && totalTimingDifferencesInr > 0) {
-        overallDetermination = 'DISALLOWED_MIXED_PERMANENT_AND_TIMING';
-    } else if (totalPermanentDisallowancesInr > 0) {
-        overallDetermination = 'DISALLOWED_PERMANENT_CHECKMATE';
-    } else if (totalTimingDifferencesInr > 0) {
-        overallDetermination = 'DISALLOWED_TIMING_DIFFERENCE';
-    }
-
-    return {
-        status: 'SUCCESS',
-        statutoryDetermination: overallDetermination,
-        financialYear,
-        assessmentYear: defaultAy,
-        itrFilingDueDate,
-        totalPayablesCount: evaluatedPayables.length,
-        summary: {
-            totalIncurredInr,
-            totalAllowedInr,
-            totalDisallowedInr,
-            totalTimingDifferencesInr,
-            totalPermanentDisallowancesInr,
-            form3CdClause26DisallowanceInr,
-            form3CdClause20bDisallowanceInr,
-            clauseBreakdown
-        },
-        evaluatedPayables,
-        isAuthorizedToDisburse: false,
-        statutoryRationale: `Section 43B / 36(1)(va) Evaluation: Evaluated ${evaluatedPayables.length} liabilities (Total INR ${totalIncurredInr.toLocaleString('en-IN')}). Allowed: INR ${totalAllowedInr.toLocaleString('en-IN')}; Total Disallowed: INR ${totalDisallowedInr.toLocaleString('en-IN')} (Permanent Clause 20(b) Checkmate: INR ${totalPermanentDisallowancesInr.toLocaleString('en-IN')}; Timing Difference Clause 26: INR ${totalTimingDifferencesInr.toLocaleString('en-IN')}). Statutory audit calculations do not authorize payment disbursement.`
-    };
-}
-
-/**
- * ─────────────────────────────────────────────────────────────────────────────
- * 3. CROSS-BORDER WITHHOLDING & DUAL-ACT FORM ROUTER
- * ─────────────────────────────────────────────────────────────────────────────
- * Anchors the transition between Income-tax Act 1961 vs Income-tax Act 2025:
- * - Post-April 1, 2026: Section 393(2), Form 145 (Rule 220), Form 146
- * - Pre-April 1, 2026: Section 195, Form 15CA (Rule 37BB), Form 15CB
- * - SC Engineering Analysis (2021) automated cloud infra vs human FTS
- * - Form 145 Part A vs Part B (AO order) vs Part C (CA cert)
- */
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
 export function evaluateCrossBorderRemittance({
     amountUsd,
     fxRate = 83.5,
@@ -1158,2981 +855,6 @@ export function evaluateCrossBorderRemittance({
 /**
  * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
-export function evaluateLowerDeductionCertificateValidity({
-    effectiveDate = null,
-    lowerDeductionCertificate = null,
-    certificateSection = null,
-    isAct2025 = false
-} = {}) {
-    if (!lowerDeductionCertificate && !certificateSection) {
-        return {
-            isValid: true,
-            status: 'NO_CERTIFICATE',
-            reason: null,
-            governingCertificateSection: isAct2025 ? 'Income-tax Act, 2025 Section 395' : 'Income-tax Act, 1961 Section 197',
-            isSection536TransitionalSavingsApplied: false,
-            transitionalSavingsClause: null,
-            certificateSection: isAct2025 ? '395' : '197'
-        };
-    }
-
-    const certObj = typeof lowerDeductionCertificate === 'object' && lowerDeductionCertificate !== null
-        ? lowerDeductionCertificate
-        : {};
-
-    const certRef = String(
-        certificateSection ||
-        certObj.certificateSection ||
-        certObj.section ||
-        certObj.governingSection ||
-        ''
-    ).trim();
-
-    const isLegacy197Ref = /197/.test(certRef) || Boolean(certObj.isTransitionalSection197);
-
-    // 1. Explicit Cancellation / Revocation Check
-    if (certObj.isCancelled === true || certObj.revoked === true || certObj.status === 'CANCELLED' || certObj.status === 'REVOKED') {
-        return {
-            isValid: false,
-            status: 'CERTIFICATE_CANCELLED_OR_REVOKED',
-            reason: 'Lower deduction certificate has been explicitly cancelled or revoked by the Assessing Officer / TRACES authority.',
-            governingCertificateSection: isAct2025 ? 'Income-tax Act, 2025 Section 395 (Revoked)' : 'Income-tax Act, 1961 Section 197 (Revoked)',
-            isSection536TransitionalSavingsApplied: false,
-            transitionalSavingsClause: null,
-            certificateSection: certRef || (isAct2025 ? '395' : '197')
-        };
-    }
-
-    // 2. Covered Period / Expiry Window Check
-    const validFrom = certObj.validFrom || null;
-    const validTo = certObj.validTo || null;
-    const coveredFy = certObj.coveredFinancialYear || certObj.financialYear || null;
-
-    if (effectiveDate) {
-        if (validFrom && effectiveDate < validFrom) {
-            return {
-                isValid: false,
-                status: 'CERTIFICATE_PREMATURE_DATE',
-                reason: `Transaction date (${effectiveDate}) is prior to certificate commencement date (${validFrom}).`,
-                governingCertificateSection: isAct2025 ? 'Income-tax Act, 2025 Section 395 (Premature)' : 'Income-tax Act, 1961 Section 197 (Premature)',
-                isSection536TransitionalSavingsApplied: false,
-                transitionalSavingsClause: null,
-                certificateSection: certRef || (isAct2025 ? '395' : '197')
-            };
-        }
-        if (validTo && effectiveDate > validTo) {
-            return {
-                isValid: false,
-                status: 'CERTIFICATE_EXPIRED_COVERED_PERIOD',
-                reason: `Transaction date (${effectiveDate}) is outside certificate covered validity period (expired on ${validTo}).`,
-                governingCertificateSection: isAct2025 ? 'Income-tax Act, 2025 Section 395 (Expired)' : 'Income-tax Act, 1961 Section 197 (Expired)',
-                isSection536TransitionalSavingsApplied: false,
-                transitionalSavingsClause: null,
-                certificateSection: certRef || (isAct2025 ? '395' : '197')
-            };
-        }
-        if (coveredFy && isAct2025) {
-            // If transaction is in FY 2026-27 or later, but certificate was strictly for FY 2025-26
-            if (/2025-26/.test(coveredFy) && effectiveDate >= '2026-04-01') {
-                return {
-                    isValid: false,
-                    status: 'CERTIFICATE_EXPIRED_COVERED_PERIOD',
-                    reason: 'Certificate was sanctioned strictly for FY 2025-26 and does not cover receivables for FY 2026-27.',
-                    governingCertificateSection: 'Income-tax Act, 1961 Section 197 (Expired FY 2025-26)',
-                    isSection536TransitionalSavingsApplied: false,
-                    transitionalSavingsClause: null,
-                    certificateSection: certRef || '197'
-                };
-            }
-        }
-    }
-
-    // 3. Act 2025 vs Act 1961 Regime Resolution
-    if (isAct2025) {
-        if (isLegacy197Ref) {
-            return {
-                isValid: true,
-                status: 'VALID_LEGACY_CERTIFICATE_UNDER_SEC_536_2',
-                reason: 'Certificate issued under Section 197 covering projected receivables for FY 2026-27 remains legally enforceable under Section 536(2) transitional savings.',
-                governingCertificateSection: "Income-tax Act, 2025 Section 395 read with Section 536(2) Transitional Savings (Deemed Section 197 Certificate)",
-                isSection536TransitionalSavingsApplied: true,
-                transitionalSavingsClause: "Income-tax Act, 2025 Section 536(2)",
-                certificateSection: certRef || '197'
-            };
-        }
-        return {
-            isValid: true,
-            status: 'VALID_ACT_2025_SEC_395',
-            reason: 'Valid certificate issued under Section 395 on Form 128 of the Income-tax Act, 2025.',
-            governingCertificateSection: "Income-tax Act, 2025 Section 395",
-            isSection536TransitionalSavingsApplied: false,
-            transitionalSavingsClause: null,
-            certificateSection: certRef || '395'
-        };
-    }
-
-    return {
-        isValid: true,
-        status: 'VALID_ACT_1961_SEC_197',
-        reason: 'Valid certificate issued under Section 197 of the Income-tax Act, 1961.',
-        governingCertificateSection: "Income-tax Act, 1961 Section 197",
-        isSection536TransitionalSavingsApplied: false,
-        transitionalSavingsClause: null,
-        certificateSection: certRef || '197'
-    };
-}
-
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
-export function resolveGoverningCertificateSection(params = {}) {
-    return evaluateLowerDeductionCertificateValidity(params);
-}
-
-/**
- * ─────────────────────────────────────────────────────────────────────────────
- * AUTHORITATIVE STATUTORY RATE SCHEDULE TABLE
- * ─────────────────────────────────────────────────────────────────────────────
- * Maintains the verified, authoritative statutory rate schedules for Finance Act
- * provisions and Double Taxation Avoidance Agreements (DTAA).
- * Rather than trusting caller-supplied rate numbers, the engine validates or retrieves
- * the legally prescribed rate directly from this verified schedule.
- */
-export const AUTHORITATIVE_STATUTORY_RATES = {
-    // 1. Finance Act Rates
-    'FINANCE_ACT:2025:SCHEDULE_I_PART_II:ITEM_2_B': {
-        ratePercent: 10.0,
-        source: 'FINANCE_ACT',
-        citation: 'Finance Act, 2025 Schedule I Part II Item 2(b)',
-        effectiveFrom: '2025-04-01',
-        effectiveTo: '2026-03-31',
-        applicableCategories: ['TECHNICAL_SERVICES', 'ROYALTY', 'SPECIFIED_FEES']
-    },
-    'FINANCE_ACT:2026:SCHEDULE_I_PART_II:ITEM_2_B': {
-        ratePercent: 10.0,
-        source: 'FINANCE_ACT',
-        citation: 'Finance Act, 2026 Schedule I Part II Item 2(b)',
-        effectiveFrom: '2026-04-01',
-        effectiveTo: '2027-03-31',
-        applicableCategories: ['TECHNICAL_SERVICES', 'ROYALTY', 'SPECIFIED_FEES']
-    },
-    // 2. DTAA Double Taxation Avoidance Treaty Rates
-    'DTAA_TREATY:INDIA_US:ARTICLE_12_2': {
-        ratePercent: 15.0,
-        source: 'DTAA_TREATY',
-        citation: 'India-US Double Taxation Avoidance Agreement Article 12(2)',
-        effectiveFrom: '1991-01-01',
-        effectiveTo: '2099-12-31',
-        applicableCategories: ['FTS', 'ROYALTY', 'TECHNICAL_SERVICES']
-    },
-    'DTAA_TREATY:INDIA_SINGAPORE:ARTICLE_12_2': {
-        ratePercent: 10.0,
-        source: 'DTAA_TREATY',
-        citation: 'India-Singapore Double Taxation Avoidance Agreement Article 12(2)',
-        effectiveFrom: '1994-08-08',
-        effectiveTo: '2099-12-31',
-        applicableCategories: ['FTS', 'ROYALTY', 'TECHNICAL_SERVICES']
-    },
-    'DTAA_TREATY:INDIA_GERMANY:ARTICLE_12_2': {
-        ratePercent: 10.0,
-        source: 'DTAA_TREATY',
-        citation: 'India-Germany Double Taxation Avoidance Agreement Article 12(2)',
-        effectiveFrom: '1996-10-26',
-        effectiveTo: '2099-12-31',
-        applicableCategories: ['FTS', 'ROYALTY', 'TECHNICAL_SERVICES']
-    }
-};
-
-
-/**
- * ─────────────────────────────────────────────────────────────────────────────
- * STATUTORY RATE PROVENANCE & EVIDENCE VALIDATOR
- * ─────────────────────────────────────────────────────────────────────────────
- * Validates that an asserted rate in force is grounded in authoritative statutory evidence:
- * 1. Checks citation against Authoritative Statutory Rate Table.
- * 2. Rejects fabricated rate values that contradict the authoritative statutory schedule.
- * 3. Enforces temporal validity window [effectiveFrom, effectiveTo] against transactionDate.
- * 4. Disallows private commercial contracts from modifying statutory withholding rates.
- * 5. Rejects unverified or contradictory rate evidence (fails closed).
- */
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
-export function validateRateEvidence({
-    rateInForce = null,
-    ratesInForceSource = 'STATUTORY_BASE',
-    sourceReference = null,
-    rateScheduleKey = null,
-    effectiveFrom = null,
-    effectiveTo = null,
-    transactionDate = null
-} = {}) {
-    // 0. Disallow private commercial contracts from attempting to define statutory rate in force
-    if (ratesInForceSource === 'COMMERCIAL_CONTRACT' || ratesInForceSource === 'PRIVATE_AGREEMENT') {
-        return {
-            isValid: false,
-            status: 'INVALID_LEGAL_SOURCE',
-            error: 'Private commercial contract cannot define or modify statutory "rates in force" under Income-tax Act, 1961 Section 2(37A) / Income-tax Act, 2025 Section 397(1)(b).'
-        };
-    }
-
-    // 1. Explicit Schedule Key Resolution with Fail-Closed Rejection of Unknown Keys
-    if (rateScheduleKey && !AUTHORITATIVE_STATUTORY_RATES[rateScheduleKey]) {
-        return {
-            isValid: false,
-            status: 'UNKNOWN_RATE_SCHEDULE_KEY',
-            error: `Unknown rateScheduleKey "${rateScheduleKey}". Key is not registered in authoritative statutory schedule registry.`
-        };
-    }
-
-    let schedule = null;
-    if (rateScheduleKey && AUTHORITATIVE_STATUTORY_RATES[rateScheduleKey]) {
-        schedule = AUTHORITATIVE_STATUTORY_RATES[rateScheduleKey];
-    } else if (sourceReference) {
-        const refLower = String(sourceReference).toLowerCase();
-        for (const [k, v] of Object.entries(AUTHORITATIVE_STATUTORY_RATES)) {
-            if (v.citation.toLowerCase().includes(refLower) || refLower.includes(v.citation.toLowerCase())) {
-                schedule = v;
-                break;
-            }
-        }
-    }
-
-    if (rateInForce === null || rateInForce === undefined) {
-        if (schedule) {
-            const effStart = schedule.effectiveFrom;
-            const effEnd = schedule.effectiveTo;
-            if (transactionDate) {
-                const tx = String(transactionDate).slice(0, 10);
-                if (effStart && tx < String(effStart).slice(0, 10)) {
-                    return {
-                        isValid: false,
-                        status: 'RATE_PRE_EFFECTIVE',
-                        error: `Rate in force evidence is not yet effective on transaction date ${tx} (effective from ${effStart}).`
-                    };
-                }
-                if (effEnd && tx > String(effEnd).slice(0, 10)) {
-                    return {
-                        isValid: false,
-                        status: 'RATE_EXPIRED',
-                        error: `Rate in force evidence expired on ${effEnd} prior to transaction date ${tx}.`
-                    };
-                }
-            }
-            return {
-                isValid: true,
-                status: 'RETRIEVED_FROM_AUTHORITATIVE_SCHEDULE',
-                ratePercent: schedule.ratePercent,
-                ratesInForceSource: schedule.source,
-                sourceReference: schedule.citation,
-                effectiveFrom: schedule.effectiveFrom,
-                effectiveTo: schedule.effectiveTo,
-                reason: `Rate of ${schedule.ratePercent}% retrieved directly from authoritative statutory schedule (${schedule.citation}).`
-            };
-        }
-        return {
-            isValid: true,
-            status: 'DEFAULT_STATUTORY_BASE',
-            ratePercent: 0.1,
-            ratesInForceSource: 'STATUTORY_BASE',
-            sourceReference: 'Statutory Base Provision',
-            reason: 'No external rate in force asserted; defaulting to baseline statutory rate.'
-        };
-    }
-
-    const numericRate = Number(rateInForce);
-    if (!Number.isFinite(numericRate) || isNaN(numericRate) || numericRate < 0) {
-        return {
-            isValid: false,
-            status: 'INVALID_NUMERIC_RATE',
-            error: `Invalid rateInForce "${rateInForce}": must be a non-negative finite number.`
-        };
-    }
-
-    const recognizedSources = ['FINANCE_ACT', 'DTAA_TREATY', 'CBDT_NOTIFIED', 'STATUTORY_BASE'];
-    if (ratesInForceSource && !recognizedSources.includes(ratesInForceSource)) {
-        return {
-            isValid: false,
-            status: 'UNRECOGNIZED_RATE_SOURCE',
-            error: `Unrecognized ratesInForceSource "${ratesInForceSource}". Must be one of: ${recognizedSources.join(', ')}.`
-        };
-    }
-
-    // If authoritative schedule is matched, enforce that supplied rate matches prescribed rate
-    if (schedule && Math.abs(numericRate - schedule.ratePercent) > 0.001) {
-        return {
-            isValid: false,
-            status: 'RATE_CONTRADICTS_AUTHORITATIVE_SCHEDULE',
-            error: `Supplied rate in force (${numericRate}%) contradicts authoritative statutory schedule for "${schedule.citation}" (prescribed rate: ${schedule.ratePercent}%).`
-        };
-    }
-
-    // Require citation reference for higher rates
-    if (numericRate > 0.1 && ratesInForceSource && ratesInForceSource !== 'STATUTORY_BASE' && !sourceReference && !schedule) {
-        return {
-            isValid: false,
-            status: 'UNAUTHENTICATED_RATE_EVIDENCE',
-            error: `Rate in force (${numericRate}%) from source "${ratesInForceSource}" requires an authoritative legal citation in sourceReference (e.g. "Finance Act 2025 Schedule I Part II" or "India-US DTAA Article 12(2)").`
-        };
-    }
-
-    // Temporal validity window check
-    const effStart = schedule?.effectiveFrom || effectiveFrom;
-    const effEnd = schedule?.effectiveTo || effectiveTo;
-
-    if (transactionDate) {
-        const tx = String(transactionDate).slice(0, 10);
-        if (effStart && tx < String(effStart).slice(0, 10)) {
-            return {
-                isValid: false,
-                status: 'RATE_PRE_EFFECTIVE',
-                error: `Rate in force evidence is not yet effective on transaction date ${tx} (effective from ${effStart}).`
-            };
-        }
-        if (effEnd && tx > String(effEnd).slice(0, 10)) {
-            return {
-                isValid: false,
-                status: 'RATE_EXPIRED',
-                error: `Rate in force evidence expired on ${effEnd} prior to transaction date ${tx}.`
-            };
-        }
-    }
-
-    return {
-        isValid: true,
-        status: schedule ? 'VERIFIED_AGAINST_AUTHORITATIVE_SCHEDULE' : 'AUTHENTICATED_STATUTORY_EVIDENCE',
-        ratePercent: numericRate,
-        ratesInForceSource: schedule?.source || ratesInForceSource || 'STATUTORY_BASE',
-        sourceReference: schedule?.citation || sourceReference,
-        effectiveFrom: effStart,
-        effectiveTo: effEnd,
-        reason: `Rate of ${numericRate}% verified against authoritative evidence (${schedule?.source || ratesInForceSource || 'STATUTORY_BASE'}: ${schedule?.citation || sourceReference || 'Statutory Baseline'}).`
-    };
-}
-
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
-export function evaluateSection194Q({
-    invoiceAmount,
-    priorFyPurchases = 0,
-    priorPurchasesInCurrentFyInr = undefined,
-    currentFyPriorPurchasesInr = undefined,
-    precedingFyPurchasesInr = undefined,
-    hasPan = true,
-    isPanInoperative = false,
-    transactionDate = null,
-    creditDate = null,
-    paymentDate = null,
-    buyerTurnoverCr = null,
-    sellerTurnoverCr = null,
-    isBuyerPrescribed = null,
-    isSellerPrescribed = null,
-    buyerName = null,
-    sellerName = null,
-    lowerDeductionRate = null,
-    lowerDeductionCertificate = null,
-    certificateMonetaryCeilingInr = null,
-    certificatePriorUtilizedInr = 0,
-    certificateSection = null,
-    gstAmountInr = 0,
-    isAdvancePayment = false,
-    creditNoteInr = 0,
-    creditNoteTiming = 'BEFORE_TAX_DEDUCTION', // 'BEFORE_TAX_DEDUCTION' | 'AFTER_TAX_DEDUCTION'
-    advanceNettedInr = 0,
-    priorAdvanceTdsDeductedInr = 0,
-    isImportOfGoods = false,
-    sellerIsNonResident = false,
-    rateInForce = null,
-    ratesInForceSource = null, // 'FINANCE_ACT' | 'DTAA_TREATY' | 'CBDT_NOTIFIED' | 'STATUTORY_BASE'
-    sourceReference = null,
-    rateScheduleKey = null,
-    rateEffectiveFrom = null,
-    rateEffectiveTo = null
-} = {}) {
-    const rawInvoiceAmount = assertMandatoryNumeric(invoiceAmount, 'invoiceAmount', 'evaluateSection194Q');
-    const gstAmount = cleanNumericAmount(gstAmountInr);
-    const creditNote = cleanNumericAmount(creditNoteInr);
-    const advanceNetted = cleanNumericAmount(advanceNettedInr);
-    const priorAdvanceTds = cleanNumericAmount(priorAdvanceTdsDeductedInr);
-
-    // CBDT Circular No. 13 of 2021 Question 3:
-    // Does Section 194Q apply to import of goods from non-residents?
-    // Clarification: Section 194Q does not apply to an import of goods where the seller
-    // is a non-resident without a permanent establishment in India. (Section 195 applies instead).
-    const isForeignVendorImport = Boolean(isImportOfGoods) || Boolean(sellerIsNonResident);
-    if (isForeignVendorImport) {
-        const effDate = transactionDate || creditDate || paymentDate || null;
-        const isAct2025 = effDate ? effDate >= '2026-04-01' : false;
-        return {
-            invoiceAmountInr: rawInvoiceAmount,
-            taxableBase: 0,
-            tdsRatePercent: 0,
-            calculatedTdsInr: 0,
-            netWireInr: rawInvoiceAmount,
-            isTdsApplicable: false,
-            isSection194QApplicable: false,
-            isExemptForeignImport: true,
-            effectiveDate: effDate,
-            regimeStatus: effDate ? 'DETERMINED' : 'INDETERMINATE_PENDING_TRANSACTION_DATE',
-            isAct2025,
-            governingSection: isAct2025 ? 'CBDT Circular No. 13 of 2021 Question 3 (Read with Section 393(2))' : 'CBDT Circular No. 13 of 2021 Question 3 (Read with Section 195)',
-            statutoryReason: 'CBDT Circular 13/2021 Question 3 explicitly clarifies Section 194Q does not apply to import of goods from non-resident sellers lacking a permanent establishment in India. Governed under cross-border provisions (Section 195 / Section 393(2)).',
-            statutoryDisposition: 'EXEMPT_IMPORT_OF_GOODS_FOREIGN_VENDOR'
-        };
-    }
-
-    // CBDT Circular No. 13 of 2021 Question 1:
-    // If tax is separately indicated on invoice and transaction is not advance payment,
-    // TDS under Section 194Q is deducted on basic goods value excluding GST component.
-    // If advance payment is made before invoice issuance, TDS applies to gross amount.
-    const effectivePurchaseAmount = isAdvancePayment 
-        ? rawInvoiceAmount 
-        : Math.max(0, rawInvoiceAmount - gstAmount);
-    
-    // CBDT Circular No. 13 of 2021 Question 4 (Purchase Returns & Credit Notes):
-    // 1. Credit Note BEFORE withholding (agreed price discount, immediate defect return before ledger entry):
-    //    Deduction applies on actual net consideration per Section 194Q(1).
-    // 2. Purchase Return AFTER withholding:
-    //    Tax already deducted cannot be refunded or adjusted against government remittance.
-    //    Purchase value reduction is carried forward for adjustment against subsequent purchases from the same seller in the same FY.
-    const isCreditNoteBeforeWithholding = creditNoteTiming !== 'AFTER_TAX_DEDUCTION';
-    const amount = isCreditNoteBeforeWithholding 
-        ? Math.max(0, effectivePurchaseAmount - creditNote)
-        : effectivePurchaseAmount;
-    const creditNoteCarryForwardInr = !isCreditNoteBeforeWithholding ? creditNote : 0;
-    const cbdtCircular13Q4Status = creditNote > 0
-        ? (isCreditNoteBeforeWithholding ? 'CREDIT_NOTE_REDUCED_PURCHASE_VALUE_BEFORE_WITHHOLDING' : 'CREDIT_NOTE_AFTER_WITHHOLDING_CARRIED_FORWARD')
-        : 'N/A';
-    const creditNoteStatutoryCitation = creditNote > 0
-        ? (isCreditNoteBeforeWithholding
-            ? 'Section 194Q(1): Deduction on sum for purchase of goods, reflecting net agreed consideration after pre-withholding credit note.'
-            : 'CBDT Circular 13/2021 Question 4: Tax deducted prior to purchase return is preserved; credit note value is carried forward for subsequent purchases from same seller in same FY.')
-        : null;
-
-    // Disambiguate Current FY purchases vs Preceding FY purchases:
-    // Section 194Q(1) statutory threshold evaluates cumulative purchases in the CURRENT previous year (current FY).
-    // Purchases from the preceding financial year do NOT consume the current financial year threshold.
-    const prior = Math.max(0, cleanNumericAmount(
-        currentFyPriorPurchasesInr !== undefined
-            ? currentFyPriorPurchasesInr
-            : (priorPurchasesInCurrentFyInr !== undefined ? priorPurchasesInCurrentFyInr : priorFyPurchases)
-    ));
-    const THRESHOLD = 5000000; // ₹50 Lakhs
-    const THRESHOLD_PAISE = 500000000; // ₹50 Lakhs in integer paise
-    const priorPaise = toIntegerPaise(prior, 'priorPurchases');
-    const amountPaise = toIntegerPaise(amount, 'amount');
-    const cumulativePaise = priorPaise + amountPaise;
-    const cumulative = fromIntegerPaise(cumulativePaise);
-
-    // Buyer turnover prescription under Section 194Q(1) Explanation:
-    // Person whose total sales, gross receipts or turnover exceeds ₹10 Crore in preceding FY.
-    let buyerPrescriptionStatus = 'INDETERMINATE';
-    if (isBuyerPrescribed !== null && isBuyerPrescribed !== undefined) {
-        buyerPrescriptionStatus = isBuyerPrescribed ? 'APPLICABLE' : 'NOT_APPLICABLE';
-    } else if (buyerTurnoverCr !== null && buyerTurnoverCr !== undefined) {
-        buyerPrescriptionStatus = Number(buyerTurnoverCr) > 10 ? 'APPLICABLE' : 'NOT_APPLICABLE';
-    }
-
-    let sellerPrescriptionStatus = 'INDETERMINATE';
-    if (isSellerPrescribed !== null && isSellerPrescribed !== undefined) {
-        sellerPrescriptionStatus = isSellerPrescribed ? 'APPLICABLE' : 'NOT_APPLICABLE';
-    } else if (sellerTurnoverCr !== null && sellerTurnoverCr !== undefined) {
-        sellerPrescriptionStatus = Number(sellerTurnoverCr) > 10 ? 'APPLICABLE' : 'NOT_APPLICABLE';
-    }
-
-    const isSection194QApplicable = buyerPrescriptionStatus === 'APPLICABLE';
-    const isBuyerPrescriptionIndeterminate = buyerPrescriptionStatus === 'INDETERMINATE';
-
-    // Incremental threshold absorption formula with Paisa integer precision:
-    // Delta = max(0, cumulative - THRESHOLD) - max(0, prior - THRESHOLD)
-    // Taxable base is min(amount, Delta)
-    const incrementalExcessPaise = Math.max(0, cumulativePaise - THRESHOLD_PAISE) - Math.max(0, priorPaise - THRESHOLD_PAISE);
-    const conditionalTaxableBasePaise = Math.max(0, Math.min(amountPaise, incrementalExcessPaise));
-    const conditionalTaxableBase = fromIntegerPaise(conditionalTaxableBasePaise);
-    const incrementalExcess = fromIntegerPaise(incrementalExcessPaise);
-    const taxableBase = isSection194QApplicable 
-        ? conditionalTaxableBase 
-        : (isBuyerPrescriptionIndeterminate ? conditionalTaxableBase : 0);
-
-    // Temporal Resolution: "Credit or Payment, whichever is earlier"
-    let effectiveDate = transactionDate;
-    let withholdingTrigger = 'TRANSACTION_DATE';
-
-    if (creditDate && paymentDate) {
-        if (creditDate <= paymentDate) {
-            effectiveDate = creditDate;
-            withholdingTrigger = 'CREDIT_TO_ACCOUNT';
-        } else {
-            effectiveDate = paymentDate;
-            withholdingTrigger = 'PAYMENT_DISBURSEMENT';
-        }
-    } else if (creditDate) {
-        effectiveDate = creditDate;
-        withholdingTrigger = 'CREDIT_TO_ACCOUNT';
-    } else if (paymentDate) {
-        effectiveDate = paymentDate;
-        withholdingTrigger = 'PAYMENT_DISBURSEMENT';
-    }
-
-    const isTemporalStraddle = Boolean(
-        creditDate && paymentDate &&
-        ((creditDate < '2026-04-01' && paymentDate >= '2026-04-01') ||
-         (paymentDate < '2026-04-01' && creditDate >= '2026-04-01'))
-    );
-
-    const temporalStraddlingAnalysis = isTemporalStraddle ? {
-        isStraddlingCommencement: true,
-        creditDate,
-        paymentDate,
-        crystallizedDate: effectiveDate,
-        withholdingTrigger,
-        governingRegime: effectiveDate >= '2026-04-01' ? 'ACT_2025' : 'ACT_1961',
-        statutoryRationale: effectiveDate < '2026-04-01'
-            ? `Tax withholding obligation crystallized on ${effectiveDate} (${withholdingTrigger}) under the Income-tax Act, 1961 prior to 2025 Act commencement. Subsequent settlement on ${effectiveDate === creditDate ? paymentDate : creditDate} creates no duplicate withholding under the 2025 Act.`
-            : `Both credit and payment occurred on or after 1 April 2026. Governed exclusively by the Income-tax Act, 2025.`
-    } : null;
-
-    // Date & Regime analysis (preserves uncertainty when effectiveDate is null rather than coercing machine date)
-    let isAct2025 = null;
-    let isPost206cSunset = null;
-    let governingWithholdingSection = "";
-    let regimeStatus = "DETERMINED";
-
-    if (effectiveDate) {
-        isAct2025 = effectiveDate >= '2026-04-01';
-        isPost206cSunset = effectiveDate >= '2025-04-01';
-        governingWithholdingSection = isSection194QApplicable || isBuyerPrescriptionIndeterminate
-            ? (isAct2025 ? "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 8(ii)" : "Income-tax Act, 1961 Section 194Q")
-            : "N/A (Buyer turnover does not exceed ₹10 Cr threshold)";
-    } else {
-        // Date is missing: preserve uncertainty rather than coercing machine date
-        regimeStatus = "INDETERMINATE_PENDING_TRANSACTION_DATE";
-        isAct2025 = false;
-        isPost206cSunset = true; // Section 206C(1H) sunset on 1 April 2025
-        governingWithholdingSection = isSection194QApplicable || isBuyerPrescriptionIndeterminate
-            ? "Income-tax Act, 1961 Section 194Q (or Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 8(ii) if credited/paid on or after 1 April 2026)"
-            : "N/A (Buyer turnover does not exceed ₹10 Cr threshold)";
-    }
-
-    let governingPanPenaltySection = isAct2025 
-        ? "Income-tax Act, 2025 Section 397(2)(b)(i)(C) read with Section 393(1), Table 1, Sl. No. 8(ii)" 
-        : "Income-tax Act, 1961 Section 206AA(1) First Proviso read with Section 194Q";
-    
-    // Resolve certificate framework with Section 536(2) transitional savings and validity evaluation
-    const certResolution = evaluateLowerDeductionCertificateValidity({
-        effectiveDate,
-        lowerDeductionCertificate,
-        certificateSection,
-        isAct2025
-    });
-    let governingCertificateSection = certResolution.governingCertificateSection;
-
-    // Rate determination per Section 194Q / Section 393(1) Table 8(ii) read with
-    // Section 206AA(1) First Proviso / Section 397(2) First Proviso:
-    // Withholding for missing/inoperative PAN applies the HIGHEST of:
-    // (i) rate specified in the Act (0.1%),
-    // (ii) rate or rates in force (if specified and higher), or
-    // (iii) statutory penalty floor (5.0% for goods purchase; 20.0% standard).
-    const panAvailable = Boolean(hasPan) && !isPanInoperative;
-    const isCertificateValid = certResolution.isValid;
-    const hasLowerDeduction = (lowerDeductionRate !== null && lowerDeductionRate !== undefined) && isCertificateValid;
-
-    // Validate rate in force against authoritative evidence (Section 2(37A) / Section 397(1)(b))
-    const rateEvidence = validateRateEvidence({
-        rateInForce,
-        ratesInForceSource: ratesInForceSource || (rateInForce > 0.1 ? 'FINANCE_ACT' : 'STATUTORY_BASE'),
-        sourceReference: sourceReference || (rateInForce > 0.1 ? 'Finance Act Rate Schedule' : null),
-        rateScheduleKey,
-        effectiveFrom: rateEffectiveFrom,
-        effectiveTo: rateEffectiveTo,
-        transactionDate: effectiveDate
-    });
-
-    if (rateEvidence && !rateEvidence.isValid) {
-        regimeStatus = 'INDETERMINATE_RATE_EVIDENCE_REJECTED';
-    }
-
-    const statutoryBaseRate = 0.1;
-    // Authenticated rate is applied if evidence is valid; unauthenticated / invalid rates fail closed to baseline
-    const effectiveRateInForce = rateEvidence.isValid ? rateEvidence.ratePercent : statutoryBaseRate;
-    const panFloorResolution = resolveMissingPanPenaltyFloor({
-        sectionCode: '194Q',
-        tableItem: isAct2025 ? '393_8_ii' : null,
-        isAct2025
-    });
-    const missingPanPenaltyFloor = panFloorResolution.penaltyFloorPercent;
-    governingPanPenaltySection = panFloorResolution.governingProviso;
-    const missingPanRate = Math.max(statutoryBaseRate, effectiveRateInForce, missingPanPenaltyFloor);
-    const standardRatePercent = panAvailable ? statutoryBaseRate : missingPanRate;
-    const certifiedRatePercent = hasLowerDeduction ? Number(lowerDeductionRate) : standardRatePercent;
-
-    // Cumulative Certificate Ceiling Exhaustion Tracking
-    const certificateCeiling = certificateMonetaryCeilingInr !== null && certificateMonetaryCeilingInr !== undefined
-        ? Number(certificateMonetaryCeilingInr)
-        : (lowerDeductionCertificate?.monetaryCeilingInr !== undefined ? Number(lowerDeductionCertificate.monetaryCeilingInr) : null);
-    
-    const certificatePriorUtilized = Number(certificatePriorUtilizedInr) || 
-        (lowerDeductionCertificate?.consumedAmountInr !== undefined ? Number(lowerDeductionCertificate.consumedAmountInr) : 0);
-    
-    const availableCeilingHeadroom = certificateCeiling !== null
-        ? Math.max(0, certificateCeiling - certificatePriorUtilized)
-        : null;
-
-    let certifiedEligibleBase = 0;
-    let uncoveredExcessBase = taxableBase;
-    let ceilingExhaustionStatus = 'NO_LOWER_DEDUCTION_CERTIFICATE';
-
-    if (hasLowerDeduction) {
-        if (certificateCeiling === null) {
-            certifiedEligibleBase = taxableBase;
-            uncoveredExcessBase = 0;
-            ceilingExhaustionStatus = 'UNCONSTRAINED';
-        } else if (availableCeilingHeadroom >= taxableBase) {
-            certifiedEligibleBase = taxableBase;
-            uncoveredExcessBase = 0;
-            ceilingExhaustionStatus = 'WITHIN_CEILING';
-        } else if (availableCeilingHeadroom > 0) {
-            certifiedEligibleBase = availableCeilingHeadroom;
-            uncoveredExcessBase = taxableBase - availableCeilingHeadroom;
-            ceilingExhaustionStatus = 'PARTIALLY_EXHAUSTED';
-        } else {
-            certifiedEligibleBase = 0;
-            uncoveredExcessBase = taxableBase;
-            ceilingExhaustionStatus = 'FULLY_EXHAUSTED';
-        }
-    } else if (lowerDeductionRate !== null && !isCertificateValid) {
-        ceilingExhaustionStatus = certResolution.status;
-    }
-
-    let certifiedTdsInr = 0;
-    let uncoveredTdsInr = 0;
-
-    if (isSection194QApplicable || isBuyerPrescriptionIndeterminate) {
-        certifiedTdsInr = Number(((certifiedEligibleBase * certifiedRatePercent) / 100).toFixed(2));
-        uncoveredTdsInr = Number(((uncoveredExcessBase * standardRatePercent) / 100).toFixed(2));
-    }
-    const calculatedTdsInr = Number((certifiedTdsInr + uncoveredTdsInr).toFixed(2));
-    const effectiveRatePercent = taxableBase > 0 
-        ? Number(((calculatedTdsInr / taxableBase) * 100).toFixed(4))
-        : 0.0;
-    const statutoryRatePercent = isSection194QApplicable || isBuyerPrescriptionIndeterminate
-        ? (hasLowerDeduction ? certifiedRatePercent : standardRatePercent)
-        : 0.0;
-
-    let sellerTcsStatus = "";
-
-    if (isPost206cSunset) {
-        sellerTcsStatus = "Section 206C(1H) was omitted/withdrawn effective 1 April 2025 by Finance Act, 2025. Sellers no longer collect TCS on goods. Withholding rests solely with the buyer.";
-    } else if (sellerPrescriptionStatus === 'APPLICABLE' && buyerPrescriptionStatus === 'NOT_APPLICABLE') {
-        sellerTcsStatus = "Buyer turnover does not exceed ₹10 Cr, so Section 194Q does not apply. Seller is prescribed (turnover > ₹10 Cr) and must collect TCS under Section 206C(1H) on receipts exceeding ₹50 Lakhs.";
-    } else {
-        sellerTcsStatus = "Section 194Q holds statutory precedence over Section 206C(1H). Because the buyer is prescribed (turnover > ₹10 Cr) and mandated to deduct TDS under Section 194Q, the seller's Section 206C(1H) collection duty is statutorily displaced/excused.";
-    }
-
-    const effectiveBuyerName = buyerName || "Buyer";
-    const effectiveSellerName = sellerName || "Seller";
-
-    let applicabilityDisposition = "DETERMINED_APPLICABLE";
-    if (buyerPrescriptionStatus === 'NOT_APPLICABLE') {
-        applicabilityDisposition = "EXEMPT_BELOW_BUYER_TURNOVER_THRESHOLD";
-    } else if (buyerPrescriptionStatus === 'INDETERMINATE') {
-        applicabilityDisposition = "INDETERMINATE_BUYER_TURNOVER_UNVERIFIED";
-    } else if (rateEvidence && !rateEvidence.isValid) {
-        applicabilityDisposition = "INDETERMINATE_RATE_EVIDENCE_REJECTED";
-    }
-
-    let formulaText = "";
-    if (buyerPrescriptionStatus === 'NOT_APPLICABLE') {
-        formulaText = "Section 194Q inapplicable: Buyer turnover does not exceed ₹10 Crore threshold.";
-    } else {
-        const qualifier = isBuyerPrescriptionIndeterminate ? " [Contingent on > ₹10 Cr Buyer Turnover]" : "";
-        if (hasLowerDeduction) {
-            if (ceilingExhaustionStatus === 'PARTIALLY_EXHAUSTED') {
-                formulaText = `Partial Ceiling Split: ₹${certifiedEligibleBase.toLocaleString('en-IN')} @ ${certifiedRatePercent}% (Sanctioned Certificate Headroom) + ₹${uncoveredExcessBase.toLocaleString('en-IN')} @ ${standardRatePercent}% (Marginal Excess beyond Sanctioned Limit) = ₹${calculatedTdsInr.toLocaleString('en-IN')}${qualifier}`;
-            } else if (ceilingExhaustionStatus === 'FULLY_EXHAUSTED') {
-                formulaText = `Certificate Fully Exhausted: Sanctioned ceiling of ₹${certificateCeiling.toLocaleString('en-IN')} is 100% utilized. Taxable base (₹${taxableBase.toLocaleString('en-IN')}) deducted at standard statutory rate of ${standardRatePercent}% = ₹${calculatedTdsInr.toLocaleString('en-IN')}${qualifier}`;
-            } else {
-                formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${certifiedRatePercent}% (${isAct2025 ? 'Section 395' : 'Section 197'} Lower Deduction Certificate) = ₹${calculatedTdsInr.toLocaleString('en-IN')}${qualifier}`;
-            }
-        } else if (lowerDeductionRate !== null && !isCertificateValid) {
-            formulaText = `Lower Deduction Certificate Disallowed (${certResolution.status}): ${certResolution.reason}. Deducted at standard statutory rate of ${standardRatePercent}% = ₹${calculatedTdsInr.toLocaleString('en-IN')}${qualifier}`;
-        } else if (panAvailable) {
-            formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × 0.1% = ₹${calculatedTdsInr.toLocaleString('en-IN')}${qualifier}`;
-        } else {
-            const penaltyProvisoCitation = isAct2025 ? 'Section 397(2)(b)(i)(C) 5% cap for goods' : 'Section 206AA(1) First Proviso 5% cap for goods';
-            formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${standardRatePercent}% (${penaltyProvisoCitation}) = ₹${calculatedTdsInr.toLocaleString('en-IN')}${qualifier}`;
-        }
-    }
-
-    const remainingTdsInr = Math.max(0, roundToPaisa(calculatedTdsInr - priorAdvanceTds));
-    const netWireInr = roundToPaisa(rawInvoiceAmount - advanceNetted - remainingTdsInr);
-
-    return {
-        invoiceAmount: amount,
-        rawInvoiceAmount,
-        gstAmountInr: gstAmount,
-        isAdvancePayment,
-        creditNoteInr: creditNote,
-        creditNoteTiming,
-        creditNoteCarryForwardInr,
-        cbdtCircular13Q4Status,
-        creditNoteStatutoryCitation,
-        advanceNettedInr: advanceNetted,
-        priorAdvanceTdsDeductedInr: priorAdvanceTds,
-        totalOrderTdsInr: calculatedTdsInr,
-        remainingTdsInr,
-        netWireInr,
-        effectivePurchaseAmount,
-        cbdtCircular13NettingApplied: !isAdvancePayment && gstAmount > 0,
-        priorFyPurchases: prior,
-        priorPurchasesInCurrentFyInr: prior,
-        currentFyPriorPurchasesInr: prior,
-        precedingFyPurchasesInr: precedingFyPurchasesInr !== undefined ? Number(precedingFyPurchasesInr) : null,
-        thresholdAccountingBasis: 'Section 194Q(1) evaluates cumulative purchases in the CURRENT previous year (current FY). Preceding financial year purchases do not consume this threshold.',
-        thresholdRemainingInCurrentFyInr: Math.max(0, THRESHOLD - prior),
-        cumulativeFyPurchases: cumulative,
-        statutoryThreshold: THRESHOLD,
-        thresholdBreached: cumulative > THRESHOLD,
-        taxableBase,
-        conditionalTaxableBase,
-        isPanFurnished: panAvailable,
-        statutoryRatePercent,
-        effectiveRatePercent,
-        calculatedTdsInr,
-        taxAmountRoundedSection288B: roundSection288B(calculatedTdsInr),
-        certifiedTdsInr,
-        uncoveredTdsInr,
-        certificateCeiling,
-        certificatePriorUtilized,
-        availableCeilingHeadroom,
-        certifiedEligibleBase,
-        uncoveredExcessBase,
-        ceilingExhaustionStatus,
-        cumulativePurchasesInCurrentFyInr: cumulative,
-        buyerTurnoverPrecondition: {
-            status: buyerPrescriptionStatus,
-            thresholdCr: 10,
-            rule: "Section 194Q(1) applies strictly if buyer's total turnover/gross receipts in preceding financial year exceeded ₹10 Crore."
-        },
-        steelCastingHsnGstAssumption: "Steel turbine castings (HSN Chapter 72/73) standardly attract 18% GST. Confirm whether invoice is inclusive of GST or if GST invoice is pending.",
-        buyerTurnoverCr: buyerTurnoverCr !== null ? Number(buyerTurnoverCr) : null,
-        sellerTurnoverCr: sellerTurnoverCr !== null ? Number(sellerTurnoverCr) : null,
-        buyerPrescriptionStatus,
-        sellerPrescriptionStatus,
-        isSection194QApplicable: buyerPrescriptionStatus === 'APPLICABLE',
-        isBuyerPrescribed: buyerPrescriptionStatus === 'APPLICABLE',
-        isSellerPrescribed: sellerPrescriptionStatus === 'APPLICABLE',
-        applicabilityDisposition,
-        statutoryDetermination: (buyerPrescriptionStatus === 'APPLICABLE' && regimeStatus === 'DETERMINED' && (!rateEvidence || rateEvidence.isValid)) ? 'APPLICABLE' : (buyerPrescriptionStatus === 'NOT_APPLICABLE' && (!rateEvidence || rateEvidence.isValid) ? 'EXEMPT' : 'INDETERMINATE'),
-        regimeStatus,
-        isAct2025: Boolean(isAct2025),
-        creditDate,
-        paymentDate,
-        effectiveWithholdingDate: effectiveDate,
-        withholdingTrigger,
-        temporalStraddlingAnalysis,
-        lowerDeductionRate: hasLowerDeduction ? Number(lowerDeductionRate) : null,
-        lowerDeductionCertificate: lowerDeductionCertificate || (hasLowerDeduction ? { ratePercent: Number(lowerDeductionRate), applied: true } : null),
-        governingWithholdingSection,
-        governingPanPenaltySection,
-        governingCertificateSection,
-        isSection536TransitionalSavingsApplied: certResolution.isSection536TransitionalSavingsApplied,
-        transitionalSavingsClause: certResolution.transitionalSavingsClause,
-        certificateValidity: certResolution,
-        certificateDisallowanceReason: certResolution.isValid ? null : certResolution.reason,
-        legalPrecedence: "Section 194Q (Buyer TDS) overrides Section 206C(1H) (Seller TCS)",
-        sellerTcsStatus,
-        requiredParty: isSection194QApplicable ? effectiveBuyerName : (sellerPrescriptionStatus === 'APPLICABLE' ? `${effectiveSellerName} (under Section 206C(1H))` : "None"),
-        rateInForce: effectiveRateInForce,
-        ratesInForceSource: ratesInForceSource || (effectiveRateInForce > 0.1 ? 'FINANCE_ACT' : 'STATUTORY_BASE'),
-        statutoryRateHierarchy: {
-            statutoryBaseRate,
-            rateInForce: effectiveRateInForce,
-            ratesInForceSource: ratesInForceSource || (effectiveRateInForce > 0.1 ? 'FINANCE_ACT' : 'STATUTORY_BASE'),
-            penaltyFloorRate: missingPanPenaltyFloor,
-            governingProviso: governingPanPenaltySection,
-            rule: 'HIGHER_OF_BASE_RATE_IN_FORCE_OR_PENALTY_FLOOR'
-        },
-        rateEvidenceValidation: rateEvidence,
-        statutoryFormula: formulaText
-    };
-}
-
-/**
- * ─────────────────────────────────────────────────────────────────────────────
- * 4B. SECTION 206C(1H): DETERMINISTIC SELLER TCS ON GOODS ENGINE
- * ─────────────────────────────────────────────────────────────────────────────
- * Evaluates tax collection at source by sellers on sale of goods:
- * - Preceding FY Seller Turnover precondition (> ₹10 Crore)
- * - Buyer Turnover precondition: If buyer turnover > ₹10 Cr, Section 194Q
- *   takes absolute statutory precedence under Section 206C(1H) Second Proviso.
- *   Seller is statutorily excused from collecting TCS.
- * - Threshold: Aggregate consideration received in FY > ₹50 Lakhs.
- * - Rate: 0.1% if PAN furnished and operative.
- * - Section 206CC Proviso Rate Cap: If PAN is missing or inoperative,
- *   rate is strictly capped at 1.0% (NOT 5% or 20%).
- * - Finance Act, 2025 Sunset: Omitted/withdrawn effective 1 April 2025.
- *   On or after 1 April 2025, TCS collection is statutorily barred.
- */
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
-export function evaluateSection206C1H({
-    receiptAmountInr = 0,
-    priorFyReceiptsInr = 0,
-    hasPan = true,
-    isPanInoperative = false,
-    transactionDate = null,
-    sellerTurnoverCr = null,
-    buyerTurnoverCr = null,
-    isBuyerLiableAndDeducting194Q = false,
-    sellerName = null,
-    buyerName = null
-} = {}) {
-    const receipt = Math.max(0, Number(receiptAmountInr) || 0);
-    const prior = Math.max(0, Number(priorFyReceiptsInr) || 0);
-    const cumulative = prior + receipt;
-    const THRESHOLD = 5000000; // ₹50 Lakhs
-
-    const effectiveDate = transactionDate || new Date().toISOString().split('T')[0];
-    const isPostSunset = effectiveDate >= '2025-04-01';
-
-    // 1. Finance Act 2025 Sunset Check (Effective 1 April 2025)
-    if (isPostSunset) {
-        return {
-            receiptAmountInr: receipt,
-            priorFyReceiptsInr: prior,
-            cumulativeFyReceiptsInr: cumulative,
-            taxableBase: 0,
-            tcsRatePercent: 0,
-            calculatedTcsInr: 0,
-            isTcsApplicable: false,
-            isOmittedByFinanceAct2025: true,
-            effectiveDate,
-            governingSection: 'Section 206C(1H) (Omitted w.e.f. 1 April 2025)',
-            statutoryReason: 'Section 206C(1H) was omitted/withdrawn effective 1 April 2025 by Finance Act, 2025. Sellers no longer collect TCS on goods. Obligation rests solely with buyer withholding under the Income-tax Act.',
-            statutoryDisposition: 'OMITTED_SUNSET_BY_FINANCE_ACT_2025'
-        };
-    }
-
-    // 2. Seller Turnover Precondition (> ₹10 Crore in preceding FY)
-    const isSellerPrescribed = sellerTurnoverCr !== null && Number(sellerTurnoverCr) > 10;
-    if (sellerTurnoverCr !== null && !isSellerPrescribed) {
-        return {
-            receiptAmountInr: receipt,
-            priorFyReceiptsInr: prior,
-            cumulativeFyReceiptsInr: cumulative,
-            taxableBase: 0,
-            tcsRatePercent: 0,
-            calculatedTcsInr: 0,
-            isTcsApplicable: false,
-            isSellerPrescribed: false,
-            effectiveDate,
-            governingSection: 'Income-tax Act, 1961 Section 206C(1H)',
-            statutoryReason: `Seller turnover (${sellerTurnoverCr} Cr) in preceding financial year did not exceed ₹10 Crore threshold. Section 206C(1H) is inapplicable.`,
-            statutoryDisposition: 'EXEMPT_SELLER_TURNOVER_BELOW_THRESHOLD'
-        };
-    }
-
-    // 3. Section 194Q Absolute Statutory Precedence (Section 194Q(5)(b) read with Second Proviso to Section 206C(1H))
-    const isBuyerLiable194Q = (buyerTurnoverCr !== null && Number(buyerTurnoverCr) > 10) || Boolean(isBuyerLiableAndDeducting194Q);
-    if (isBuyerLiable194Q) {
-        return {
-            receiptAmountInr: receipt,
-            priorFyReceiptsInr: prior,
-            cumulativeFyReceiptsInr: cumulative,
-            taxableBase: 0,
-            tcsRatePercent: 0,
-            calculatedTcsInr: 0,
-            isTcsApplicable: false,
-            isDisplacedBySection194Q: true,
-            effectiveDate,
-            governingSection: 'Income-tax Act, 1961 Section 194Q(5)(b) read with Section 206C(1H) Second Proviso',
-            statutoryReason: 'Section 194Q(5)(b) and Second Proviso to Section 206C(1H) mandate that TCS under 206C(1H) shall not be collected if buyer is liable to deduct tax at source under Section 194Q and has deducted such amount. Section 194Q takes absolute statutory precedence.',
-            statutoryDisposition: 'STATUTORILY_DISPLACED_BY_SECTION_194Q_TDS'
-        };
-    }
-
-    // 4. Threshold & Taxable Base Calculation
-    const incrementalExcess = Math.max(0, cumulative - THRESHOLD) - Math.max(0, prior - THRESHOLD);
-    const taxableBase = Math.max(0, Math.min(receipt, incrementalExcess));
-
-    // 5. Rate Determination (Section 206C(1H) read with Section 206CC Proviso)
-    const panAvailable = Boolean(hasPan) && !isPanInoperative;
-    const tcsRatePercent = panAvailable ? 0.1 : 1.0; // Section 206CC proviso caps missing PAN at 1%, NOT 5% or 20%
-    const calculatedTcsInr = Number(((taxableBase * tcsRatePercent) / 100).toFixed(2));
-
-    return {
-        receiptAmountInr: receipt,
-        priorFyReceiptsInr: prior,
-        cumulativeFyReceiptsInr: cumulative,
-        statutoryThreshold: THRESHOLD,
-        thresholdBreached: cumulative > THRESHOLD,
-        taxableBase,
-        isPanFurnished: panAvailable,
-        tcsRatePercent,
-        calculatedTcsInr,
-        isTcsApplicable: taxableBase > 0,
-        effectiveDate,
-        governingSection: 'Income-tax Act, 1961 Section 206C(1H)',
-        governingPenaltySection: panAvailable ? null : 'Income-tax Act, 1961 Section 206CC Proviso (Capped at 1%)',
-        statutoryDisposition: taxableBase > 0 ? 'DETERMINED_TCS_COLLECTION_REQUIRED' : 'BELOW_THRESHOLD_RECEIPT',
-        statutoryFormula: taxableBase > 0
-            ? `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${tcsRatePercent}%${panAvailable ? '' : ' (Section 206CC Proviso Cap for 206C(1H))'} = ₹${calculatedTcsInr.toLocaleString('en-IN')}`
-            : 'Consideration received does not exceed ₹50 Lakhs threshold in current FY.'
-    };
-}
-
-/**
- * Standard Indian State & Union Territory Codes (Census 2011 / GSTN 2-digit prefix).
- */
-export const INDIAN_STATE_CODES = {
-    '01': 'Jammu & Kashmir',
-    '02': 'Himachal Pradesh',
-    '03': 'Punjab',
-    '04': 'Chandigarh',
-    '05': 'Uttarakhand',
-    '06': 'Haryana',
-    '07': 'Delhi',
-    '08': 'Rajasthan',
-    '09': 'Uttar Pradesh',
-    '10': 'Bihar',
-    '11': 'Sikkim',
-    '12': 'Arunachal Pradesh',
-    '13': 'Nagaland',
-    '14': 'Manipur',
-    '15': 'Mizoram',
-    '16': 'Tripura',
-    '17': 'Meghalaya',
-    '18': 'Assam',
-    '19': 'West Bengal',
-    '20': 'Jharkhand',
-    '21': 'Odisha',
-    '22': 'Chhattisgarh',
-    '23': 'Madhya Pradesh',
-    '24': 'Gujarat',
-    '26': 'Dadra & Nagar Haveli and Daman & Diu',
-    '27': 'Maharashtra',
-    '29': 'Karnataka',
-    '30': 'Goa',
-    '31': 'Lakshadweep',
-    '32': 'Kerala',
-    '33': 'Tamil Nadu',
-    '34': 'Puducherry',
-    '35': 'Andaman & Nicobar Islands',
-    '36': 'Telangana',
-    '37': 'Andhra Pradesh',
-    '38': 'Ladakh',
-    '97': 'Other Territory',
-    '99': 'Centre Jurisdiction'
-};
-
-/**
- * Statutory 4th character legal status classification for Indian Permanent Account Numbers (PAN).
- * Enacted under Section 139A of the Income-tax Act, 1961 read with Rule 114 of Income Tax Rules.
- */
-export const PAN_ENTITY_TYPES = {
-    'P': { code: 'P', name: 'Individual', isIndividualOrHuf: true, standard194cRatePercent: 1.0 },
-    'H': { code: 'H', name: 'Hindu Undivided Family (HUF)', isIndividualOrHuf: true, standard194cRatePercent: 1.0 },
-    'C': { code: 'C', name: 'Company', isIndividualOrHuf: false, standard194cRatePercent: 2.0 },
-    'F': { code: 'F', name: 'Partnership Firm / LLP', isIndividualOrHuf: false, standard194cRatePercent: 2.0 },
-    'T': { code: 'T', name: 'Trust', isIndividualOrHuf: false, standard194cRatePercent: 2.0 },
-    'A': { code: 'A', name: 'Association of Persons (AOP)', isIndividualOrHuf: false, standard194cRatePercent: 2.0 },
-    'B': { code: 'B', name: 'Body of Individuals (BOI)', isIndividualOrHuf: false, standard194cRatePercent: 2.0 },
-    'L': { code: 'L', name: 'Local Authority', isIndividualOrHuf: false, standard194cRatePercent: 2.0 },
-    'J': { code: 'J', name: 'Artificial Juridical Person', isIndividualOrHuf: false, standard194cRatePercent: 2.0 },
-    'G': { code: 'G', name: 'Government Agency', isIndividualOrHuf: false, standard194cRatePercent: 2.0 }
-};
-
-const BASE36_ALPHANUMERIC = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-/**
- * Validates the check digit of a 15-character Goods and Services Tax Identification Number (GSTIN)
- * using the official ISO/IEC 7064 Mod 36, 36 check digit algorithm.
- * 
- * Offline, zero-dependency, and deterministic. Requires zero network calls.
- * 
- * @param {string} gstin 15-character alphanumeric GSTIN string
- * @returns {boolean} True if the 15th character exactly matches the calculated check character
- */
-export function isValidGstinChecksum(gstin) {
-    if (!gstin || typeof gstin !== 'string') return false;
-    const clean = gstin.trim().toUpperCase();
-
-    // Structural syntax: State (2 digits) + PAN (10 chars) + Entity (1 char) + Z (1 char) + Check (1 char)
-    const pattern = /^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]$/;
-    if (!pattern.test(clean)) return false;
-
-    let total = 0;
-    for (let i = 0; i < 14; i++) {
-        const val = BASE36_ALPHANUMERIC.indexOf(clean[i]);
-        if (val === -1) return false;
-        const factor = (i % 2 === 0) ? 1 : 2;
-        const product = val * factor;
-        total += Math.floor(product / 36) + (product % 36);
-    }
-
-    const expectedIndex = (36 - (total % 36)) % 36;
-    const expectedChar = BASE36_ALPHANUMERIC[expectedIndex];
-    return clean[14] === expectedChar;
-}
-
-/**
- * Deterministically decodes an Indian Tax Identifier (PAN or GSTIN).
- * 
- * Capabilities:
- * - Structural regular expression pattern validation
- * - Offline ISO/IEC 7064 Mod 36, 36 checksum calculation for GSTIN
- * - State code and name extraction from GSTIN prefix
- * - Embedded 10-character PAN extraction from GSTIN positions 3..12
- * - Statutory legal entity classification via 4th character of PAN (Individual, HUF, Company, Firm, etc.)
- * - Statutory Section 194C withholding rate derivation (1% for Individual/HUF vs 2% for Other Entities)
- * 
- * Zero dependencies, 0-neuron, zero network calls.
- * 
- * @param {string} rawId PAN (10 characters) or GSTIN (15 characters)
- * @returns {Object} Decoded tax entity metadata
- */
-export function decodeTaxIdentifier(rawId) {
-    if (!rawId || typeof rawId !== 'string') {
-        return {
-            isValid: false,
-            error: 'Tax identifier must be a non-empty string.'
-        };
-    }
-
-    const clean = rawId.trim().toUpperCase();
-
-    // 1. Process 15-character GSTIN
-    if (clean.length === 15) {
-        const pattern = /^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]$/;
-        if (!pattern.test(clean)) {
-            return {
-                isValid: false,
-                type: 'GSTIN',
-                gstin: clean,
-                error: 'Malformed GSTIN format: expected 2 digits state + 10 chars PAN + 1 entity char + Z + 1 check char.'
-            };
-        }
-
-        const isChecksumValid = isValidGstinChecksum(clean);
-        const stateCode = clean.slice(0, 2);
-        const pan = clean.slice(2, 12);
-        const entityCode = pan[3];
-        const entityMeta = PAN_ENTITY_TYPES[entityCode] || {
-            code: entityCode,
-            name: 'Other Entity / Non-Individual',
-            isIndividualOrHuf: false,
-            standard194cRatePercent: 2.0
-        };
-
-        return {
-            isValid: isChecksumValid,
-            checksumValid: isChecksumValid,
-            type: 'GSTIN',
-            gstin: clean,
-            pan,
-            stateCode,
-            stateName: INDIAN_STATE_CODES[stateCode] || 'Unknown Territory',
-            entityCode,
-            entityType: entityMeta.name,
-            isIndividualOrHuf: entityMeta.isIndividualOrHuf,
-            standard194cRatePercent: entityMeta.standard194cRatePercent,
-            error: isChecksumValid ? null : 'GSTIN checksum mismatch under ISO/IEC 7064 Mod 36, 36.'
-        };
-    }
-
-    // 2. Process 10-character PAN
-    if (clean.length === 10) {
-        const panPattern = /^[A-Z]{5}\d{4}[A-Z]$/;
-        if (!panPattern.test(clean)) {
-            return {
-                isValid: false,
-                type: 'PAN',
-                pan: clean,
-                error: 'Malformed PAN format: expected 5 letters + 4 digits + 1 letter.'
-            };
-        }
-
-        const entityCode = clean[3];
-        const entityMeta = PAN_ENTITY_TYPES[entityCode] || {
-            code: entityCode,
-            name: 'Other Entity / Non-Individual',
-            isIndividualOrHuf: false,
-            standard194cRatePercent: 2.0
-        };
-
-        return {
-            isValid: true,
-            type: 'PAN',
-            pan: clean,
-            entityCode,
-            entityType: entityMeta.name,
-            isIndividualOrHuf: entityMeta.isIndividualOrHuf,
-            standard194cRatePercent: entityMeta.standard194cRatePercent,
-            error: null
-        };
-    }
-
-    return {
-        isValid: false,
-        error: `Invalid identifier length (${clean.length}): Expected 10 characters for PAN or 15 characters for GSTIN.`
-    };
-}
-
-/**
- * ─────────────────────────────────────────────────────────────────────────────
- * 5. SECTION 194C: DETERMINISTIC CONTRACTOR & SUB-CONTRACTOR ENGINE
- * ─────────────────────────────────────────────────────────────────────────────
- * Evaluates payments to resident contractors and sub-contractors:
- * - Deductee entity classification:
- *   - Individual / HUF: 1.0%
- *   - Other entity (Company, LLP, Firm, AOP, BOI): 2.0%
- *   - Auto-inferred if PAN or GSTIN is supplied (4th character decoding).
- * - Dual statutory threshold under Section 194C(5):
- *   - Single invoice > ₹30,000 OR
- *   - Aggregate in Financial Year > ₹1,00,000
- *   - When aggregate crosses ₹1,00,000, catch-up withholding applies to untaxed prior base.
- * - Transporter Exemption under Section 194C(6):
- *   - Contractor in business of plying, hiring or leasing goods carriages who owns
- *     <= 10 goods carriages and furnishes declaration + PAN: 0.0% (NIL TDS).
- * - Section 206AA Penalty: 20.0% if PAN is absent or inoperative.
- * - Section 197 Lower Deduction Certificate with cumulative ceiling tracking.
- * - CBDT Circular No. 23/2017: Excludes separately stated GST.
- * - Income-tax Act, 2025 Transition: Section 393(1) Table 8, Item (i).
- */
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
-export function evaluateSection194C({
-    invoiceAmount,
-    deducteeType = null, // 'INDIVIDUAL', 'HUF', 'COMPANY', 'FIRM', 'LLP', 'OTHER'
-    pan = null,
-    gstin = null,
-    priorFyPayments = 0,
-    priorFyPaymentsAlreadyTaxed = null,
-    hasPan = true,
-    isPanInoperative = false,
-    transactionDate = null,
-    creditDate = null,
-    paymentDate = null,
-    isTransporter = false,
-    ownsTenOrLessCarriages = false,
-    transporterDeclarationFurnished = false,
-    gstAmountInr = 0,
-    isAdvancePayment = false,
-    lowerDeductionRate = null,
-    lowerDeductionCertificate = null,
-    certificateMonetaryCeilingInr = null,
-    certificatePriorUtilizedInr = 0,
-    certificateSection = null
-} = {}) {
-    const rawInvoiceAmount = assertMandatoryNumeric(invoiceAmount, 'invoiceAmount', 'evaluateSection194C');
-    const gstAmount = cleanNumericAmount(gstAmountInr);
-
-    // CBDT Circular No. 23/2017: If GST is separately stated, TDS applies to basic value
-    const effectiveContractAmount = isAdvancePayment
-        ? rawInvoiceAmount
-        : Math.max(0, rawInvoiceAmount - gstAmount);
-
-    const prior = Math.max(0, cleanNumericAmount(priorFyPayments));
-    const cumulative = prior + effectiveContractAmount;
-
-    const SINGLE_THRESHOLD = 30000;
-    const AGGREGATE_THRESHOLD = 100000;
-
-    const panAvailable = Boolean(hasPan) && !isPanInoperative;
-
-    // ── Transporter Exemption Check (Section 194C(6)) ──
-    const isTransporterExempt = Boolean(
-        isTransporter &&
-        ownsTenOrLessCarriages &&
-        transporterDeclarationFurnished &&
-        panAvailable
-    );
-
-    // ── Threshold Evaluation (Section 194C(5)) ──
-    const singleBreach = effectiveContractAmount > SINGLE_THRESHOLD;
-    const aggregateBreach = cumulative > AGGREGATE_THRESHOLD;
-    const isThresholdBreached = singleBreach || aggregateBreach;
-
-    let taxableBase = 0;
-    let thresholdDisposition = 'BELOW_THRESHOLD_EXEMPT';
-
-    if (isTransporterExempt) {
-        taxableBase = 0;
-        thresholdDisposition = 'EXEMPT_TRANSPORTER_SECTION_194C_6';
-    } else if (isThresholdBreached) {
-        if (aggregateBreach) {
-            // If aggregate crossed ₹1,00,000, determine previously taxed vs untaxed amount
-            const previouslyTaxed = priorFyPaymentsAlreadyTaxed !== null && priorFyPaymentsAlreadyTaxed !== undefined
-                ? Math.max(0, Number(priorFyPaymentsAlreadyTaxed))
-                : (prior > AGGREGATE_THRESHOLD ? prior : 0);
-
-            taxableBase = Math.max(0, cumulative - previouslyTaxed);
-            thresholdDisposition = prior <= AGGREGATE_THRESHOLD && previouslyTaxed === 0
-                ? 'AGGREGATE_THRESHOLD_BREACHED_WITH_CATCHUP'
-                : 'AGGREGATE_THRESHOLD_ACTIVE';
-        } else {
-            // Single bill breached ₹30,000 while cumulative <= ₹1,00,000
-            taxableBase = effectiveContractAmount;
-            thresholdDisposition = 'SINGLE_BILL_THRESHOLD_BREACHED';
-        }
-    }
-
-    // Temporal Resolution: "Credit or Payment, whichever is earlier"
-    let effectiveDate = transactionDate;
-    let withholdingTrigger = 'TRANSACTION_DATE';
-
-    if (creditDate && paymentDate) {
-        if (creditDate <= paymentDate) {
-            effectiveDate = creditDate;
-            withholdingTrigger = 'CREDIT_TO_ACCOUNT';
-        } else {
-            effectiveDate = paymentDate;
-            withholdingTrigger = 'PAYMENT_DISBURSEMENT';
-        }
-    } else if (creditDate) {
-        effectiveDate = creditDate;
-        withholdingTrigger = 'CREDIT_TO_ACCOUNT';
-    } else if (paymentDate) {
-        effectiveDate = paymentDate;
-        withholdingTrigger = 'PAYMENT_DISBURSEMENT';
-    }
-
-    const isTemporalStraddle = Boolean(
-        creditDate && paymentDate &&
-        ((creditDate < '2026-04-01' && paymentDate >= '2026-04-01') ||
-         (paymentDate < '2026-04-01' && creditDate >= '2026-04-01'))
-    );
-
-    const temporalStraddlingAnalysis = isTemporalStraddle ? {
-        isStraddlingCommencement: true,
-        creditDate,
-        paymentDate,
-        crystallizedDate: effectiveDate,
-        withholdingTrigger,
-        governingRegime: effectiveDate >= '2026-04-01' ? 'ACT_2025' : 'ACT_1961',
-        statutoryRationale: effectiveDate < '2026-04-01'
-            ? `Tax withholding obligation crystallized on ${effectiveDate} (${withholdingTrigger}) under the Income-tax Act, 1961 prior to 2025 Act commencement. Subsequent settlement on ${effectiveDate === creditDate ? paymentDate : creditDate} creates no duplicate withholding under the 2025 Act.`
-            : `Both credit and payment occurred on or after 1 April 2026. Governed exclusively by the Income-tax Act, 2025.`
-    } : null;
-
-    // ── Temporal Act Bridge ──
-    const isAct2025 = effectiveDate ? effectiveDate >= '2026-04-01' : false;
-    const governingSection = isAct2025
-        ? "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 6(i)"
-        : "Income-tax Act, 1961 Section 194C";
-    
-    // Resolve certificate framework with Section 536(2) transitional savings and validity evaluation
-    const certResolution = evaluateLowerDeductionCertificateValidity({
-        effectiveDate,
-        lowerDeductionCertificate,
-        certificateSection,
-        isAct2025
-    });
-    const governingCertificateSection = certResolution.governingCertificateSection;
-
-    // ── Entity Rate Determination & Tax Identifier Decoding ──
-    let decodedTaxId = null;
-    const taxIdInput = gstin || pan;
-    if (taxIdInput && typeof taxIdInput === 'string') {
-        decodedTaxId = decodeTaxIdentifier(taxIdInput);
-        if (decodedTaxId.isValid) {
-            if (deducteeType === null || deducteeType === undefined) {
-                deducteeType = decodedTaxId.isIndividualOrHuf ? 'INDIVIDUAL' : 'COMPANY';
-            }
-        }
-    }
-    const normalizedType = String(deducteeType || 'COMPANY').toUpperCase().trim();
-    const isIndividualOrHuf = normalizedType === 'INDIVIDUAL' || normalizedType === 'HUF';
-    const baseStatutoryRatePercent = isIndividualOrHuf ? 1.0 : 2.0;
-
-    // Section 206AA: 20% if PAN missing/inoperative (no 5% goods cap for 194C)
-    const standardRatePercent = panAvailable ? baseStatutoryRatePercent : 20.0;
-
-    // ── Lower Deduction Certificate Validation ──
-    const isCertificateValid = certResolution.isValid;
-    const hasLowerDeduction = (lowerDeductionRate !== null && lowerDeductionRate !== undefined) && isCertificateValid;
-    const certifiedRatePercent = hasLowerDeduction ? Number(lowerDeductionRate) : standardRatePercent;
-
-    const certificateCeiling = certificateMonetaryCeilingInr !== null && certificateMonetaryCeilingInr !== undefined
-        ? Number(certificateMonetaryCeilingInr)
-        : (lowerDeductionCertificate?.monetaryCeilingInr !== undefined ? Number(lowerDeductionCertificate.monetaryCeilingInr) : null);
-
-    const certificatePriorUtilized = Number(certificatePriorUtilizedInr) ||
-        (lowerDeductionCertificate?.consumedAmountInr !== undefined ? Number(lowerDeductionCertificate.consumedAmountInr) : 0);
-
-    const availableCeilingHeadroom = certificateCeiling !== null
-        ? Math.max(0, certificateCeiling - certificatePriorUtilized)
-        : null;
-
-    let certifiedEligibleBase = 0;
-    let uncoveredExcessBase = taxableBase;
-    let ceilingExhaustionStatus = 'NO_LOWER_DEDUCTION_CERTIFICATE';
-
-    if (hasLowerDeduction && taxableBase > 0) {
-        if (certificateCeiling === null) {
-            certifiedEligibleBase = taxableBase;
-            uncoveredExcessBase = 0;
-            ceilingExhaustionStatus = 'UNCONSTRAINED';
-        } else if (availableCeilingHeadroom >= taxableBase) {
-            certifiedEligibleBase = taxableBase;
-            uncoveredExcessBase = 0;
-            ceilingExhaustionStatus = 'WITHIN_CEILING';
-        } else if (availableCeilingHeadroom > 0) {
-            certifiedEligibleBase = availableCeilingHeadroom;
-            uncoveredExcessBase = taxableBase - availableCeilingHeadroom;
-            ceilingExhaustionStatus = 'PARTIALLY_EXHAUSTED';
-        } else {
-            certifiedEligibleBase = 0;
-            uncoveredExcessBase = taxableBase;
-            ceilingExhaustionStatus = 'FULLY_EXHAUSTED';
-        }
-    } else if (lowerDeductionRate !== null && !isCertificateValid) {
-        ceilingExhaustionStatus = certResolution.status;
-    }
-
-    let certifiedTdsInr = 0;
-    let uncoveredTdsInr = 0;
-
-    if (taxableBase > 0) {
-        certifiedTdsInr = Number(((certifiedEligibleBase * certifiedRatePercent) / 100).toFixed(2));
-        uncoveredTdsInr = Number(((uncoveredExcessBase * standardRatePercent) / 100).toFixed(2));
-    }
-    const calculatedTdsInr = Number((certifiedTdsInr + uncoveredTdsInr).toFixed(2));
-    const effectiveRatePercent = taxableBase > 0
-        ? Number(((calculatedTdsInr / taxableBase) * 100).toFixed(4))
-        : (isTransporterExempt ? 0.0 : standardRatePercent);
-
-    let formulaText = "";
-    if (isTransporterExempt) {
-        formulaText = "Section 194C(6) Nil withholding: Transporter furnished declaration of owning <= 10 goods carriages with valid PAN.";
-    } else if (taxableBase === 0) {
-        formulaText = `Section 194C inapplicable: Bill (₹${effectiveContractAmount.toLocaleString('en-IN')}) <= ₹30,000 single limit and cumulative (₹${cumulative.toLocaleString('en-IN')}) <= ₹1,00,000 aggregate limit.`;
-    } else if (hasLowerDeduction) {
-        if (ceilingExhaustionStatus === 'PARTIALLY_EXHAUSTED') {
-            formulaText = `Partial Ceiling Split: ₹${certifiedEligibleBase.toLocaleString('en-IN')} @ ${certifiedRatePercent}% + ₹${uncoveredExcessBase.toLocaleString('en-IN')} @ ${standardRatePercent}% = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-        } else {
-            formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${certifiedRatePercent}% (${isAct2025 ? 'Section 395' : 'Section 197'} Certificate) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-        }
-    } else if (lowerDeductionRate !== null && !isCertificateValid) {
-        formulaText = `Lower Deduction Certificate Disallowed (${certResolution.status}): ${certResolution.reason}. Deducted at standard statutory rate of ${standardRatePercent}% = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-    } else if (panAvailable) {
-        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${standardRatePercent}% (${isIndividualOrHuf ? 'Individual/HUF' : 'Company/LLP/Firm'}) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-    } else {
-        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × 20% (Section 206AA Penal Rate for missing PAN) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-    }
-
-    return {
-        section: '194C',
-        governingSection,
-        governingCertificateSection,
-        isSection536TransitionalSavingsApplied: certResolution.isSection536TransitionalSavingsApplied,
-        transitionalSavingsClause: certResolution.transitionalSavingsClause,
-        certificateValidity: certResolution,
-        certificateDisallowanceReason: certResolution.isValid ? null : certResolution.reason,
-        creditDate,
-        paymentDate,
-        effectiveWithholdingDate: effectiveDate,
-        withholdingTrigger,
-        temporalStraddlingAnalysis,
-        rawInvoiceAmount,
-        gstAmountInr: gstAmount,
-        isAdvancePayment,
-        effectiveContractAmount,
-        cbdtCircular23Applied: !isAdvancePayment && gstAmount > 0,
-        priorFyPayments: prior,
-        cumulativeFyPayments: cumulative,
-        singleThreshold: SINGLE_THRESHOLD,
-        aggregateThreshold: AGGREGATE_THRESHOLD,
-        singleBreach,
-        aggregateBreach,
-        isThresholdBreached,
-        thresholdDisposition,
-        deducteeType: normalizedType,
-        isIndividualOrHuf,
-        decodedTaxIdentifier: decodedTaxId,
-        isTransporter,
-        isTransporterExempt,
-        ownsTenOrLessCarriages,
-        transporterDeclarationFurnished,
-        isPanFurnished: panAvailable,
-        taxableBase,
-        baseStatutoryRatePercent,
-        standardRatePercent,
-        effectiveRatePercent,
-        calculatedTdsInr,
-        taxAmountRoundedSection288B: roundSection288B(calculatedTdsInr),
-        certifiedTdsInr,
-        uncoveredTdsInr,
-        certificateCeiling,
-        certificatePriorUtilized,
-        availableCeilingHeadroom,
-        certifiedEligibleBase,
-        uncoveredExcessBase,
-        ceilingExhaustionStatus,
-        lowerDeductionRate: hasLowerDeduction ? Number(lowerDeductionRate) : null,
-        statutoryFormula: formulaText
-    };
-}
-
-/**
- * ─────────────────────────────────────────────────────────────────────────────
- * 6. SECTION 194J: DETERMINISTIC PROFESSIONAL & TECHNICAL SERVICES ENGINE
- * ─────────────────────────────────────────────────────────────────────────────
- * Evaluates payments for professional, technical services, royalty, and director fees:
- * - Service Category Classification:
- *   - Fees for Technical Services (FTS) / BPO / Royalty for cinematographic films: 2.0%
- *   - Royalty (general, non-film): 2.0%
- *   - Professional Services (Legal, Medical, Engineering, Accountancy, etc.): 10.0%
- *   - Non-compete fees (Section 28(va)): 10.0%
- *   - Director Remuneration (other than salary covered by Sec 192): 10.0% (Zero threshold!)
- * - Statutory Threshold under Section 194J(1):
- *   - ₹30,000 aggregate per category in FY.
- *   - Director remuneration: ₹0 threshold (first rupee deductible).
- *   - When cumulative crosses ₹30,000, catch-up withholding applies to untaxed prior base.
- * - Section 206AA Penalty: 20.0% if PAN is missing or inoperative.
- * - Section 197 Lower Deduction Certificate with cumulative ceiling tracking.
- * - CBDT Circular No. 23/2017: Excludes separately stated GST.
- * - Income-tax Act, 2025 Transition: Section 393(1) Table 8, Item (iii).
- */
-export const VALID_194J_CATEGORIES = [
-    'PROFESSIONAL_SERVICES',
-    'TECHNICAL_SERVICES',
-    'DIRECTOR_REMUNERATION',
-    'ROYALTY_GENERAL',
-    'ROYALTY_FILM',
-    'NON_COMPETE'
-];
-
-export function normalize194JCategory(rawCategory) {
-    if (!rawCategory || typeof rawCategory !== 'string') return null;
-    const clean = rawCategory.trim().toUpperCase().replace(/[-\s]+/g, '_');
-    
-    if (VALID_194J_CATEGORIES.includes(clean)) {
-        return clean;
-    }
-    
-    // Synonyms for PROFESSIONAL_SERVICES (10%)
-    if (/^(PROFESSIONAL|PROF|CA|LEGAL|LAWYER|ADVOCATE|CONSULTING|CONSULTANT|AUDIT|AUDITOR|MEDICAL|DOCTOR|ARCHITECT)$/i.test(clean) ||
-        clean.includes('PROFESSIONAL') || clean.includes('LEGAL_') || clean.includes('AUDIT_')) {
-        return 'PROFESSIONAL_SERVICES';
-    }
-
-    // Synonyms for TECHNICAL_SERVICES (2%)
-    if (/^(TECHNICAL|FTS|FEES_FOR_TECHNICAL_SERVICES|IT|SOFTWARE|HOSTING|TECH|DEVELOPMENT|ENGINEERING|CLOUD)$/i.test(clean) ||
-        clean.includes('TECHNICAL') || clean.includes('FTS')) {
-        return 'TECHNICAL_SERVICES';
-    }
-
-    // Synonyms for DIRECTOR_REMUNERATION (10%, ₹0 threshold)
-    if (/^(DIRECTOR|DIRECTOR_FEE|DIRECTOR_FEES|SITTING_FEE|SITTING_FEES|BOARD_MEETING_FEE)$/i.test(clean) ||
-        clean.includes('DIRECTOR') || clean.includes('SITTING_FEE')) {
-        return 'DIRECTOR_REMUNERATION';
-    }
-
-    // Synonyms for ROYALTY_GENERAL (2%)
-    if (/^(ROYALTY|PATENT|COPYRIGHT|TRADEMARK|IP_LICENSING)$/i.test(clean) ||
-        clean === 'ROYALTY_GENERAL') {
-        return 'ROYALTY_GENERAL';
-    }
-
-    // Synonyms for ROYALTY_FILM (2%)
-    if (/^(ROYALTY_FILM|FILM_ROYALTY|CINEMATOGRAPHIC_FILM)$/i.test(clean)) {
-        return 'ROYALTY_FILM';
-    }
-
-    // Synonyms for NON_COMPETE (10%)
-    if (/^(NON_COMPETE|NONCOMPETE|NON_COMPETE_FEE|NON_COMPETE_FEES)$/i.test(clean)) {
-        return 'NON_COMPETE';
-    }
-
-    return null;
-}
-
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
-export function evaluateSection194J({
-    invoiceAmount,
-    serviceCategory = 'TECHNICAL_SERVICES', // 'TECHNICAL_SERVICES', 'PROFESSIONAL_SERVICES', 'ROYALTY_FILM', 'ROYALTY_GENERAL', 'DIRECTOR_REMUNERATION', 'NON_COMPETE'
-    priorFyCategoryPayments = 0,
-    priorPaymentsInCurrentFyInr = null,
-    priorFyCategoryPaymentsAlreadyTaxed = null,
-    hasPan = true,
-    isPanInoperative = false,
-    transactionDate = null,
-    creditDate = null,
-    paymentDate = null,
-    gstAmountInr = 0,
-    isAdvancePayment = false,
-    lowerDeductionRate = null,
-    lowerDeductionCertificate = null,
-    certificateMonetaryCeilingInr = null,
-    certificatePriorUtilizedInr = 0,
-    certificateSection = null
-} = {}) {
-    const normalizedCategory = normalize194JCategory(serviceCategory);
-    if (!normalizedCategory) {
-        throw new Error(`INVALID_SERVICE_CATEGORY: Unknown serviceCategory "${serviceCategory}". Allowed categories: ${VALID_194J_CATEGORIES.join(', ')}`);
-    }
-
-    const rawInvoiceAmount = assertMandatoryNumeric(invoiceAmount, 'invoiceAmount', 'evaluateSection194J');
-    const gstAmount = cleanNumericAmount(gstAmountInr);
-
-    // CBDT Circular No. 23/2017: If GST is separately stated, TDS applies to basic value
-    const effectiveServiceAmount = isAdvancePayment
-        ? rawInvoiceAmount
-        : Math.max(0, rawInvoiceAmount - gstAmount);
-
-    const effectivePriorInput = priorPaymentsInCurrentFyInr !== null && priorPaymentsInCurrentFyInr !== undefined
-        ? priorPaymentsInCurrentFyInr
-        : priorFyCategoryPayments;
-    const prior = Math.max(0, cleanNumericAmount(effectivePriorInput));
-    const cumulative = prior + effectiveServiceAmount;
-
-    const isDirectorFee = normalizedCategory === 'DIRECTOR_REMUNERATION';
-    const isProfessionalOrNonCompete = normalizedCategory === 'PROFESSIONAL_SERVICES' || normalizedCategory === 'NON_COMPETE';
-
-    // Temporal Resolution: "Credit or Payment, whichever is earlier"
-    let effectiveDate = transactionDate;
-    let withholdingTrigger = 'TRANSACTION_DATE';
-
-    if (creditDate && paymentDate) {
-        if (creditDate <= paymentDate) {
-            effectiveDate = creditDate;
-            withholdingTrigger = 'CREDIT_TO_ACCOUNT';
-        } else {
-            effectiveDate = paymentDate;
-            withholdingTrigger = 'PAYMENT_DISBURSEMENT';
-        }
-    } else if (creditDate) {
-        effectiveDate = creditDate;
-        withholdingTrigger = 'CREDIT_TO_ACCOUNT';
-    } else if (paymentDate) {
-        effectiveDate = paymentDate;
-        withholdingTrigger = 'PAYMENT_DISBURSEMENT';
-    }
-
-    const isTemporalStraddle = Boolean(
-        creditDate && paymentDate &&
-        ((creditDate < '2026-04-01' && paymentDate >= '2026-04-01') ||
-         (paymentDate < '2026-04-01' && creditDate >= '2026-04-01'))
-    );
-
-    const temporalStraddlingAnalysis = isTemporalStraddle ? {
-        isStraddlingCommencement: true,
-        creditDate,
-        paymentDate,
-        crystallizedDate: effectiveDate,
-        withholdingTrigger,
-        governingRegime: effectiveDate >= '2026-04-01' ? 'ACT_2025' : 'ACT_1961',
-        statutoryRationale: effectiveDate < '2026-04-01'
-            ? `Tax withholding obligation crystallized on ${effectiveDate} (${withholdingTrigger}) under the Income-tax Act, 1961 prior to 2025 Act commencement. Subsequent settlement on ${effectiveDate === creditDate ? paymentDate : creditDate} creates no duplicate withholding under the 2025 Act.`
-            : `Both credit and payment occurred on or after 1 April 2026. Governed exclusively by the Income-tax Act, 2025.`
-    } : null;
-
-    // ── Temporal Act Bridge ──
-    const isAct2025 = Boolean(effectiveDate && String(effectiveDate).slice(0, 10) >= '2026-04-01');
-    const governingSection = isDirectorFee
-        ? (isAct2025 ? "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 6(iii) (Director Remuneration)" : "Income-tax Act, 1961 Section 194J(1)(ba)")
-        : (isAct2025 ? "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 6(iii)" : "Income-tax Act, 1961 Section 194J");
-
-    // ── Rate Determination ──
-    // 2% for FTS, BPO, Royalty; 10% for Professional Services, Non-compete, and Director fees
-    const baseStatutoryRatePercent = isProfessionalOrNonCompete || isDirectorFee ? 10.0 : 2.0;
-
-    const panAvailable = Boolean(hasPan) && !isPanInoperative;
-    const panFloorResolution = resolveMissingPanPenaltyFloor({
-        sectionCode: '194J',
-        tableItem: isAct2025 ? '393_7' : null,
-        isAct2025
-    });
-    // Section 206AA(1)(iii) / Section 397(2)(a): Strictly 20% floor for professional & technical services
-    const standardRatePercent = panAvailable ? baseStatutoryRatePercent : Math.max(baseStatutoryRatePercent, panFloorResolution.penaltyFloorPercent);
-
-    // ── Threshold Evaluation ──
-    // Director remuneration has NO threshold under 3rd proviso to Section 194J(1)
-    // Director remuneration has NO threshold under 3rd proviso to Section 194J(1) / Section 393(1) Table 1 Sl. No. 6(iii)
-    // 1961 Act threshold: ₹30,000; 2025 Act threshold: ₹50,000 (Section 393(1), Table 1, Sl. No. 6(iii))
-    const CATEGORY_THRESHOLD = isDirectorFee ? 0 : (isAct2025 ? 50000 : 30000);
-    const isThresholdBreached = isDirectorFee || cumulative > CATEGORY_THRESHOLD;
-
-    let taxableBase = 0;
-    let thresholdDisposition = 'BELOW_THRESHOLD_EXEMPT';
-
-    if (isThresholdBreached) {
-        if (isDirectorFee) {
-            taxableBase = effectiveServiceAmount;
-            thresholdDisposition = 'DIRECTOR_FEES_ZERO_THRESHOLD';
-        } else {
-            const previouslyTaxed = priorFyCategoryPaymentsAlreadyTaxed !== null && priorFyCategoryPaymentsAlreadyTaxed !== undefined
-                ? Math.max(0, Number(priorFyCategoryPaymentsAlreadyTaxed))
-                : (prior > CATEGORY_THRESHOLD ? prior : 0);
-
-            taxableBase = Math.max(0, cumulative - previouslyTaxed);
-            thresholdDisposition = prior <= CATEGORY_THRESHOLD && previouslyTaxed === 0
-                ? 'CATEGORY_THRESHOLD_BREACHED_WITH_CATCHUP'
-                : 'CATEGORY_THRESHOLD_ACTIVE';
-        }
-    }
-    
-    // Resolve certificate framework with Section 536(2) transitional savings and validity evaluation
-    const certResolution = evaluateLowerDeductionCertificateValidity({
-        effectiveDate,
-        lowerDeductionCertificate,
-        certificateSection,
-        isAct2025
-    });
-    const governingCertificateSection = certResolution.governingCertificateSection;
-
-    // ── Lower Deduction Certificate Validation ──
-    const isCertificateValid = certResolution.isValid;
-    const hasLowerDeduction = (lowerDeductionRate !== null && lowerDeductionRate !== undefined) && isCertificateValid;
-    const certifiedRatePercent = hasLowerDeduction ? Number(lowerDeductionRate) : standardRatePercent;
-
-    const certificateCeiling = certificateMonetaryCeilingInr !== null && certificateMonetaryCeilingInr !== undefined
-        ? Number(certificateMonetaryCeilingInr)
-        : (lowerDeductionCertificate?.monetaryCeilingInr !== undefined ? Number(lowerDeductionCertificate.monetaryCeilingInr) : null);
-
-    const certificatePriorUtilized = Number(certificatePriorUtilizedInr) ||
-        (lowerDeductionCertificate?.consumedAmountInr !== undefined ? Number(lowerDeductionCertificate.consumedAmountInr) : 0);
-
-    const availableCeilingHeadroom = certificateCeiling !== null
-        ? Math.max(0, certificateCeiling - certificatePriorUtilized)
-        : null;
-
-    let certifiedEligibleBase = 0;
-    let uncoveredExcessBase = taxableBase;
-    let ceilingExhaustionStatus = 'NO_LOWER_DEDUCTION_CERTIFICATE';
-
-    if (hasLowerDeduction && taxableBase > 0) {
-        if (certificateCeiling === null) {
-            certifiedEligibleBase = taxableBase;
-            uncoveredExcessBase = 0;
-            ceilingExhaustionStatus = 'UNCONSTRAINED';
-        } else if (availableCeilingHeadroom >= taxableBase) {
-            certifiedEligibleBase = taxableBase;
-            uncoveredExcessBase = 0;
-            ceilingExhaustionStatus = 'WITHIN_CEILING';
-        } else if (availableCeilingHeadroom > 0) {
-            certifiedEligibleBase = availableCeilingHeadroom;
-            uncoveredExcessBase = taxableBase - availableCeilingHeadroom;
-            ceilingExhaustionStatus = 'PARTIALLY_EXHAUSTED';
-        } else {
-            certifiedEligibleBase = 0;
-            uncoveredExcessBase = taxableBase;
-            ceilingExhaustionStatus = 'FULLY_EXHAUSTED';
-        }
-    } else if (lowerDeductionRate !== null && !isCertificateValid) {
-        ceilingExhaustionStatus = certResolution.status;
-    }
-
-    let certifiedTdsInr = 0;
-    let uncoveredTdsInr = 0;
-
-    if (taxableBase > 0) {
-        certifiedTdsInr = Number(((certifiedEligibleBase * certifiedRatePercent) / 100).toFixed(2));
-        uncoveredTdsInr = Number(((uncoveredExcessBase * standardRatePercent) / 100).toFixed(2));
-    }
-    const calculatedTdsInr = Number((certifiedTdsInr + uncoveredTdsInr).toFixed(2));
-    const effectiveRatePercent = taxableBase > 0
-        ? Number(((calculatedTdsInr / taxableBase) * 100).toFixed(4))
-        : standardRatePercent;
-
-    let formulaText = "";
-    if (taxableBase === 0) {
-        formulaText = `Section 194J inapplicable: Cumulative fees (₹${cumulative.toLocaleString('en-IN')}) do not exceed ₹30,000 threshold for ${normalizedCategory}.`;
-    } else if (hasLowerDeduction) {
-        if (ceilingExhaustionStatus === 'PARTIALLY_EXHAUSTED') {
-            formulaText = `Partial Ceiling Split: ₹${certifiedEligibleBase.toLocaleString('en-IN')} @ ${certifiedRatePercent}% + ₹${uncoveredExcessBase.toLocaleString('en-IN')} @ ${standardRatePercent}% = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-        } else {
-            formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${certifiedRatePercent}% (${isAct2025 ? 'Section 395' : 'Section 197'} Certificate) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-        }
-    } else if (lowerDeductionRate !== null && !isCertificateValid) {
-        formulaText = `Lower Deduction Certificate Disallowed (${certResolution.status}): ${certResolution.reason}. Deducted at standard statutory rate of ${standardRatePercent}% = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-    } else if (panAvailable) {
-        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${standardRatePercent}% (${normalizedCategory}) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-    } else {
-        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × 20% (${panFloorResolution.governingProviso}) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-    }
-
-    return {
-        section: '194J',
-        isAct2025,
-        governingSection,
-        governingPanPenaltySection: panFloorResolution.governingProviso,
-        governingCertificateSection,
-        isSection536TransitionalSavingsApplied: certResolution.isSection536TransitionalSavingsApplied,
-        transitionalSavingsClause: certResolution.transitionalSavingsClause,
-        certificateValidity: certResolution,
-        certificateDisallowanceReason: certResolution.isValid ? null : certResolution.reason,
-        creditDate,
-        paymentDate,
-        effectiveWithholdingDate: effectiveDate,
-        withholdingTrigger,
-        temporalStraddlingAnalysis,
-        rawInvoiceAmount,
-        gstAmountInr: gstAmount,
-        isAdvancePayment,
-        effectiveServiceAmount,
-        cbdtCircular23Applied: !isAdvancePayment && gstAmount > 0,
-        serviceCategory: normalizedCategory,
-        priorFyCategoryPayments: prior,
-        priorPaymentsInCurrentFyInr: prior,
-        cumulativeFyCategoryPayments: cumulative,
-        cumulativePaymentsInCurrentFyInr: cumulative,
-        categoryThreshold: CATEGORY_THRESHOLD,
-        isDirectorFee,
-        isThresholdBreached,
-        thresholdDisposition,
-        isPanFurnished: panAvailable,
-        taxableBase,
-        baseStatutoryRatePercent,
-        standardRatePercent,
-        effectiveRatePercent,
-        calculatedTdsInr,
-        taxAmountRoundedSection288B: roundSection288B(calculatedTdsInr),
-        certifiedTdsInr,
-        uncoveredTdsInr,
-        certificateCeiling,
-        certificatePriorUtilized,
-        availableCeilingHeadroom,
-        certifiedEligibleBase,
-        uncoveredExcessBase,
-        ceilingExhaustionStatus,
-        lowerDeductionRate: hasLowerDeduction ? Number(lowerDeductionRate) : null,
-        statutoryFormula: formulaText,
-        classificationRiskAdvisory: normalizedCategory === 'TECHNICAL_SERVICES' ? {
-            statutoryRatePercent: 2.0,
-            reclassificationRiskRatePercent: 10.0,
-            potentialExposure: "If Assessing Officer reclassifies ERP advisory/technical consultancy as professional services under Section 194J(1)(a), differential 8% withholding plus Section 201(1A) interest (1% per month) applies.",
-            recommendation: "Review contract scope of work: pure technical/IT services qualify for 2% under Section 194J(1)(II); managerial/professional consulting attracts 10% under Section 194J(1)(a)."
-        } : null,
-        statutoryRectificationProcedure: {
-            excessDeductionRemedy: "Deductor cannot claim a cash refund from the vendor for excess TDS deducted. The deductor must file a correction statement (Revised Form 26Q) via TRACES to adjust challan mapping, or the deductee/vendor claims credit/refund in their annual Income Tax Return (ITR) based on Form 26AS/AIS.",
-            belatedCertificateRemedy: "If Section 197 certificate is authenticated post-disbursement, adjust against subsequent payments in the same financial year or advise vendor to claim refund in their ITR."
-        }
-    };
-}
-
-
-
-
-/**
- * ─────────────────────────────────────────────────────────────────────────────
- * 7. SECTION 194I: DETERMINISTIC TDS ON RENT ENGINE
- * ─────────────────────────────────────────────────────────────────────────────
- * Evaluates payments for lease or rental of machinery, equipment, land, or buildings:
- * - Rates:
- *   - Plant, Machinery, or Equipment: 2.0% (Section 194I(a))
- *   - Land, Building, Furniture, or Fittings: 10.0% (Section 194I(b))
- * - Annual Threshold: ₹2,40,000 per financial year per payee.
- * - Missing PAN: 20.0% (Section 206AA(1)(iii)).
- * - CBDT Circular No. 23/2017: Separately stated GST excluded from TDS.
- * - Income-tax Act, 2025 Transition: Section 393(1) Table 8, Item 5.
- */
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
-export function evaluateSection194I({
-    invoiceAmount,
-    monthlyRent = null,
-    rentPeriodMonths = null,
-    priorFyRent = 0,
-    priorFyPayments = null,
-    priorFyPaymentsAlreadyTaxed = null,
-    rentType = 'LAND_BUILDING', // 'LAND_BUILDING', 'PLANT_MACHINERY'
-    hasPan = true,
-    isPanInoperative = false,
-    transactionDate = null,
-    creditDate = null,
-    paymentDate = null,
-    gstAmountInr = 0,
-    isAdvancePayment = false,
-    lowerDeductionRate = null,
-    lowerDeductionCertificate = null,
-    certificateMonetaryCeilingInr = null,
-    certificatePriorUtilizedInr = 0,
-    certificateSection = null
-} = {}) {
-    const rawInvoiceAmount = assertMandatoryNumeric(invoiceAmount, 'invoiceAmount', 'evaluateSection194I');
-    const gstAmount = cleanNumericAmount(gstAmountInr);
-
-    const effectiveRentAmount = isAdvancePayment
-        ? rawInvoiceAmount
-        : Math.max(0, rawInvoiceAmount - gstAmount);
-
-    const effectivePrior = priorFyPayments !== null && priorFyPayments !== undefined
-        ? cleanNumericAmount(priorFyPayments)
-        : cleanNumericAmount(priorFyRent);
-    const prior = Math.max(0, effectivePrior);
-    const cumulative = prior + effectiveRentAmount;
-
-    // Normalizing rentType:
-    const cleanType = String(rentType || '').trim().toUpperCase().replace(/[-\s]+/g, '_');
-    const isPlantOrMachinery = /^(PLANT|MACHINERY|EQUIPMENT|PLANT_MACHINERY|PLANT_AND_MACHINERY)$/i.test(cleanType) || cleanType.includes('MACHINERY') || cleanType.includes('EQUIPMENT');
-    const normalizedRentType = isPlantOrMachinery ? 'PLANT_MACHINERY' : 'LAND_BUILDING';
-    const baseStatutoryRatePercent = isPlantOrMachinery ? 2.0 : 10.0;
-
-    // Temporal Resolution: Credit or Payment, whichever is earlier
-    let effectiveDate = transactionDate;
-    let withholdingTrigger = 'TRANSACTION_DATE';
-
-    if (creditDate && paymentDate) {
-        if (creditDate <= paymentDate) {
-            effectiveDate = creditDate;
-            withholdingTrigger = 'CREDIT_TO_ACCOUNT';
-        } else {
-            effectiveDate = paymentDate;
-            withholdingTrigger = 'PAYMENT_DISBURSEMENT';
-        }
-    } else if (creditDate) {
-        effectiveDate = creditDate;
-        withholdingTrigger = 'CREDIT_TO_ACCOUNT';
-    } else if (paymentDate) {
-        effectiveDate = paymentDate;
-        withholdingTrigger = 'PAYMENT_DISBURSEMENT';
-    }
-
-    const isAct2025 = Boolean(effectiveDate && String(effectiveDate).slice(0, 10) >= '2026-04-01');
-    const governingSection = isAct2025
-        ? "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 2"
-        : "Income-tax Act, 1961 Section 194I";
-
-    const panAvailable = Boolean(hasPan) && !isPanInoperative;
-    const panFloorResolution = resolveMissingPanPenaltyFloor({
-        sectionCode: '194I',
-        tableItem: isAct2025 ? '393_5' : null,
-        isAct2025
-    });
-    const standardRatePercent = panAvailable ? baseStatutoryRatePercent : Math.max(baseStatutoryRatePercent, panFloorResolution.penaltyFloorPercent);
-
-    // Threshold: Under 1961 Act: ₹2,40,000 per financial year; Under 2025 Act: ₹50,000 per month or part thereof (Section 393(1), Table 1, Sl. No. 2)
-    let RENT_THRESHOLD;
-    if (isAct2025) {
-        const effectiveRentMonths = (rentPeriodMonths !== null && rentPeriodMonths !== undefined && !isNaN(Number(rentPeriodMonths)) && Number(rentPeriodMonths) > 0)
-            ? Number(rentPeriodMonths)
-            : null;
-        RENT_THRESHOLD = effectiveRentMonths ? (50000 * effectiveRentMonths) : 50000;
-    } else {
-        RENT_THRESHOLD = 240000;
-    }
-    const isThresholdBreached = cumulative > RENT_THRESHOLD;
-
-    let taxableBase = 0;
-    let thresholdDisposition = 'BELOW_THRESHOLD_EXEMPT';
-
-    if (isThresholdBreached) {
-        const previouslyTaxed = priorFyPaymentsAlreadyTaxed !== null && priorFyPaymentsAlreadyTaxed !== undefined
-            ? Math.max(0, Number(priorFyPaymentsAlreadyTaxed))
-            : (prior > RENT_THRESHOLD ? prior : 0);
-
-        taxableBase = Math.max(0, cumulative - previouslyTaxed);
-        thresholdDisposition = prior <= RENT_THRESHOLD && previouslyTaxed === 0
-            ? 'CATEGORY_THRESHOLD_BREACHED_WITH_CATCHUP'
-            : 'CATEGORY_THRESHOLD_ACTIVE';
-    }
-
-    // Lower Deduction Certificate resolution
-    const certResolution = evaluateLowerDeductionCertificateValidity({
-        effectiveDate,
-        lowerDeductionCertificate,
-        certificateSection,
-        isAct2025
-    });
-    const hasLowerDeduction = (lowerDeductionRate !== null && lowerDeductionRate !== undefined) && certResolution.isValid;
-    const certifiedRatePercent = hasLowerDeduction ? Number(lowerDeductionRate) : standardRatePercent;
-
-    let calculatedTdsInr = 0;
-    if (taxableBase > 0) {
-        calculatedTdsInr = Number(((taxableBase * certifiedRatePercent) / 100).toFixed(2));
-    }
-    const effectiveRatePercent = taxableBase > 0
-        ? Number(((calculatedTdsInr / taxableBase) * 100).toFixed(4))
-        : standardRatePercent;
-
-    let formulaText = "";
-    if (taxableBase === 0) {
-        formulaText = `Section 194I inapplicable: Cumulative rent (₹${cumulative.toLocaleString('en-IN')}) does not exceed ₹2,40,000 annual threshold.`;
-    } else if (hasLowerDeduction) {
-        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${certifiedRatePercent}% (${isAct2025 ? 'Section 395' : 'Section 197'} Certificate) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-    } else if (panAvailable) {
-        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${standardRatePercent}% (${normalizedRentType}) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-    } else {
-        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × 20% (${panFloorResolution.governingProviso}) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-    }
-
-    return {
-        section: isAct2025 ? '393' : '194I',
-        isAct2025,
-        governingSection,
-        governingPanPenaltySection: panFloorResolution.governingProviso,
-        rawInvoiceAmount,
-        gstAmountInr: gstAmount,
-        effectiveRentAmount,
-        cbdtCircular23Applied: !isAdvancePayment && gstAmount > 0,
-        rentType: normalizedRentType,
-        priorFyRent: prior,
-        cumulativeFyRent: cumulative,
-        rentThreshold: RENT_THRESHOLD,
-        isThresholdBreached,
-        thresholdDisposition,
-        isPanFurnished: panAvailable,
-        taxableBase,
-        baseStatutoryRatePercent,
-        standardRatePercent,
-        effectiveRatePercent,
-        calculatedTdsInr,
-        taxAmountRoundedSection288B: roundSection288B(calculatedTdsInr),
-        netPayable: roundToPaisa(Math.max(0, rawInvoiceAmount - calculatedTdsInr)),
-        statutoryFormula: formulaText
-    };
-}
-
-/**
- * ─────────────────────────────────────────────────────────────────────────────
- * 8. SECTION 194H: DETERMINISTIC TDS ON COMMISSION & BROKERAGE ENGINE
- * ─────────────────────────────────────────────────────────────────────────────
- * Evaluates payments for commission (other than insurance commission) or brokerage:
- * - Rates:
- *   - Prior to 1 October 2024: 5.0%
- *   - On or after 1 October 2024: 2.0% (Amended by Finance (No. 2) Act, 2024)
- * - Annual Threshold: ₹15,000 per financial year per payee.
- * - Missing PAN: 20.0% (Section 206AA(1)(iii)).
- * - CBDT Circular No. 23/2017: Separately stated GST excluded from TDS.
- * - Income-tax Act, 2025 Transition: Section 393(1) Table 8, Item 4.
- */
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
-export function evaluateSection194H({
-    invoiceAmount,
-    priorFyCommission = 0,
-    priorFyPayments = null,
-    priorFyPaymentsAlreadyTaxed = null,
-    hasPan = true,
-    isPanInoperative = false,
-    transactionDate = null,
-    creditDate = null,
-    paymentDate = null,
-    gstAmountInr = 0,
-    isAdvancePayment = false,
-    lowerDeductionRate = null,
-    lowerDeductionCertificate = null,
-    certificateMonetaryCeilingInr = null,
-    certificatePriorUtilizedInr = 0,
-    certificateSection = null
-} = {}) {
-    const rawInvoiceAmount = assertMandatoryNumeric(invoiceAmount, 'invoiceAmount', 'evaluateSection194H');
-    const gstAmount = cleanNumericAmount(gstAmountInr);
-
-    const effectiveCommissionAmount = isAdvancePayment
-        ? rawInvoiceAmount
-        : Math.max(0, rawInvoiceAmount - gstAmount);
-
-    const effectivePrior = priorFyPayments !== null && priorFyPayments !== undefined
-        ? cleanNumericAmount(priorFyPayments)
-        : cleanNumericAmount(priorFyCommission);
-    const prior = Math.max(0, effectivePrior);
-    const cumulative = prior + effectiveCommissionAmount;
-
-    // Temporal Resolution: Credit or Payment, whichever is earlier
-    let effectiveDate = transactionDate;
-    let withholdingTrigger = 'TRANSACTION_DATE';
-
-    if (creditDate && paymentDate) {
-        if (creditDate <= paymentDate) {
-            effectiveDate = creditDate;
-            withholdingTrigger = 'CREDIT_TO_ACCOUNT';
-        } else {
-            effectiveDate = paymentDate;
-            withholdingTrigger = 'PAYMENT_DISBURSEMENT';
-        }
-    } else if (creditDate) {
-        effectiveDate = creditDate;
-        withholdingTrigger = 'CREDIT_TO_ACCOUNT';
-    } else if (paymentDate) {
-        effectiveDate = paymentDate;
-        withholdingTrigger = 'PAYMENT_DISBURSEMENT';
-    }
-
-    const dateStr = effectiveDate ? String(effectiveDate).slice(0, 10) : new Date().toISOString().split('T')[0];
-    const isAct2025 = Boolean(dateStr >= '2026-04-01');
-    const isPostOctober2024 = dateStr >= '2024-10-01';
-
-    // Base statutory rate: 2% from 1 Oct 2024 onwards; 5% prior
-    const baseStatutoryRatePercent = isPostOctober2024 ? 2.0 : 5.0;
-
-    const governingSection = isAct2025
-        ? "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 1(ii)"
-        : "Income-tax Act, 1961 Section 194H";
-
-    const panAvailable = Boolean(hasPan) && !isPanInoperative;
-    const panFloorResolution = resolveMissingPanPenaltyFloor({
-        sectionCode: '194H',
-        tableItem: isAct2025 ? '393_4' : null,
-        isAct2025
-    });
-    const standardRatePercent = panAvailable ? baseStatutoryRatePercent : Math.max(baseStatutoryRatePercent, panFloorResolution.penaltyFloorPercent);
-
-    // Threshold: ₹15,000 under 1961 Act; ₹20,000 under 2025 Act Section 393(1), Table 1, Sl. No. 1(ii)
-    const COMMISSION_THRESHOLD = isAct2025 ? 20000 : 15000;
-    const isThresholdBreached = cumulative > COMMISSION_THRESHOLD;
-
-    let taxableBase = 0;
-    let thresholdDisposition = 'BELOW_THRESHOLD_EXEMPT';
-
-    if (isThresholdBreached) {
-        const previouslyTaxed = priorFyPaymentsAlreadyTaxed !== null && priorFyPaymentsAlreadyTaxed !== undefined
-            ? Math.max(0, Number(priorFyPaymentsAlreadyTaxed))
-            : (prior > COMMISSION_THRESHOLD ? prior : 0);
-
-        taxableBase = Math.max(0, cumulative - previouslyTaxed);
-        thresholdDisposition = prior <= COMMISSION_THRESHOLD && previouslyTaxed === 0
-            ? 'CATEGORY_THRESHOLD_BREACHED_WITH_CATCHUP'
-            : 'CATEGORY_THRESHOLD_ACTIVE';
-    }
-
-    // Lower Deduction Certificate resolution
-    const certResolution = evaluateLowerDeductionCertificateValidity({
-        effectiveDate,
-        lowerDeductionCertificate,
-        certificateSection,
-        isAct2025
-    });
-    const hasLowerDeduction = (lowerDeductionRate !== null && lowerDeductionRate !== undefined) && certResolution.isValid;
-    const certifiedRatePercent = hasLowerDeduction ? Number(lowerDeductionRate) : standardRatePercent;
-
-    let calculatedTdsInr = 0;
-    if (taxableBase > 0) {
-        calculatedTdsInr = Number(((taxableBase * certifiedRatePercent) / 100).toFixed(2));
-    }
-    const effectiveRatePercent = taxableBase > 0
-        ? Number(((calculatedTdsInr / taxableBase) * 100).toFixed(4))
-        : standardRatePercent;
-
-    let formulaText = "";
-    if (taxableBase === 0) {
-        formulaText = `Section 194H inapplicable: Cumulative commission (₹${cumulative.toLocaleString('en-IN')}) does not exceed ₹15,000 annual threshold.`;
-    } else if (hasLowerDeduction) {
-        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${certifiedRatePercent}% (${isAct2025 ? 'Section 395' : 'Section 197'} Certificate) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-    } else if (panAvailable) {
-        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${standardRatePercent}% (${isPostOctober2024 ? 'Finance (No. 2) Act 2024 rate 2%' : 'Pre-amendment rate 5%'}) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-    } else {
-        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × 20% (${panFloorResolution.governingProviso}) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-    }
-
-    return {
-        section: isAct2025 ? '393' : '194H',
-        isAct2025,
-        governingSection,
-        governingPanPenaltySection: panFloorResolution.governingProviso,
-        rawInvoiceAmount,
-        gstAmountInr: gstAmount,
-        effectiveCommissionAmount,
-        cbdtCircular23Applied: !isAdvancePayment && gstAmount > 0,
-        priorFyCommission: prior,
-        cumulativeFyCommission: cumulative,
-        commissionThreshold: COMMISSION_THRESHOLD,
-        isThresholdBreached,
-        thresholdDisposition,
-        isPanFurnished: panAvailable,
-        taxableBase,
-        baseStatutoryRatePercent,
-        standardRatePercent,
-        effectiveRatePercent,
-        calculatedTdsInr,
-        taxAmountRoundedSection288B: roundSection288B(calculatedTdsInr),
-        netPayable: roundToPaisa(Math.max(0, rawInvoiceAmount - calculatedTdsInr)),
-        statutoryFormula: formulaText
-    };
-}
-
-/**
- * ─────────────────────────────────────────────────────────────────────────────
- * 9. SECTION 194A: DETERMINISTIC TDS ON INTEREST (OTHER THAN SECURITIES)
- * ─────────────────────────────────────────────────────────────────────────────
- * Income-tax Act, 1961: Section 194A
- * Income-tax Act, 2025: Section 393(1) Table 4, Item (i)
- *
- * Implements authoritative interest withholding logic:
- * - Rates:
- *   - Standard rate: 10.0%
- *   - Missing / Inoperative PAN: 20.0% (Section 206AA(1)(iii) / Section 397)
- *   - Valid Form 15G / Form 15H: 0.0%
- * - Annual Thresholds per Payee:
- *   - Banking Company, Co-operative Bank, or Post Office: ₹40,000 (₹50,000 for Senior Citizens u/s 80TTB)
- *   - Any Other Payer (Commercial, Vendor Delayed Interest, Inter-Corporate Loans): ₹5,000
- *   - Firm to Partner / Exempt Institutions: Always 0% (Section 194A(3) statutory exclusion)
- * - MSMED Act Section 16 Interaction:
- *   - Penal interest payable under Section 16 to Micro & Small enterprises is subject to 194A withholding if exceeding ₹5,000.
- *   - Section 23 of MSMED Act: Strictly disallowed as deduction in computing taxable income (tax add-back).
- * - Temporal Resolution: Earlier of credit in books or payment disbursement.
- * - Dual-Act Crystallization: Pre-1 April 2026 -> 1961 Act; Post-1 April 2026 -> 2025 Act.
- */
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
-export function evaluateSection194A({
-    interestAmount,
-    priorPaymentsInCurrentFyInr = 0,
-    priorFyCategoryPayments = null,
-    priorFyPaymentsAlreadyTaxed = null,
-    payeeCategory = 'COMMERCIAL_OTHER', // 'COMMERCIAL_OTHER' | 'BANKING_OR_COOPERATIVE' | 'SENIOR_CITIZEN_DEPOSIT' | 'FIRM_TO_PARTNER' | 'EXEMPT_INSTITUTION'
-    hasPan = true,
-    isPanInoperative = false,
-    hasForm15G15H = false,
-    isForm15Valid = true,
-    isMsmeInterestSec16 = false,
-    transactionDate = null,
-    creditDate = null,
-    paymentDate = null,
-    lowerDeductionRate = null,
-    lowerDeductionCertificate = null,
-    certificateMonetaryCeilingInr = null,
-    certificatePriorUtilizedInr = 0,
-    certificateSection = null
-} = {}) {
-    const rawInterestAmount = assertMandatoryNumeric(interestAmount, 'interestAmount', 'evaluateSection194A');
-
-    const effectivePriorInput = priorPaymentsInCurrentFyInr !== null && priorPaymentsInCurrentFyInr !== undefined
-        ? priorPaymentsInCurrentFyInr
-        : priorFyCategoryPayments;
-    const prior = Math.max(0, cleanNumericAmount(effectivePriorInput));
-    const cumulative = prior + rawInterestAmount;
-
-    // Temporal Resolution: "Credit or Payment, whichever is earlier"
-    let effectiveDate = transactionDate;
-    let withholdingTrigger = 'TRANSACTION_DATE';
-
-    if (creditDate && paymentDate) {
-        if (creditDate <= paymentDate) {
-            effectiveDate = creditDate;
-            withholdingTrigger = 'CREDIT_TO_ACCOUNT';
-        } else {
-            effectiveDate = paymentDate;
-            withholdingTrigger = 'PAYMENT_DISBURSEMENT';
-        }
-    } else if (creditDate) {
-        effectiveDate = creditDate;
-        withholdingTrigger = 'CREDIT_TO_ACCOUNT';
-    } else if (paymentDate) {
-        effectiveDate = paymentDate;
-        withholdingTrigger = 'PAYMENT_DISBURSEMENT';
-    }
-
-    const isAct2025 = Boolean(effectiveDate && String(effectiveDate).slice(0, 10) >= '2026-04-01');
-
-    // Payee Category & Threshold Resolution
-    const isExemptInstitution = payeeCategory === 'EXEMPT_INSTITUTION';
-    const isFirmToPartner = payeeCategory === 'FIRM_TO_PARTNER';
-    const isStatutoryExclusion = isExemptInstitution || isFirmToPartner;
-
-    let INTEREST_THRESHOLD;
-    let governingSection;
-
-    if (isAct2025) {
-        if (payeeCategory === 'SENIOR_CITIZEN_DEPOSIT') {
-            INTEREST_THRESHOLD = 100000;
-            governingSection = "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 5(ii)";
-        } else if (payeeCategory === 'BANKING_OR_COOPERATIVE') {
-            INTEREST_THRESHOLD = 50000;
-            governingSection = "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 5(ii)";
-        } else {
-            INTEREST_THRESHOLD = 10000;
-            governingSection = "Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 5(iii)";
-        }
-    } else {
-        if (payeeCategory === 'SENIOR_CITIZEN_DEPOSIT') {
-            INTEREST_THRESHOLD = 50000;
-        } else if (payeeCategory === 'BANKING_OR_COOPERATIVE') {
-            INTEREST_THRESHOLD = 40000;
-        } else {
-            INTEREST_THRESHOLD = 5000;
-        }
-        governingSection = "Income-tax Act, 1961 Section 194A";
-    }
-
-    const isThresholdBreached = !isStatutoryExclusion && (cumulative > INTEREST_THRESHOLD);
-
-    let taxableBase = 0;
-    let thresholdDisposition = 'BELOW_THRESHOLD_EXEMPT';
-
-    if (isStatutoryExclusion) {
-        taxableBase = 0;
-        thresholdDisposition = isFirmToPartner
-            ? 'EXEMPT_FIRM_TO_PARTNER_SEC_194A_3_IV'
-            : 'EXEMPT_INSTITUTION_SEC_194A_3_III';
-    } else if (isThresholdBreached) {
-        const previouslyTaxed = priorFyPaymentsAlreadyTaxed !== null && priorFyPaymentsAlreadyTaxed !== undefined
-            ? Math.max(0, Number(priorFyPaymentsAlreadyTaxed))
-            : (prior > INTEREST_THRESHOLD ? prior : 0);
-
-        taxableBase = Math.max(0, cumulative - previouslyTaxed);
-        thresholdDisposition = prior <= INTEREST_THRESHOLD && previouslyTaxed === 0
-            ? 'CATEGORY_THRESHOLD_BREACHED_WITH_CATCHUP'
-            : 'CATEGORY_THRESHOLD_ACTIVE';
-    }
-
-    // Form 15G / 15H Exemption
-    const isForm15Applied = Boolean(hasForm15G15H) && Boolean(isForm15Valid) && !isStatutoryExclusion;
-
-    // Rate Determination
-    const baseStatutoryRatePercent = (isStatutoryExclusion || isForm15Applied) ? 0.0 : 10.0;
-    const panAvailable = Boolean(hasPan) && !isPanInoperative;
-    const panFloorResolution = resolveMissingPanPenaltyFloor({
-        sectionCode: '194A',
-        tableItem: isAct2025 ? '393_4' : null,
-        isAct2025
-    });
-
-    const standardRatePercent = (isStatutoryExclusion || isForm15Applied)
-        ? 0.0
-        : (panAvailable ? baseStatutoryRatePercent : Math.max(baseStatutoryRatePercent, panFloorResolution.penaltyFloorPercent));
-
-    // Lower Deduction Certificate resolution
-    const certResolution = evaluateLowerDeductionCertificateValidity({
-        effectiveDate,
-        lowerDeductionCertificate,
-        certificateSection,
-        isAct2025
-    });
-    const hasLowerDeduction = (lowerDeductionRate !== null && lowerDeductionRate !== undefined) && certResolution.isValid && !isStatutoryExclusion && !isForm15Applied;
-    const certifiedRatePercent = hasLowerDeduction ? Number(lowerDeductionRate) : standardRatePercent;
-
-    let calculatedTdsInr = 0;
-    if (taxableBase > 0 && !isForm15Applied && !isStatutoryExclusion) {
-        calculatedTdsInr = Number(((taxableBase * certifiedRatePercent) / 100).toFixed(2));
-    }
-
-    const effectiveRatePercent = taxableBase > 0
-        ? Number(((calculatedTdsInr / taxableBase) * 100).toFixed(4))
-        : standardRatePercent;
-
-    // MSMED Act Section 16 & Section 23 Interaction
-    const msmeAnalysis = isMsmeInterestSec16 ? {
-        isMsmePenalInterest: true,
-        msmedStatute: "Micro, Small and Medium Enterprises Development Act, 2006",
-        section16Status: "SUBJECT_TO_SECTION_194A_WITHHOLDING",
-        section23Disallowance: "MANDATORY_TAX_ADDBACK",
-        statutoryRationale: "Interest paid under Section 16 of the MSMED Act constitutes interest under Section 2(28A) of the Income-tax Act, 1961 and is subject to Section 194A TDS upon crossing ₹5,000 threshold. Under Section 23 of the MSMED Act, this interest is strictly non-deductible as an expenditure in computing total taxable income."
-    } : null;
-
-    let formulaText = "";
-    if (isStatutoryExclusion) {
-        formulaText = `Section 194A exempt: Payee category ${payeeCategory} excluded under Section 194A(3).`;
-    } else if (isForm15Applied) {
-        formulaText = `Section 194A NIL deduction: Payee furnished valid Form 15G/15H declaration under Section 197A.`;
-    } else if (taxableBase === 0) {
-        formulaText = `Section 194A inapplicable: Cumulative interest (₹${cumulative.toLocaleString('en-IN')}) does not exceed ₹${INTEREST_THRESHOLD.toLocaleString('en-IN')} annual threshold.`;
-    } else if (hasLowerDeduction) {
-        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${certifiedRatePercent}% (${isAct2025 ? 'Section 395' : 'Section 197'} Certificate) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-    } else if (panAvailable) {
-        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${standardRatePercent}% = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-    } else {
-        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × 20% (${panFloorResolution.governingProviso}) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-    }
-
-    const netPayable = roundToPaisa(Math.max(0, rawInterestAmount - calculatedTdsInr));
-
-    return {
-        section: isAct2025 ? '393' : '194A',
-        isAct2025,
-        governingSection,
-        governingPanPenaltySection: panFloorResolution.governingProviso,
-        rawInterestAmount,
-        payeeCategory,
-        priorFyInterest: prior,
-        cumulativeFyInterest: cumulative,
-        interestThreshold: INTEREST_THRESHOLD,
-        isThresholdBreached,
-        thresholdDisposition,
-        hasForm15G15H: isForm15Applied,
-        isPanFurnished: panAvailable,
-        taxableBase,
-        baseStatutoryRatePercent,
-        standardRatePercent,
-        effectiveRatePercent,
-        calculatedTdsInr,
-        taxAmountRoundedSection288B: roundSection288B(calculatedTdsInr),
-        netPayable,
-        msmeSection16Analysis: msmeAnalysis,
-        taxAddbackDisallowedMsmeSec23: Boolean(isMsmeInterestSec16),
-        statutoryFormula: formulaText,
-        isAuthorizedToDisburse: false
-    };
-}
-
-/**
- * ─────────────────────────────────────────────────────────────────────────────
- * 10. SECTION 194O: DETERMINISTIC TDS ON E-COMMERCE OPERATORS ENGINE
- * ─────────────────────────────────────────────────────────────────────────────
- * Income-tax Act, 1961: Section 194O
- * Income-tax Act, 2025: Section 393(1) Table 8, Item (i)
- *
- * Implements authoritative marketplace withholding logic:
- * - Rates:
- *   - Prior to 1 October 2024: 1.0%
- *   - On or after 1 October 2024: 0.1% (Finance (No. 2) Act, 2024 rate cut)
- *   - Missing / Inoperative PAN: 5.0% (Section 206AA(1) second proviso specific cap)
- * - De Minimis Annual Threshold:
- *   - Individuals and HUFs: ₹5,00,000 gross GMV per FY (provided PAN is furnished)
- *   - Companies, LLPs, Firms: ₹0 threshold (TDS applies from ₹1)
- * - Gross Amount Scope:
- *   - Includes direct payments made by purchaser to seller deemed paid by operator (Explanation to 194O(1)).
- * - Statutory Precedence:
- *   - Overrides Section 194Q (buyer TDS) and Section 206C(1H) (seller TCS).
- * - Temporal Resolution: Earlier of credit to account (including clearing) or payment.
- */
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
-export function evaluateSection194O({
-    grossSaleAmount,
-    directPurchaserPaymentDeemedInr = 0,
-    priorPaymentsInCurrentFyInr = 0,
-    priorFyCategoryPayments = null,
-    priorFyPaymentsAlreadyTaxed = null,
-    participantEntityType = 'INDIVIDUAL_HUF', // 'INDIVIDUAL_HUF' | 'COMPANY' | 'PARTNERSHIP_FIRM' | 'LLP' | 'OTHER'
-    hasPan = true,
-    isPanInoperative = false,
-    transactionDate = null,
-    creditDate = null,
-    paymentDate = null,
-    lowerDeductionRate = null,
-    lowerDeductionCertificate = null,
-    certificateMonetaryCeilingInr = null,
-    certificatePriorUtilizedInr = 0,
-    certificateSection = null
-} = {}) {
-    const rawGrossSale = assertMandatoryNumeric(grossSaleAmount, 'grossSaleAmount', 'evaluateSection194O');
-    const deemedDirectPayment = Math.max(0, cleanNumericAmount(directPurchaserPaymentDeemedInr));
-    const totalTransactionGmv = rawGrossSale + deemedDirectPayment;
-
-    const effectivePriorInput = priorPaymentsInCurrentFyInr !== null && priorPaymentsInCurrentFyInr !== undefined
-        ? priorPaymentsInCurrentFyInr
-        : priorFyCategoryPayments;
-    const prior = Math.max(0, cleanNumericAmount(effectivePriorInput));
-    const cumulative = prior + totalTransactionGmv;
-
-    // Temporal Resolution: "Credit or Payment, whichever is earlier"
-    let effectiveDate = transactionDate;
-    let withholdingTrigger = 'TRANSACTION_DATE';
-
-    if (creditDate && paymentDate) {
-        if (creditDate <= paymentDate) {
-            effectiveDate = creditDate;
-            withholdingTrigger = 'CREDIT_TO_ACCOUNT';
-        } else {
-            effectiveDate = paymentDate;
-            withholdingTrigger = 'PAYMENT_DISBURSEMENT';
-        }
-    } else if (creditDate) {
-        effectiveDate = creditDate;
-        withholdingTrigger = 'CREDIT_TO_ACCOUNT';
-    } else if (paymentDate) {
-        effectiveDate = paymentDate;
-        withholdingTrigger = 'PAYMENT_DISBURSEMENT';
-    }
-
-    const isAct2025 = Boolean(effectiveDate && String(effectiveDate).slice(0, 10) >= '2026-04-01');
-    const governingSection = isAct2025
-        ? "Income-tax Act, 2025 Section 393(1) Table 8, Item (i)"
-        : "Income-tax Act, 1961 Section 194O";
-
-    // Rate Determination: 1.0% pre-Oct 2024, 0.1% post-Oct 2024 (Finance (No. 2) Act 2024)
-    const effectiveDateIso = effectiveDate ? String(effectiveDate).slice(0, 10) : '2025-04-01';
-    const isPostOctober2024 = effectiveDateIso >= '2024-10-01';
-    const baseStatutoryRatePercent = isPostOctober2024 ? 0.1 : 1.0;
-
-    const panAvailable = Boolean(hasPan) && !isPanInoperative;
-    // Section 206AA(1) second proviso specifies a capped 5% penalty rate for Section 194-O (not 20%)
-    const penaltyRatePercent = 5.0;
-    const standardRatePercent = panAvailable ? baseStatutoryRatePercent : penaltyRatePercent;
-
-    // De Minimis Threshold Resolution
-    const isIndividualOrHuf = participantEntityType === 'INDIVIDUAL_HUF';
-    // Individual/HUF threshold is ₹5 Lakhs, but ONLY if PAN is provided! If PAN is missing, threshold is ₹0
-    const THRESHOLD = (isIndividualOrHuf && panAvailable) ? 500000 : 0;
-    const isThresholdBreached = cumulative > THRESHOLD;
-
-    let taxableBase = 0;
-    let thresholdDisposition = 'BELOW_THRESHOLD_EXEMPT';
-
-    if (isThresholdBreached) {
-        const previouslyTaxed = priorFyPaymentsAlreadyTaxed !== null && priorFyPaymentsAlreadyTaxed !== undefined
-            ? Math.max(0, Number(priorFyPaymentsAlreadyTaxed))
-            : (prior > THRESHOLD ? prior : 0);
-
-        taxableBase = Math.max(0, cumulative - previouslyTaxed);
-        thresholdDisposition = prior <= THRESHOLD && previouslyTaxed === 0
-            ? 'CATEGORY_THRESHOLD_BREACHED_WITH_CATCHUP'
-            : 'CATEGORY_THRESHOLD_ACTIVE';
-    } else if (isIndividualOrHuf && panAvailable && cumulative <= THRESHOLD) {
-        thresholdDisposition = 'INDIVIDUAL_HUF_BELOW_5L_EXEMPT';
-    }
-
-    // Lower Deduction Certificate resolution
-    const certResolution = evaluateLowerDeductionCertificateValidity({
-        effectiveDate,
-        lowerDeductionCertificate,
-        certificateSection,
-        isAct2025
-    });
-    const hasLowerDeduction = (lowerDeductionRate !== null && lowerDeductionRate !== undefined) && certResolution.isValid;
-    const certifiedRatePercent = hasLowerDeduction ? Number(lowerDeductionRate) : standardRatePercent;
-
-    let calculatedTdsInr = 0;
-    if (taxableBase > 0) {
-        calculatedTdsInr = Number(((taxableBase * certifiedRatePercent) / 100).toFixed(2));
-    }
-
-    const effectiveRatePercent = taxableBase > 0
-        ? Number(((calculatedTdsInr / taxableBase) * 100).toFixed(4))
-        : standardRatePercent;
-
-    let formulaText = "";
-    if (taxableBase === 0) {
-        formulaText = `Section 194O inapplicable: Cumulative GMV (₹${cumulative.toLocaleString('en-IN')}) does not exceed ₹${THRESHOLD.toLocaleString('en-IN')} annual threshold for ${participantEntityType}.`;
-    } else if (hasLowerDeduction) {
-        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${certifiedRatePercent}% (${isAct2025 ? 'Section 395' : 'Section 197'} Certificate) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-    } else if (panAvailable) {
-        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × ${standardRatePercent}% (${isPostOctober2024 ? 'Finance (No. 2) Act 2024 rate 0.1%' : 'Pre-amendment rate 1.0%'}) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-    } else {
-        formulaText = `Taxable Base (₹${taxableBase.toLocaleString('en-IN')}) × 5% (Section 206AA second proviso capped rate) = ₹${calculatedTdsInr.toLocaleString('en-IN')}`;
-    }
-
-    const netPayable = roundToPaisa(Math.max(0, rawGrossSale - calculatedTdsInr));
-
-    return {
-        section: isAct2025 ? '393' : '194O',
-        isAct2025,
-        governingSection,
-        governingPanPenaltySection: panAvailable ? null : "Section 206AA(1) second proviso",
-        rawGrossSale,
-        directPurchaserPaymentDeemedInr: deemedDirectPayment,
-        totalTransactionGmv,
-        participantEntityType,
-        priorFyGmv: prior,
-        cumulativeFyGmv: cumulative,
-        gmvThreshold: THRESHOLD,
-        isThresholdBreached,
-        thresholdDisposition,
-        isPanFurnished: panAvailable,
-        taxableBase,
-        baseStatutoryRatePercent,
-        standardRatePercent,
-        effectiveRatePercent,
-        calculatedTdsInr,
-        taxAmountRoundedSection288B: roundSection288B(calculatedTdsInr),
-        netPayable,
-        statutoryPrecedence: {
-            overridesSection194Q: true,
-            overridesSection206C1H: true,
-            statutoryRationale: "Under Section 194O(3) read with Section 194Q(5) and Section 206C(1H), transactions subject to Section 194O take absolute statutory precedence. No buyer TDS under 194Q or seller TCS under 206C(1H) shall be deducted or collected."
-        },
-        statutoryFormula: formulaText,
-        isAuthorizedToDisburse: false
-    };
-}
-
-/**
- * ─────────────────────────────────────────────────────────────────────────────
- * SECTION 194-IA: TDS ON TRANSFER OF CERTAIN IMMOVABLE PROPERTY
- * ─────────────────────────────────────────────────────────────────────────────
- * Evaluates tax deduction at source on acquisition/transfer of immovable property
- * (land, commercial office, factory, residential premises other than agricultural land):
- * - Rate: 1.0% on HIGHER of contractual consideration or Stamp Duty Value (SDV)
- *   (Finance Act, 2022 amendment w.e.f. 1 April 2022).
- * - Threshold: INR 50,00,000 (Section 194-IA(2)).
- *   Applies if either consideration OR SDV >= INR 50,00,000.
- * - Consideration Scope (Finance Act, 2019 Explanation):
- *   Includes club membership fees, car parking charges, electricity/water facility charges,
- *   maintenance advance fees, and all other charges incidental to transfer.
- * - Missing / Inoperative PAN: 20.0% statutory penalty rate under Section 206AA.
- * - Exemptions: Agricultural land, non-resident sellers (governed by Section 195).
- * - Compliance: Form 26QB (30 days from month end), Form 16B (15 days from 26QB).
- * - Dual-Act 2025: Section 393(1) Table 4 Item (q).
- */
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
-export function evaluateSection194IA({
-    contractualConsiderationInr,
-    stampDutyValueInr = null,
-    incidentalChargesInr = 0,
-    isAgriculturalLand = false,
-    isSellerResident = true,
-    hasPan = true,
-    isPanInoperative = false,
-    lowerDeductionRate = null,
-    lowerDeductionCertificate = null,
-    transactionDate = null,
-    creditDate = null,
-    paymentDate = null
-} = {}) {
-    const rawBaseConsideration = Math.max(0, assertMandatoryNumeric(contractualConsiderationInr, 'contractualConsiderationInr', 'evaluateSection194IA'));
-
-    // Exclusion 1: Agricultural Land
-    if (isAgriculturalLand) {
-        const grossAmount = roundToPaisa(rawBaseConsideration + Math.max(0, cleanNumericAmount(incidentalChargesInr)));
-        return {
-            status: 'SUCCESS',
-            statutoryDetermination: 'EXEMPT_AGRICULTURAL_LAND',
-            applicableTdsRatePercent: 0,
-            taxableBaseInr: 0,
-            calculatedTdsInr: 0,
-            netPayableToSellerInr: grossAmount,
-            governingLaw: 'Income-tax Act, 1961 Section 194-IA Explanation (agricultural land excluded)',
-            isAuthorizedToDisburse: false,
-            statutoryRationale: 'Section 194-IA specifically excludes agricultural land from tax deduction at source. No withholding applies.'
-        };
-    }
-
-    // Exclusion 2: Non-Resident Seller
-    if (!isSellerResident) {
-        return {
-            status: 'SUCCESS',
-            statutoryDetermination: 'GOVERNED_BY_SECTION_195',
-            applicableTdsRatePercent: null,
-            taxableBaseInr: null,
-            calculatedTdsInr: null,
-            isAuthorizedToDisburse: false,
-            governingLaw: 'Income-tax Act, 1961 Section 195 (Cross-Border Non-Resident Remittance)',
-            statutoryRationale: 'Section 194-IA applies exclusively to resident transferors. Remittances to non-resident sellers on property transfers are subject to Section 195 withholding on capital gains (with Form 15CA/15CB routing).'
-        };
-    }
-
-    const rawIncidental = Math.max(0, cleanNumericAmount(incidentalChargesInr));
-    const totalContractualConsideration = roundToPaisa(rawBaseConsideration + rawIncidental);
-
-    const effectiveSdv = (stampDutyValueInr !== null && stampDutyValueInr !== undefined)
-        ? roundToPaisa(Math.max(0, cleanNumericAmount(stampDutyValueInr)))
-        : totalContractualConsideration;
-
-    // Finance Act 2022 Amendment: Higher of consideration or Stamp Duty Value
-    const taxableBaseInr = roundToPaisa(Math.max(totalContractualConsideration, effectiveSdv));
-
-    // Threshold Check: De minimis INR 50 Lakh (Section 194-IA(2))
-    // TDS triggered if EITHER consideration OR SDV >= INR 50,00,000
-    const isThresholdMet = (totalContractualConsideration >= 5000000 || effectiveSdv >= 5000000);
-
-    // Temporal Resolution: Earlier of credit or payment
-    let effectiveDate = transactionDate;
-    let withholdingTrigger = 'TRANSACTION_DATE';
-
-    if (creditDate && paymentDate) {
-        if (creditDate <= paymentDate) {
-            effectiveDate = creditDate;
-            withholdingTrigger = 'CREDIT_TO_ACCOUNT';
-        } else {
-            effectiveDate = paymentDate;
-            withholdingTrigger = 'PAYMENT_DISBURSEMENT';
-        }
-    } else if (creditDate) {
-        effectiveDate = creditDate;
-        withholdingTrigger = 'CREDIT_TO_ACCOUNT';
-    } else if (paymentDate) {
-        effectiveDate = paymentDate;
-        withholdingTrigger = 'PAYMENT_DISBURSEMENT';
-    }
-
-    const isAct2025 = Boolean(effectiveDate && String(effectiveDate).slice(0, 10) >= '2026-04-01');
-    const governingSection = isAct2025
-        ? 'Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 3(i)'
-        : 'Income-tax Act, 1961 Section 194-IA';
-
-    if (!isThresholdMet) {
-        return {
-            status: 'SUCCESS',
-            statutoryDetermination: 'BELOW_DE_MINIMIS_THRESHOLD',
-            applicableTdsRatePercent: 0,
-            contractualConsiderationInr: totalContractualConsideration,
-            stampDutyValueInr: effectiveSdv,
-            taxableBaseInr,
-            calculatedTdsInr: 0,
-            netPayableToSellerInr: totalContractualConsideration,
-            effectiveDate,
-            withholdingTrigger,
-            governingLaw: governingSection,
-            isAuthorizedToDisburse: false,
-            statutoryRationale: `Both contractual consideration (INR ${totalContractualConsideration.toLocaleString('en-IN')}) and Stamp Duty Value (INR ${effectiveSdv.toLocaleString('en-IN')}) are below the statutory threshold of INR 50,00,000 under Section 194-IA(2). Zero TDS required.`
-        };
-    }
-
-    // Rate Determination
-    let applicableTdsRatePercent = 1.0;
-    let rateType = 'STANDARD_STATUTORY_RATE';
-    let isPenaltyRate = false;
-
-    if (!hasPan || isPanInoperative) {
-        applicableTdsRatePercent = 20.0;
-        rateType = 'PENALTY_RATE_SECTION_206AA';
-        isPenaltyRate = true;
-    } else if (lowerDeductionRate !== null && !isNaN(Number(lowerDeductionRate)) && Number(lowerDeductionRate) >= 0) {
-        applicableTdsRatePercent = Number(lowerDeductionRate);
-        rateType = 'CONCESSIONAL_CERTIFICATE_SECTION_197';
-    }
-
-    const calculatedTdsInr = roundToPaisa((taxableBaseInr * applicableTdsRatePercent) / 100);
-    const netPayableToSellerInr = roundToPaisa(Math.max(0, totalContractualConsideration - calculatedTdsInr));
-
-    return {
-        status: 'SUCCESS',
-        statutoryDetermination: 'DETERMINED_APPLICABLE',
-        governingLaw: governingSection,
-        effectiveDate,
-        withholdingTrigger,
-        valuationBasis: {
-            contractualConsiderationInr: rawBaseConsideration,
-            incidentalChargesInr: rawIncidental,
-            totalContractualConsiderationInr: totalContractualConsideration,
-            stampDutyValueInr: effectiveSdv,
-            higherValuationAdopted: effectiveSdv > totalContractualConsideration ? 'STAMP_DUTY_VALUE' : 'CONTRACTUAL_CONSIDERATION',
-            taxableBaseInr
-        },
-        withholding: {
-            applicableTdsRatePercent,
-            rateType,
-            isPenaltyRate,
-            calculatedTdsInr,
-            netPayableToSellerInr
-        },
-        complianceRequirements: {
-            challanCumStatementForm: 'Form 26QB (Electronic)',
-            challanFilingCutoff: 'Within 30 days from the end of the month in which deduction was made',
-            tdsCertificateForm: 'Form 16B (TRACES)',
-            certificateIssuanceCutoff: 'Within 15 days from the due date for furnishing Form 26QB',
-            tanRequired: false
-        },
-        isAuthorizedToDisburse: false,
-        statutoryRationale: `Section 194-IA Applicable: Taxable base INR ${taxableBaseInr.toLocaleString('en-IN')} (Higher of consideration INR ${totalContractualConsideration.toLocaleString('en-IN')} vs SDV INR ${effectiveSdv.toLocaleString('en-IN')}) taxed at ${applicableTdsRatePercent}% = INR ${calculatedTdsInr.toLocaleString('en-IN')}. Net payable to seller: INR ${netPayableToSellerInr.toLocaleString('en-IN')}. File Form 26QB within 30 days of month-end.`
-    };
-}
-
-/**
- * ═══════════════════════════════════════════════════════════════════════════
- * CORPORATE FINANCE: ADVANCE TAX & INTEREST CALCULATOR (DUAL-ACT ENGINE)
- * Income-tax Act, 1961: Sections 208, 209, 211, 234B, 234C
- * Income-tax Act, 2025: Sections 405 (Computation & Threshold), 408 (Installments)
- * ═══════════════════════════════════════════════════════════════════════════
- *
- * Implements authoritative corporate advance tax installment compliance,
- * 12% & 36% safe harbors for Q1 and Q2, Section 234C sudden income provisos
- * (capital gains, dividends, new business), and Section 234B default interest.
- */
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
-export function calculateAdvanceTaxAndInterest({
-    taxYear = '2025-26',
-    assessmentYear = null,
-    estimatedAssessedTaxInr,
-    tdsTcsCreditInr = 0,
-    paidQ1Inr = 0,
-    paidQ2Inr = 0,
-    paidQ3Inr = 0,
-    paidQ4Inr = 0,
-    suddenIncomeExceptions = null,
-    assessmentDate = null,
-    isAct2025 = null
-} = {}) {
-    if (estimatedAssessedTaxInr === undefined || estimatedAssessedTaxInr === null) {
-        return {
-            status: 'INDETERMINATE',
-            code: 'MISSING_ESTIMATED_TAX',
-            statutoryDetermination: 'INDETERMINATE',
-            message: 'Field "estimatedAssessedTaxInr" is required to determine advance tax liability.',
-            isAdvanceTaxPayable: null,
-            totalInterest: null,
-            isAuthorizedToDisburse: false
-        };
-    }
-
-    const estimatedTax = cleanNumericAmount(estimatedAssessedTaxInr);
-    const credits = cleanNumericAmount(tdsTcsCreditInr);
-    if (estimatedTax < 0) {
-        throw new Error('[@mudraforge/statutory] Invalid estimatedAssessedTaxInr: expected non-negative finite number.');
-    }
-    if (credits < 0) {
-        throw new Error('[@mudraforge/statutory] Invalid tdsTcsCreditInr: expected non-negative finite number.');
-    }
-
-    // Regime resolution: Income-tax Act, 1961 vs Income-tax Act, 2025
-    const resolvedIsAct2025 = isAct2025 !== null
-        ? Boolean(isAct2025)
-        : (taxYear >= '2026-27' || (assessmentYear && assessmentYear >= '2027-28'));
-
-    const governingAct = resolvedIsAct2025 ? 'Income-tax Act, 2025' : 'Income-tax Act, 1961';
-    const governingComputationSection = resolvedIsAct2025 ? 'Section 405' : 'Section 208 read with Section 209';
-    const governingInstallmentSection = resolvedIsAct2025 ? 'Section 408' : 'Section 211';
-    const governingInterestSection = resolvedIsAct2025 ? 'Sections 410 & 411' : 'Sections 234B & 234C';
-
-    const netTaxPayable = roundToPaisa(Math.max(0, estimatedTax - credits));
-    const ADVANCE_TAX_THRESHOLD = 10000; // ₹10,000 threshold under Section 208 / Section 405
-
-    // Zero-liability below threshold
-    if (netTaxPayable < ADVANCE_TAX_THRESHOLD) {
-        return {
-            status: 'EXEMPT_BELOW_THRESHOLD',
-            statutoryDetermination: 'EXEMPT',
-            governingAct,
-            governingComputationSection,
-            governingInstallmentSection,
-            governingInterestSection,
-            taxYear,
-            assessmentYear: assessmentYear || (taxYear ? `${Number(taxYear.slice(0, 4)) + 1}-${Number(taxYear.slice(5, 7)) + 1}` : null),
-            estimatedAssessedTaxInr: estimatedTax,
-            tdsTcsCreditInr: credits,
-            netTaxPayableInr: netTaxPayable,
-            advanceTaxThresholdInr: ADVANCE_TAX_THRESHOLD,
-            isAdvanceTaxPayable: false,
-            installments: [],
-            totalShortfallQ1toQ4: 0,
-            interestSection234CInr: 0,
-            interestSection234BInr: 0,
-            totalInterestInr: 0,
-            totalPayableInr: 0,
-            isAuthorizedToDisburse: false,
-            statutoryRationale: `Assessed tax after TDS/TCS credits (₹${netTaxPayable.toLocaleString('en-IN')}) is below the ₹10,000 threshold under ${governingComputationSection}. No advance tax obligation arises.`
-        };
-    }
-
-    // Cumulative installments calculation (15%, 45%, 75%, 100%)
-    const pQ1 = Math.max(0, cleanNumericAmount(paidQ1Inr));
-    const pQ2 = Math.max(0, cleanNumericAmount(paidQ2Inr));
-    const pQ3 = Math.max(0, cleanNumericAmount(paidQ3Inr));
-    const pQ4 = Math.max(0, cleanNumericAmount(paidQ4Inr));
-
-    const cumPaidQ1 = pQ1;
-    const cumPaidQ2 = cumPaidQ1 + pQ2;
-    const cumPaidQ3 = cumPaidQ2 + pQ3;
-    const cumPaidQ4 = cumPaidQ3 + pQ4;
-
-    const reqQ1 = roundToPaisa(netTaxPayable * 0.15);
-    const reqQ2 = roundToPaisa(netTaxPayable * 0.45);
-    const reqQ3 = roundToPaisa(netTaxPayable * 0.75);
-    const reqQ4 = roundToPaisa(netTaxPayable * 1.00);
-
-    // Section 234C Safe Harbors (First Proviso to Section 234C(1)):
-    // Q1: If paid on or before 15 June is not less than 12%, no 234C interest.
-    // Q2: If paid on or before 15 September is not less than 36%, no 234C interest.
-    const safeHarborQ1Threshold = roundToPaisa(netTaxPayable * 0.12);
-    const safeHarborQ2Threshold = roundToPaisa(netTaxPayable * 0.36);
-
-    const safeHarborQ1Applied = cumPaidQ1 >= safeHarborQ1Threshold;
-    const safeHarborQ2Applied = cumPaidQ2 >= safeHarborQ2Threshold;
-
-    // Sudden income exception relief under First Proviso to Section 234C(1):
-    // Capital gains, casual income, new business, domestic dividends
-    const suddenReliefTax = (suddenIncomeExceptions && typeof suddenIncomeExceptions === 'object')
-        ? Math.max(0, Number(
-            (suddenIncomeExceptions.capitalGainsTaxInr || 0) +
-            (suddenIncomeExceptions.dividendTaxInr || 0) +
-            (suddenIncomeExceptions.newBusinessTaxInr || 0) +
-            (suddenIncomeExceptions.casualIncomeTaxInr || 0)
-        ))
-        : 0;
-
-    // Q1 Interest: 1% per month for 3 months
-    let shortfallQ1 = 0;
-    let interestQ1 = 0;
-    if (!safeHarborQ1Applied && cumPaidQ1 < reqQ1) {
-        shortfallQ1 = Math.max(0, reqQ1 - cumPaidQ1);
-        if (suddenReliefTax > 0 && suddenIncomeExceptions?.occurrenceQuarter > 1) {
-            // Sudden income occurred in subsequent quarter; relief applied to earlier installment
-            shortfallQ1 = Math.max(0, shortfallQ1 - roundToPaisa(suddenReliefTax * 0.15));
-        }
-        interestQ1 = roundSection288B(shortfallQ1) * 0.01 * 3;
-    }
-
-    // Q2 Interest: 1% per month for 3 months
-    let shortfallQ2 = 0;
-    let interestQ2 = 0;
-    if (!safeHarborQ2Applied && cumPaidQ2 < reqQ2) {
-        shortfallQ2 = Math.max(0, reqQ2 - cumPaidQ2);
-        if (suddenReliefTax > 0 && suddenIncomeExceptions?.occurrenceQuarter > 2) {
-            shortfallQ2 = Math.max(0, shortfallQ2 - roundToPaisa(suddenReliefTax * 0.45));
-        }
-        interestQ2 = roundSection288B(shortfallQ2) * 0.01 * 3;
-    }
-
-    // Q3 Interest: 1% per month for 3 months (No statutory safe harbor buffer)
-    let shortfallQ3 = Math.max(0, reqQ3 - cumPaidQ3);
-    let interestQ3 = 0;
-    if (shortfallQ3 > 0) {
-        if (suddenReliefTax > 0 && suddenIncomeExceptions?.occurrenceQuarter > 3) {
-            shortfallQ3 = Math.max(0, shortfallQ3 - roundToPaisa(suddenReliefTax * 0.75));
-        }
-        interestQ3 = roundSection288B(shortfallQ3) * 0.01 * 3;
-    }
-
-    // Q4 Interest: 1% per month for 1 month
-    let shortfallQ4 = Math.max(0, reqQ4 - cumPaidQ4);
-    let interestQ4 = 0;
-    if (shortfallQ4 > 0) {
-        interestQ4 = roundSection288B(shortfallQ4) * 0.01 * 1;
-    }
-
-    const totalInterest234C = roundSection288B(interestQ1 + interestQ2 + interestQ3 + interestQ4);
-
-    // Section 234B Default Interest:
-    // Triggers if total advance tax paid on or before 31 March is < 90% of assessed tax.
-    const isNinetyPercentSatisfied = cumPaidQ4 >= roundToPaisa(netTaxPayable * 0.90);
-    let shortfall234B = 0;
-    let interestSection234B = 0;
-    let months234B = 0;
-
-    if (!isNinetyPercentSatisfied) {
-        shortfall234B = Math.max(0, netTaxPayable - cumPaidQ4);
-        
-        // Month count from 1 April of AY to date of determination/assessment
-        if (assessmentDate) {
-            const ayStart = new Date(`${(assessmentYear ? assessmentYear.slice(0, 4) : Number(taxYear.slice(0, 4)) + 1)}-04-01T00:00:00.000Z`);
-            const dAssess = new Date(String(assessmentDate).slice(0, 10) + 'T00:00:00.000Z');
-            if (!isNaN(dAssess.getTime()) && dAssess > ayStart) {
-                const diffTime = dAssess.getTime() - ayStart.getTime();
-                const rawMonths = diffTime / (1000 * 60 * 60 * 24 * 30.4375);
-                months234B = Math.max(1, Math.ceil(rawMonths));
-            } else {
-                months234B = 1;
-            }
-        } else {
-            months234B = 1; // Minimum statutory period: 1 month
-        }
-
-        interestSection234B = roundSection288B(shortfall234B) * 0.01 * months234B;
-    }
-
-    const totalInterest = roundSection288B(totalInterest234C + interestSection234B);
-    const balanceTaxDue = Math.max(0, netTaxPayable - cumPaidQ4);
-    const totalPayable = roundToPaisa(balanceTaxDue + totalInterest);
-
-    const installments = [
-        {
-            quarter: 'Q1',
-            statutoryDueDate: `${taxYear.slice(0, 4)}-06-15`,
-            cumulativePercentTarget: 15,
-            cumulativeRequiredInr: reqQ1,
-            cumulativePaidInr: cumPaidQ1,
-            quarterlyPaidInr: pQ1,
-            shortfallInr: shortfallQ1,
-            safeHarbor12PercentThresholdInr: safeHarborQ1Threshold,
-            isSafeHarborApplied: safeHarborQ1Applied,
-            ratePercent: 1.0,
-            statutoryMonths: 3,
-            interestInr: interestQ1,
-            statutoryRule: safeHarborQ1Applied ? 'SAFE_HARBOR_12_PERCENT_SATISFIED' : (shortfallQ1 > 0 ? 'DEFERMENT_INTEREST_APPLIED' : 'PAID_IN_FULL')
-        },
-        {
-            quarter: 'Q2',
-            statutoryDueDate: `${taxYear.slice(0, 4)}-09-15`,
-            cumulativePercentTarget: 45,
-            cumulativeRequiredInr: reqQ2,
-            cumulativePaidInr: cumPaidQ2,
-            quarterlyPaidInr: pQ2,
-            shortfallInr: shortfallQ2,
-            safeHarbor36PercentThresholdInr: safeHarborQ2Threshold,
-            isSafeHarborApplied: safeHarborQ2Applied,
-            ratePercent: 1.0,
-            statutoryMonths: 3,
-            interestInr: interestQ2,
-            statutoryRule: safeHarborQ2Applied ? 'SAFE_HARBOR_36_PERCENT_SATISFIED' : (shortfallQ2 > 0 ? 'DEFERMENT_INTEREST_APPLIED' : 'PAID_IN_FULL')
-        },
-        {
-            quarter: 'Q3',
-            statutoryDueDate: `${taxYear.slice(0, 4)}-12-15`,
-            cumulativePercentTarget: 75,
-            cumulativeRequiredInr: reqQ3,
-            cumulativePaidInr: cumPaidQ3,
-            quarterlyPaidInr: pQ3,
-            shortfallInr: shortfallQ3,
-            isSafeHarborApplied: false,
-            ratePercent: 1.0,
-            statutoryMonths: 3,
-            interestInr: interestQ3,
-            statutoryRule: shortfallQ3 > 0 ? 'DEFERMENT_INTEREST_APPLIED' : 'PAID_IN_FULL'
-        },
-        {
-            quarter: 'Q4',
-            statutoryDueDate: `${Number(taxYear.slice(0, 4)) + 1}-03-15`,
-            cumulativePercentTarget: 100,
-            cumulativeRequiredInr: reqQ4,
-            cumulativePaidInr: cumPaidQ4,
-            quarterlyPaidInr: pQ4,
-            shortfallInr: shortfallQ4,
-            isSafeHarborApplied: false,
-            ratePercent: 1.0,
-            statutoryMonths: 1,
-            interestInr: interestQ4,
-            statutoryRule: shortfallQ4 > 0 ? 'DEFERMENT_INTEREST_APPLIED' : 'PAID_IN_FULL'
-        }
-    ];
-
-    return {
-        status: 'SUCCESS',
-        statutoryDetermination: 'APPLICABLE',
-        governingAct,
-        governingComputationSection,
-        governingInstallmentSection,
-        governingInterestSection,
-        isAct2025: resolvedIsAct2025,
-        taxYear,
-        assessmentYear: assessmentYear || `${Number(taxYear.slice(0, 4)) + 1}-${Number(taxYear.slice(5, 7)) + 1}`,
-        estimatedAssessedTaxInr: estimatedTax,
-        tdsTcsCreditInr: credits,
-        netTaxPayableInr: netTaxPayable,
-        advanceTaxThresholdInr: ADVANCE_TAX_THRESHOLD,
-        isAdvanceTaxPayable: true,
-        installments,
-        totalAdvanceTaxPaidInr: cumPaidQ4,
-        balanceTaxDueInr: balanceTaxDue,
-        interestSection234CInr: totalInterest234C,
-        section234BDetails: {
-            ninetyPercentThresholdInr: roundToPaisa(netTaxPayable * 0.90),
-            isNinetyPercentSatisfied,
-            shortfall234BInr: shortfall234B,
-            months234B,
-            ratePerMonthPercent: 1.0,
-            interestInr: interestSection234B,
-            rule: isNinetyPercentSatisfied ? 'EXEMPT_PAID_AT_LEAST_90_PERCENT' : 'DEFAULT_INTEREST_APPLIED_BELOW_90_PERCENT'
-        },
-        interestSection234BInr: interestSection234B,
-        totalInterestInr: totalInterest,
-        totalPayableInr: totalPayable,
-        isAuthorizedToDisburse: false,
-        statutoryRationale: `${governingComputationSection} requires advance tax on net liability ₹${netTaxPayable.toLocaleString('en-IN')}. Section 234C interest ₹${totalInterest234C.toLocaleString('en-IN')} (deferment), Section 234B interest ₹${interestSection234B.toLocaleString('en-IN')} (${isNinetyPercentSatisfied ? 'satisfied >=90%' : 'default <90%'}). Total interest: ₹${totalInterest.toLocaleString('en-IN')}. Note: Payment authorization requires corporate controller sign-off.`
-    };
-}
-
-/**
- * ═══════════════════════════════════════════════════════════════════════════
- * CORPORATE FINANCE: GST INPUT TAX CREDIT APPORTIONMENT & REVERSAL
- * CGST Rules 2017: Rule 42 (Inputs & Services) & Rule 43 (Capital Goods)
- * ═══════════════════════════════════════════════════════════════════════════
- *
- * Implements deterministic apportionment, monthly provisional reversals (Table 4(B)(1)),
- * annual true-up reconciliations before 30th November (Notification No. 18/2022-CT),
- * Section 50(1) 18% statutory interest on shortfalls, Table 4(D)(1) reclaim mechanics,
- * and 60-month capital goods asset amortisation and conversions.
- */
-
-/**
- * GST RULE 42: INPUTS & INPUT SERVICES COMMON ITC REVERSAL CALCULATOR
- * CGST Act, 2017: Section 17(1) & 17(2) read with Rule 42
- *
- * Segregates total input tax (T) into:
- * - Specific ineligibles: T1 (non-business), T2 (exempt), T3 (blocked u/s 17(5))
- * - Credited to Electronic Credit Ledger: C1 = T - (T1 + T2 + T3)
- * - Specific eligible: T4 (taxable & zero-rated supplies)
- * - Common Credit: C2 = C1 - T4
- * - Monthly Ineligible Reversals: D1 = (E / F) * C2, D2 = 5% of C2 (non-business)
- * - Eligible Common Credit: C3 = C2 - (D1 + D2)
- * - Net Eligible Inputs Credit: G = T4 + C3 = C1 - (D1 + D2)
- */
 /**
  * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
@@ -4245,15 +967,6 @@ export function calculateRule42InputServiceReversal({
 }
 
 /**
- * GST RULE 42(2): ANNUAL COMMON CREDIT TRUE-UP & RECONCILIATION ENGINE
- * CGST Rules, 2017: Rule 42(2) read with Section 16(4) and Section 50(1)
- * Amended by Finance Act, 2022 & Notification No. 18/2022-Central Tax w.e.f. 01.10.2022
- *
- * Annual Cutoff: 30th November following the end of the financial year.
- * - Shortfall Reversal: Payable with 18% p.a. interest under Section 50(1) from 1st April of succeeding FY.
- * - Excess Reversal: Reclaimable as credit in Form GSTR-3B Table 4(A)(5) and Table 4(D)(1) before 30th November.
- */
-/**
  * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
 export function reconcileRule42AnnualTrueUp({
@@ -4361,17 +1074,6 @@ export function reconcileRule42AnnualTrueUp({
     };
 }
 
-/**
- * GST RULE 43: CAPITAL GOODS COMMON ITC AMORTISATION & REVERSAL CALCULATOR
- * CGST Act, 2017: Section 17(1) & 17(2) read with Rule 43
- *
- * Implements:
- * - 60-month statutory useful life tracking for each capital asset.
- * - Monthly credit slice: Tm = Tc / 60.
- * - Aggregate monthly common credit: Tr = sum(Tm).
- * - Monthly exempt reversal: Te = (E / F) * Tr (added to output tax liability in Table 4(B)(1)).
- * - Asset conversion: 5% reduction per quarter under Rule 43(1)(c) for exclusive-to-common transitions.
- */
 /**
  * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
@@ -4542,13 +1244,6 @@ export function calculateRule43CapitalGoodsReversal({
     };
 }
 
-/**
- * UNIFIED ORCHESTRATOR: GST RULE 42 & 43 COMBINED APPORTIONMENT
- * Backward-compatible facade coordinating inputs/services, capital goods, and annual true-ups.
- */
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
 export function calculateGstItcApportionmentRule42_43({
     taxPeriod = null,
     financialYear = '2025-26',
@@ -5418,201 +2113,6 @@ export function calculateCorporateTaxMatVsConcessional({
 /**
  * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
  */
-export function evaluatePlaceOfSupplyAndLut({
-    transactionType = 'DOMESTIC_SERVICES',
-    supplierStateCode = null,
-    supplierGstin = null,
-    recipientStateCode = null,
-    recipientGstin = null,
-    recipientCountryCode = 'IN',
-    invoiceAmountInr = 0,
-    gstRate = 0.18,
-    isB2B = true,
-    placeOfSupplyStateCode = null,
-    immovablePropertyLocationStateCode = null,
-    isSupplierInIndia = true,
-    isRecipientOutsideIndia = null,
-    isPlaceOfSupplyOutsideIndia = null,
-    isConvertibleForexReceivedOrRbiInr = null,
-    isDistinctPersonEstablishment = false,
-    isIntermediaryService = false,
-    hasValidLut = false,
-    lutArn = null
-} = {}) {
-    const amount = cleanNumericAmount(invoiceAmountInr);
-    const rate = Number(gstRate) || 0.18;
-    const isTransExport = transactionType === 'EXPORT_SERVICES' || transactionType === 'EXPORT_GOODS' || (recipientCountryCode && recipientCountryCode.toUpperCase() !== 'IN');
-
-    // Extract state codes
-    let supState = supplierStateCode;
-    if (!supState && supplierGstin && typeof supplierGstin === 'string' && supplierGstin.length >= 2) {
-        supState = supplierGstin.slice(0, 2);
-    }
-    let recState = recipientStateCode;
-    if (!recState && recipientGstin && typeof recipientGstin === 'string' && recipientGstin.length >= 2) {
-        recState = recipientGstin.slice(0, 2);
-    }
-
-    if (isTransExport) {
-        // Evaluate Section 2(6) 5 Cumulative Conditions for Export of Services
-        const cond1SupplierInIndia = isSupplierInIndia === true;
-        const cond2RecipientOutsideIndia = recipientCountryCode.toUpperCase() !== 'IN' && (isRecipientOutsideIndia === null || isRecipientOutsideIndia === true);
-        // Intermediary services under Section 13(8)(b) have POS at supplier location in India!
-        const cond3PosOutsideIndia = !isIntermediaryService && (isPlaceOfSupplyOutsideIndia === null || isPlaceOfSupplyOutsideIndia === true);
-        const cond4ForexReceived = isConvertibleForexReceivedOrRbiInr === true;
-        const cond5NotDistinctPersons = isDistinctPersonEstablishment === false;
-
-        const conditionAudit = [
-            { condition: '1. Supplier located in India (Sec 2(6)(i))', status: cond1SupplierInIndia ? 'PASS' : 'FAIL' },
-            { condition: '2. Recipient located outside India (Sec 2(6)(ii))', status: cond2RecipientOutsideIndia ? 'PASS' : 'FAIL' },
-            { condition: '3. Place of supply outside India (Sec 2(6)(iii) & Sec 13)', status: cond3PosOutsideIndia ? 'PASS' : (isIntermediaryService ? 'FAIL_INTERMEDIARY_SEC_13_8_B' : 'FAIL') },
-            { condition: '4. Convertible forex / RBI permitted INR received (Sec 2(6)(iv))', status: cond4ForexReceived ? 'PASS' : 'FAIL_NO_FIRC_EBRC' },
-            { condition: '5. Not merely establishments of distinct persons (Sec 2(6)(v))', status: cond5NotDistinctPersons ? 'PASS' : 'FAIL_DISTINCT_PERSON_BRANCH' }
-        ];
-
-        const isFullyQualifiedExport = cond1SupplierInIndia && cond2RecipientOutsideIndia && cond3PosOutsideIndia && cond4ForexReceived && cond5NotDistinctPersons;
-
-        if (isFullyQualifiedExport) {
-            if (hasValidLut) {
-                return {
-                    status: 'SUCCESS',
-                    statutoryDetermination: 'ZERO_RATED_EXPORT_UNDER_LUT',
-                    governingLaw: 'IGST Act, 2017 Sections 2(6), 16(1)(a) & 16(3)(a); CGST Rules, 2017 Rule 96A',
-                    transactionType: 'EXPORT_SERVICES',
-                    invoiceAmountInr: amount,
-                    gstRate: 0,
-                    igstPayableInr: 0,
-                    cgstPayableInr: 0,
-                    sgstPayableInr: 0,
-                    lutArn: lutArn || 'LUT_ARN_ACTIVE_ON_RECORD',
-                    isZeroRated: true,
-                    itcRefundEligible: true,
-                    reportingTable: 'GSTR-1 Table 6A (Export without payment of tax)',
-                    conditionAudit,
-                    isAuthorizedToDisburse: false,
-                    statutoryRationale: `Zero-Rated Export of Services under LUT: All 5 conditions of Section 2(6) IGST Act verified. Export proceeds in convertible foreign exchange/RBI INR confirmed. Supply is zero-rated at 0% IGST under valid LUT ARN ${lutArn || 'ACTIVE'}. Accumulated unutilized ITC is eligible for refund under Section 54(3).`
-                };
-            } else {
-                const igstTax = roundToPaisa(amount * rate);
-                return {
-                    status: 'SUCCESS',
-                    statutoryDetermination: 'ZERO_RATED_EXPORT_WITH_TAX_PAYMENT',
-                    governingLaw: 'IGST Act, 2017 Sections 2(6), 16(1)(a) & 16(3)(b); CGST Act Section 54',
-                    transactionType: 'EXPORT_SERVICES',
-                    invoiceAmountInr: amount,
-                    gstRate: rate,
-                    igstPayableInr: igstTax,
-                    cgstPayableInr: 0,
-                    sgstPayableInr: 0,
-                    isZeroRated: true,
-                    itcRefundEligible: true,
-                    reportingTable: 'GSTR-1 Table 6A (Export with payment of tax)',
-                    conditionAudit,
-                    isAuthorizedToDisburse: false,
-                    statutoryRationale: `Zero-Rated Export with payment of tax: All 5 conditions of Section 2(6) satisfied, but no valid LUT on record. IGST of INR ${igstTax.toLocaleString('en-IN')} (at ${(rate * 100)}%) is charged and eligible for refund under Section 54(1).`
-                };
-            }
-        } else {
-            const igstTax = roundToPaisa(amount * rate);
-            const failedReasons = conditionAudit.filter(c => c.status !== 'PASS').map(c => c.condition);
-            return {
-                status: 'SUCCESS',
-                statutoryDetermination: 'DISQUALIFIED_FROM_ZERO_RATING',
-                governingLaw: 'IGST Act, 2017 Sections 2(6), 7(5)(a) & 13',
-                transactionType: 'DISQUALIFIED_EXPORT_SERVICES',
-                invoiceAmountInr: amount,
-                gstRate: rate,
-                igstPayableInr: igstTax,
-                cgstPayableInr: 0,
-                sgstPayableInr: 0,
-                isZeroRated: false,
-                itcRefundEligible: false,
-                disqualificationReasons: failedReasons,
-                conditionAudit,
-                isAuthorizedToDisburse: false,
-                statutoryRationale: `Disqualified from Zero-Rated Export: Supply failed statutory condition(s): ${failedReasons.join('; ')}. Treated as standard domestic inter-state supply to foreign person subject to standard ${(rate * 100)}% IGST (INR ${igstTax.toLocaleString('en-IN')}).`
-            };
-        }
-    }
-
-    // Domestic Transaction Place of Supply Determination
-    let posState = placeOfSupplyStateCode;
-    let posLegalRule = '';
-
-    if (immovablePropertyLocationStateCode) {
-        posState = immovablePropertyLocationStateCode;
-        posLegalRule = 'IGST Act Section 12(3) (Directly related to immovable property - location of property)';
-    } else if (transactionType === 'DOMESTIC_GOODS') {
-        posState = posState || recState || supState;
-        posLegalRule = 'IGST Act Section 10(1)(a) (Location of goods at termination of delivery)';
-    } else {
-        if (isB2B && recState) {
-            posState = recState;
-            posLegalRule = 'IGST Act Section 12(2)(a) (B2B supply - location of registered recipient)';
-        } else if (recState) {
-            posState = recState;
-            posLegalRule = 'IGST Act Section 12(2)(b) (B2C supply with address on record)';
-        } else {
-            posState = supState;
-            posLegalRule = 'IGST Act Section 12(2)(b) proviso (B2C supply without address - location of supplier)';
-        }
-    }
-
-    const isIntraState = supState && posState && (supState === posState);
-    let cgstRate = 0, sgstRate = 0, igstRate = 0;
-    let cgstAmountInr = 0, sgstAmountInr = 0, igstAmountInr = 0;
-
-    if (isIntraState) {
-        cgstRate = rate / 2;
-        sgstRate = rate / 2;
-        cgstAmountInr = roundToPaisa(amount * cgstRate);
-        sgstAmountInr = roundToPaisa(amount * sgstRate);
-    } else {
-        igstRate = rate;
-        igstAmountInr = roundToPaisa(amount * igstRate);
-    }
-    const totalGstInr = roundToPaisa(cgstAmountInr + sgstAmountInr + igstAmountInr);
-
-    return {
-        status: 'SUCCESS',
-        statutoryDetermination: isIntraState ? 'INTRA_STATE_SUPPLY' : 'INTER_STATE_SUPPLY',
-        governingLaw: isIntraState ? 'CGST Act Section 9 & SGST Act Section 9' : 'IGST Act Section 5 & Section 7',
-        posLegalRule,
-        supplierStateCode: supState,
-        placeOfSupplyStateCode: posState,
-        recipientStateCode: recState,
-        invoiceAmountInr: amount,
-        supplyNature: isIntraState ? 'INTRA_STATE' : 'INTER_STATE',
-        taxBreakdown: {
-            cgstRate,
-            cgstAmountInr,
-            sgstRate,
-            sgstAmountInr,
-            igstRate,
-            igstAmountInr,
-            totalGstAmountInr: totalGstInr
-        },
-        isAuthorizedToDisburse: false,
-        statutoryRationale: isIntraState
-            ? `Intra-State Supply: Supplier state (${supState}) matches Place of Supply (${posState}). CGST (${(cgstRate * 100)}%: INR ${cgstAmountInr.toLocaleString('en-IN')}) and SGST (${(sgstRate * 100)}%: INR ${sgstAmountInr.toLocaleString('en-IN')}) levied under Section 9.`
-            : `Inter-State Supply: Supplier state (${supState}) differs from Place of Supply (${posState}). IGST (${(igstRate * 100)}%: INR ${igstAmountInr.toLocaleString('en-IN')}) levied under Section 5 of IGST Act.`
-    };
-}
-
-/**
- * -----------------------------------------------------------------------------
- * 30. TRANSFER PRICING ARM'S LENGTH PRICE (ALP) ENGINE (SECTION 92C & RULE 10CA)
- * -----------------------------------------------------------------------------
- * Computes Transfer Pricing compliance:
- * 1. Associated Enterprise (AE) transaction validation under Section 92A.
- * 2. 3% tolerance band for wholesale traders vs 1% for other businesses (proviso to Sec 92C(2)).
- * 3. Rule 10CA Percentile Range: 35th to 65th percentile dataset evaluation for >= 6 comparables.
- * 4. Rule 10CA(7) Median (50th percentile) primary adjustment if tested margin is outside range.
- * 5. Section 92CE Secondary Adjustment threshold warning (> 1 Cr).
- */
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
 export function calculateTransferPricingAlp({
     transactionDescription = 'International Transaction with Associated Enterprise',
     testedParty = 'Indian Enterprise',
@@ -6039,561 +2539,6 @@ export function evaluateSection281TaxClearance({
  * 1. Monetary Assets (Receivables, Bank) vs Monetary Liabilities (Payables, Loans).
  * 2. Net Unrealized Gain/Loss routing: P&L vs Other Comprehensive Income (OCI - Cash Flow Hedge Reserve).
  * 3. Ind AS 109 Balance Sheet schedule generation.
- */
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
-export function revalueForeignExchangeIndAs109({
-    asOfDate = null,
-    reportingCurrency = 'INR',
-    items = []
-} = {}) {
-    const dAsOf = asOfDate ? new Date(asOfDate) : new Date();
-    const asOfIso = !isNaN(dAsOf.getTime()) ? dAsOf.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-
-    const revaluedItems = [];
-    let totalPnlGainInr = 0;
-    let totalPnlLossInr = 0;
-    let totalOciGainInr = 0;
-    let totalOciLossInr = 0;
-
-    const itemList = Array.isArray(items) ? items : [];
-
-    for (const item of itemList) {
-        const desc = item.description || item.itemDescription || 'FX Item';
-        const itemType = (item.itemType || 'MONETARY_ASSET').toUpperCase();
-        const ccy = item.foreignCurrency || item.currency || 'USD';
-        const fcyAmt = cleanNumericAmount(item.foreignAmount || item.amount);
-        const bookRate = cleanNumericAmount(item.bookingRate || item.historicalRate) || 1;
-        const closeRate = cleanNumericAmount(item.closingRate || item.spotRate) || bookRate;
-        const isHedge = item.isDesignatedCashFlowHedge === true;
-
-        if (itemType === 'NON_MONETARY') {
-            revaluedItems.push({
-                description: desc,
-                itemType: 'NON_MONETARY',
-                foreignCurrency: ccy,
-                foreignAmount: fcyAmt,
-                bookingRate: bookRate,
-                closingRate: closeRate,
-                carryingAmountInr: roundToPaisa(fcyAmt * bookRate),
-                unrealizedGainLossInr: 0,
-                accountingTreatment: 'Carried at historical cost per Ind AS 21.23(b) -- No closing rate revaluation.'
-            });
-            continue;
-        }
-
-        const carryingAmountInr = roundToPaisa(fcyAmt * bookRate);
-        const revaluedAmountInr = roundToPaisa(fcyAmt * closeRate);
-
-        let gainLoss = 0;
-        if (itemType === 'MONETARY_ASSET') {
-            gainLoss = roundToPaisa(revaluedAmountInr - carryingAmountInr);
-        } else {
-            gainLoss = roundToPaisa(carryingAmountInr - revaluedAmountInr);
-        }
-
-        let routing = '';
-        if (isHedge) {
-            routing = 'OTHER_COMPREHENSIVE_INCOME (Cash Flow Hedge Reserve)';
-            if (gainLoss >= 0) totalOciGainInr += gainLoss;
-            else totalOciLossInr += Math.abs(gainLoss);
-        } else {
-            routing = 'PROFIT_AND_LOSS (Foreign Exchange Fluctuation Account)';
-            if (gainLoss >= 0) totalPnlGainInr += gainLoss;
-            else totalPnlLossInr += Math.abs(gainLoss);
-        }
-
-        revaluedItems.push({
-            description: desc,
-            itemType,
-            foreignCurrency: ccy,
-            foreignAmount: fcyAmt,
-            bookingRate: bookRate,
-            closingRate: closeRate,
-            carryingAmountInr,
-            revaluedAmountInr,
-            unrealizedGainLossInr: gainLoss,
-            isGain: gainLoss >= 0,
-            accountingTreatment: routing
-        });
-    }
-
-    const netPnlGainLossInr = roundToPaisa(totalPnlGainInr - totalPnlLossInr);
-    const netOciGainLossInr = roundToPaisa(totalOciGainInr - totalOciLossInr);
-
-    return {
-        status: 'SUCCESS',
-        statutoryDetermination: 'APPLICABLE',
-        governingLaw: 'Ind AS 21 (The Effects of Changes in Foreign Exchange Rates) & Ind AS 109 (Financial Instruments)',
-        asOfDate: asOfIso,
-        reportingCurrency,
-        totalItemsEvaluated: revaluedItems.length,
-        summary: {
-            netPnlImpactInr: netPnlGainLossInr,
-            netPnlStatus: netPnlGainLossInr >= 0 ? 'NET_UNREALIZED_GAIN' : 'NET_UNREALIZED_LOSS',
-            netOciImpactInr: netOciGainLossInr,
-            netOciStatus: netOciGainLossInr >= 0 ? 'NET_HEDGE_RESERVE_GAIN' : 'NET_HEDGE_RESERVE_LOSS',
-            totalPnlGainInr: roundToPaisa(totalPnlGainInr),
-            totalPnlLossInr: roundToPaisa(totalPnlLossInr)
-        },
-        revaluedItems,
-        isAuthorizedToDisburse: false,
-        statutoryRationale: `Ind AS 21 & 109 Revaluation: ${revaluedItems.length} items evaluated as of ${asOfIso}. Net P&L FX impact: INR ${netPnlGainLossInr.toLocaleString('en-IN')}; Net OCI Hedge impact: INR ${netOciGainLossInr.toLocaleString('en-IN')}. Accounting revaluations do not authorize payment disbursement.`
-    };
-}
-
-/**
- * Evaluates Tax Deduction at Source on Benefit or Perquisite in respect of Business or Profession under Section 194R.
- * 
- * Rules Enforced:
- * 1. Payer Turnover Prerequisite:
- *    - Individuals & HUFs: Covered only if preceding FY business turnover > 1 Crore or profession receipts > 50 Lakhs.
- *    - Companies, LLPs, Partnership Firms: Covered irrespective of turnover.
- * 2. Cumulative Financial Year Exemption:
- *    - Threshold: INR 20,000 aggregate in a financial year.
- *    - Value up to INR 20,000: No TDS (EXEMPT_BELOW_THRESHOLD).
- *    - Once aggregate exceeds INR 20,000: TDS applies at 10% standard rate.
- * 3. Specific Exclusions per CBDT Circular No. 12/2022 & 18/2022:
- *    - Sales discount, cash discount, and commercial rebates are excluded.
- *    - Bona fide dealer training/launch conferences without leisure/family overstay are excluded.
- * 4. In-Kind / Non-Cash Benefits (Section 194R(1) Proviso):
- *    - If benefit is wholly in kind or partly in kind, provider must ensure advance tax (ITNS 281) has been paid before release.
- *    - Release without advance tax verification flags 30% disallowance under Section 40(a)(ia).
- * 5. Section 206AA / 206AB Rules:
- *    - 20% floor for missing/inoperative PAN.
- *    - Section 206AB non-filer penalty active pre-1 April 2025; omitted post-1 April 2025 by Finance Act, 2025.
- * 6. Statutory Invariant:
- *    - Always returns isAuthorizedToDisburse: false.
- */
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
-export function evaluateSection194R({
-    currentBenefitValueInr,
-    cumulativePriorBenefitsInr = 0,
-    payerEntityType = 'COMPANY',
-    payerPrecedingFyTurnoverInr = null,
-    payerPrecedingFyProfessionReceiptsInr = null,
-    benefitNature = 'CASH', // 'CASH', 'IN_KIND', 'PARTLY_CASH_PARTLY_KIND'
-    benefitCategory = 'OTHER', // 'DEALER_INCENTIVE_TRIP', 'SALES_CONFERENCE_EXCESS', 'CAPITAL_ASSET_TRANSFER', 'PRODUCT_SAMPLE_COMMERCIAL', 'GIFT_VOUCHER_OR_GOLD', 'COMMERCIAL_DISCOUNT_REBATE', 'DEALER_CONFERENCE_BONAFIDE', 'OTHER'
-    isAdvanceTaxPaidBeforeRelease = false,
-    hasPan = true,
-    isPanInoperative = false,
-    isSpecifiedPerson206AB = false,
-    effectiveDate = null
-} = {}) {
-    const benefitVal = roundToPaisa(Math.max(0, assertMandatoryNumeric(currentBenefitValueInr, 'currentBenefitValueInr', 'evaluateSection194R')));
-    const priorVal = roundToPaisa(Math.max(0, cleanNumericAmount(cumulativePriorBenefitsInr)));
-    const totalCumulativeVal = roundToPaisa(priorVal + benefitVal);
-    const dateStr = effectiveDate ? String(effectiveDate).slice(0, 10) : new Date().toISOString().slice(0, 10);
-
-    // Exclusion 1: CBDT Circular 12/2022 & 18/2022 Non-Perquisite Categories
-    if (benefitCategory === 'COMMERCIAL_DISCOUNT_REBATE' || benefitCategory === 'DEALER_CONFERENCE_BONAFIDE') {
-        return {
-            status: 'SUCCESS',
-            statutoryDetermination: 'EXCLUDED_CBDT_CIRCULAR_12_2022',
-            applicableTdsRatePercent: 0,
-            taxableBaseInr: 0,
-            calculatedTdsInr: 0,
-            benefitValueInr: benefitVal,
-            cumulativePriorBenefitsInr: priorVal,
-            totalCumulativeInr: totalCumulativeVal,
-            disallowanceRiskSection40a_ia: false,
-            governingLaw: 'Income-tax Act, 1961 Section 194R read with CBDT Circular No. 12/2022 & Circular No. 18/2022',
-            isAuthorizedToDisburse: false,
-            statutoryRationale: `Benefit category "${benefitCategory}" is explicitly excluded from Section 194R per CBDT Circular No. 12/2022. Sales discounts, commercial rebates, and bona fide dealer product conferences do not constitute taxable perquisites.`
-        };
-    }
-
-    // Exclusion 2: Individual / HUF Payer Turnover Floor
-    const normalizedEntityType = String(payerEntityType || 'COMPANY').toUpperCase();
-    if (normalizedEntityType === 'INDIVIDUAL' || normalizedEntityType === 'HUF' || normalizedEntityType === 'INDIVIDUAL_HUF') {
-        const turnover = cleanNumericAmount(payerPrecedingFyTurnoverInr);
-        const profReceipts = cleanNumericAmount(payerPrecedingFyProfessionReceiptsInr);
-        const exceedsBusinessFloor = turnover > 10000000; // > 1 Crore
-        const exceedsProfessionFloor = profReceipts > 5000000; // > 50 Lakhs
-
-        if (!exceedsBusinessFloor && !exceedsProfessionFloor) {
-            return {
-                status: 'SUCCESS',
-                statutoryDetermination: 'EXEMPT_PAYER_TURNOVER_BELOW_STATUTORY_FLOOR',
-                applicableTdsRatePercent: 0,
-                taxableBaseInr: 0,
-                calculatedTdsInr: 0,
-                benefitValueInr: benefitVal,
-                cumulativePriorBenefitsInr: priorVal,
-                totalCumulativeInr: totalCumulativeVal,
-                disallowanceRiskSection40a_ia: false,
-                governingLaw: 'Income-tax Act, 1961 Section 194R(1) Second Proviso',
-                isAuthorizedToDisburse: false,
-                statutoryRationale: 'Payer is an Individual/HUF whose business turnover (INR ' + turnover.toLocaleString('en-IN') + ') and professional receipts (INR ' + profReceipts.toLocaleString('en-IN') + ') in preceding FY do not exceed the statutory threshold (> INR 1 Cr business / > INR 50L profession). Section 194R withholding does not apply.'
-            };
-        }
-    }
-
-    // Exclusion 3: Cumulative Financial Year De Minimis Ceiling (<= INR 20,000)
-    const STATUTORY_THRESHOLD_INR = 20000;
-    if (totalCumulativeVal <= STATUTORY_THRESHOLD_INR) {
-        return {
-            status: 'SUCCESS',
-            statutoryDetermination: 'EXEMPT_BELOW_THRESHOLD',
-            applicableTdsRatePercent: 0,
-            taxableBaseInr: 0,
-            calculatedTdsInr: 0,
-            benefitValueInr: benefitVal,
-            cumulativePriorBenefitsInr: priorVal,
-            totalCumulativeInr: totalCumulativeVal,
-            thresholdCeilingInr: STATUTORY_THRESHOLD_INR,
-            disallowanceRiskSection40a_ia: false,
-            governingLaw: 'Income-tax Act, 1961 Section 194R(1) First Proviso',
-            isAuthorizedToDisburse: false,
-            statutoryRationale: `Cumulative value of perquisites in financial year (INR ${totalCumulativeVal.toLocaleString('en-IN')}) does not exceed the statutory de minimis limit of INR 20,000. No tax deduction at source is required.`
-        };
-    }
-
-    // Rate Determination
-    let applicableRate = 10.0;
-    let rateLaw = 'Section 194R(1) standard rate (10%)';
-
-    // Section 206AA: Missing or inoperative PAN
-    if (!hasPan || isPanInoperative) {
-        applicableRate = 20.0;
-        rateLaw = 'Section 206AA penal rate (20%) due to missing or inoperative PAN';
-    } else if (isSpecifiedPerson206AB) {
-        // Section 206AB: Non-filer higher rate (omitted w.e.f. 1 April 2025)
-        if (dateStr < '2025-04-01') {
-            applicableRate = 20.0;
-            rateLaw = 'Section 206AB higher rate (20% - twice standard rate) for non-filer prior to 1 April 2025';
-        } else {
-            applicableRate = 10.0;
-            rateLaw = 'Section 194R(1) standard rate (10%) - Section 206AB omitted w.e.f. 1 April 2025';
-        }
-    }
-
-    const calculatedTds = roundToPaisa(benefitVal * (applicableRate / 100));
-
-    // In-Kind Compliance Verification (Section 194R(1) Proviso)
-    const normalizedNature = String(benefitNature || 'CASH').toUpperCase();
-    const isInKind = normalizedNature === 'IN_KIND' || normalizedNature === 'PARTLY_CASH_PARTLY_KIND';
-
-    if (isInKind && !isAdvanceTaxPaidBeforeRelease) {
-        return {
-            status: 'SUCCESS',
-            statutoryDetermination: 'MANDATORY_IN_KIND_ADVANCE_TAX_PENDING',
-            applicableTdsRatePercent: applicableRate,
-            taxableBaseInr: benefitVal,
-            calculatedTdsInr: calculatedTds,
-            benefitValueInr: benefitVal,
-            cumulativePriorBenefitsInr: priorVal,
-            totalCumulativeInr: totalCumulativeVal,
-            benefitNature: normalizedNature,
-            isAdvanceTaxPaidBeforeRelease: false,
-            disallowanceRiskSection40a_ia: true,
-            disallowanceAmountInr: roundToPaisa(benefitVal * 0.30),
-            governingLaw: `Income-tax Act, 1961 Section 194R(1) read with ${rateLaw}`,
-            isAuthorizedToDisburse: false,
-            statutoryRationale: `Section 194R(1) Proviso mandates that where perquisite is wholly or partly in kind, the provider must ensure tax has been paid in advance before releasing the benefit. Releasing INR ${benefitVal.toLocaleString('en-IN')} benefit in kind without verified advance tax payment creates an immediate 30% expenditure disallowance risk (INR ${roundToPaisa(benefitVal * 0.30).toLocaleString('en-IN')}) under Section 40(a)(ia).`
-        };
-    }
-
-    return {
-        status: 'SUCCESS',
-        statutoryDetermination: isInKind ? 'DEDUCTION_MANDATORY_IN_KIND_DISCHARGED' : 'DEDUCTION_MANDATORY',
-        applicableTdsRatePercent: applicableRate,
-        taxableBaseInr: benefitVal,
-        calculatedTdsInr: calculatedTds,
-        benefitValueInr: benefitVal,
-        cumulativePriorBenefitsInr: priorVal,
-        totalCumulativeInr: totalCumulativeVal,
-        benefitNature: normalizedNature,
-        isAdvanceTaxPaidBeforeRelease: isInKind ? true : null,
-        disallowanceRiskSection40a_ia: false,
-        governingLaw: `Income-tax Act, 1961 Section 194R(1) read with ${rateLaw}`,
-        isAuthorizedToDisburse: false,
-        statutoryRationale: `Cumulative benefits (INR ${totalCumulativeVal.toLocaleString('en-IN')}) exceed statutory threshold of INR 20,000. TDS of INR ${calculatedTds.toLocaleString('en-IN')} (rate: ${applicableRate}%) applies under Section 194R.`
-    };
-}
-
-/**
- * Evaluates Tax Deduction at Source on Payment of Rent by Certain Individuals or HUF under Section 194-IB.
- * 
- * Rules Enforced:
- * 1. Payer Qualification:
- *    - Individuals and HUFs not liable to tax audit under Section 44AB.
- * 2. Monthly Rent Threshold:
- *    - Rent exceeding INR 50,000 for a month or part of a month in the previous year.
- *    - Rent <= INR 50,000/month: EXEMPT_BELOW_MONTHLY_THRESHOLD.
- * 3. Rate Rationalization (Finance (No. 2) Act, 2024):
- *    - Transactions prior to 1 October 2024: 5.0%.
- *    - Transactions on or after 1 October 2024: 2.0%.
- * 4. Section 206AA Penalty & Statutory Ceiling (Section 194-IB(4)):
- *    - 20.0% penalty rate if landlord has missing/inoperative PAN.
- *    - Mandatory Statutory Cap: Deduction under Section 206AA shall NOT exceed the rent payable for the last month of the tenancy.
- * 5. Compliance Return:
- *    - Form 26QC challan-cum-statement within 30 days of month-end; Form 16C certificate.
- * 6. Statutory Invariant:
- *    - Always returns isAuthorizedToDisburse: false.
- */
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
-export function evaluateSection194IB({
-    monthlyRentInr,
-    tenancyMonthsInYear = 1,
-    lastMonthRentPayableInr = null,
-    isPayerTaxAuditCovered = false,
-    hasLandlordPan = true,
-    isLandlordPanInoperative = false,
-    effectiveDate = null
-} = {}) {
-    const monthRent = roundToPaisa(Math.max(0, assertMandatoryNumeric(monthlyRentInr, 'monthlyRentInr', 'evaluateSection194IB')));
-    const months = Math.max(1, Math.min(12, Number(tenancyMonthsInYear) || 1));
-    const totalRentForPeriod = roundToPaisa(monthRent * months);
-    const lastMonthRent = lastMonthRentPayableInr !== null && lastMonthRentPayableInr !== undefined
-        ? roundToPaisa(Math.max(0, cleanNumericAmount(lastMonthRentPayableInr)))
-        : monthRent;
-    const dateStr = effectiveDate ? String(effectiveDate).slice(0, 10) : new Date().toISOString().slice(0, 10);
-
-    // Condition 1: Payer covered under Section 194-I (Tax audit covered)
-    if (isPayerTaxAuditCovered) {
-        return {
-            status: 'SUCCESS',
-            statutoryDetermination: 'GOVERNED_BY_SECTION_194I',
-            applicableTdsRatePercent: null,
-            taxableBaseInr: null,
-            calculatedTdsInr: null,
-            isAuthorizedToDisburse: false,
-            governingLaw: 'Income-tax Act, 1961 Section 194-I (Commercial / Audit Payer Rent)',
-            statutoryRationale: 'Payer is subject to tax audit under Section 44AB. Rent payments are governed by Section 194-I (2% machinery / 10% land & building) with Form 26Q quarterly reporting, rather than Section 194-IB.'
-        };
-    }
-
-    // Condition 2: Monthly Rent Threshold (<= INR 50,000 per month)
-    const STATUTORY_MONTHLY_THRESHOLD_INR = 50000;
-    if (monthRent <= STATUTORY_MONTHLY_THRESHOLD_INR) {
-        return {
-            status: 'SUCCESS',
-            statutoryDetermination: 'EXEMPT_BELOW_MONTHLY_THRESHOLD',
-            applicableTdsRatePercent: 0,
-            taxableBaseInr: 0,
-            calculatedTdsInr: 0,
-            monthlyRentInr: monthRent,
-            tenancyMonthsInYear: months,
-            totalRentInr: totalRentForPeriod,
-            monthlyThresholdCeilingInr: STATUTORY_MONTHLY_THRESHOLD_INR,
-            netPayableToLandlordInr: totalRentForPeriod,
-            isAuthorizedToDisburse: false,
-            governingLaw: 'Income-tax Act, 1961 Section 194-IB(1)',
-            statutoryRationale: `Monthly rent of INR ${monthRent.toLocaleString('en-IN')} does not exceed the statutory threshold of INR 50,000 per month. No tax deduction at source is required.`
-        };
-    }
-
-    // Rate Determination
-    const isPostRateCut = dateStr >= '2024-10-01';
-    let applicableRate = isPostRateCut ? 2.0 : 5.0;
-    let rateDescription = isPostRateCut
-        ? 'Section 194-IB amended rate (2% w.e.f. 1 October 2024 by Finance (No. 2) Act, 2024)'
-        : 'Section 194-IB historical rate (5% prior to 1 October 2024)';
-    let isCappedByLastMonthRent = false;
-
-    // Penalty Rate Check (Section 206AA)
-    if (!hasLandlordPan || isLandlordPanInoperative) {
-        applicableRate = 20.0;
-        rateDescription = 'Section 206AA penal rate (20%) due to missing or inoperative Landlord PAN';
-    }
-
-    const rawTdsAmount = roundToPaisa((totalRentForPeriod * applicableRate) / 100);
-    let finalTdsAmount = rawTdsAmount;
-
-    // Section 194-IB(4) Statutory Ceiling for Section 206AA
-    if ((!hasLandlordPan || isLandlordPanInoperative) && rawTdsAmount > lastMonthRent) {
-        finalTdsAmount = lastMonthRent;
-        isCappedByLastMonthRent = true;
-    }
-
-    const netPayable = roundToPaisa(Math.max(0, totalRentForPeriod - finalTdsAmount));
-
-    return {
-        status: 'SUCCESS',
-        statutoryDetermination: 'DEDUCTION_MANDATORY',
-        applicableTdsRatePercent: applicableRate,
-        taxableBaseInr: totalRentForPeriod,
-        calculatedTdsInr: finalTdsAmount,
-        uncappedTdsInr: rawTdsAmount,
-        monthlyRentInr: monthRent,
-        tenancyMonthsInYear: months,
-        totalRentInr: totalRentForPeriod,
-        lastMonthRentCeilingInr: lastMonthRent,
-        isCappedByLastMonthRent,
-        netPayableToLandlordInr: netPayable,
-        complianceRequirements: {
-            challanCumStatementForm: 'Form 26QC (Electronic)',
-            challanFilingCutoff: 'Within 30 days from the end of the month in which deduction was made',
-            tdsCertificateForm: 'Form 16C (TRACES)',
-            certificateIssuanceCutoff: 'Within 15 days from the due date for furnishing Form 26QC',
-            tanRequired: false
-        },
-        governingLaw: `Income-tax Act, 1961 Section 194-IB read with ${rateDescription}`,
-        isAuthorizedToDisburse: false,
-        statutoryRationale: isCappedByLastMonthRent
-            ? `Section 194-IB Applicable: 20% Section 206AA penalty on INR ${totalRentForPeriod.toLocaleString('en-IN')} (INR ${rawTdsAmount.toLocaleString('en-IN')}) was legally capped at INR ${lastMonthRent.toLocaleString('en-IN')} under Section 194-IB(4) (rent payable for last month of tenancy). Net payable: INR ${netPayable.toLocaleString('en-IN')}.`
-            : `Section 194-IB Applicable: Total rent INR ${totalRentForPeriod.toLocaleString('en-IN')} for ${months} months taxed at ${applicableRate}% = INR ${finalTdsAmount.toLocaleString('en-IN')}. Net payable: INR ${netPayable.toLocaleString('en-IN')}. File Form 26QC within 30 days of month-end.`
-    };
-}
-
-/**
- * Evaluates Tax Deduction at Source on Payments to Contractors/Professionals by Certain Individuals or HUF under Section 194M.
- * 
- * Rules Enforced:
- * 1. Payer Qualification:
- *    - Individuals and HUFs not liable to deduct TDS under Section 194C, 194H, or 194J.
- * 2. Cumulative Financial Year Threshold:
- *    - Aggregate sum exceeding INR 50,00,000 in a financial year.
- *    - Aggregate <= INR 50 Lakhs: EXEMPT_BELOW_THRESHOLD.
- * 3. Rate Rationalization (Finance (No. 2) Act, 2024):
- *    - Transactions prior to 1 October 2024: 5.0%.
- *    - Transactions on or after 1 October 2024: 2.0%.
- * 4. Section 206AA / 206AB Penalties:
- *    - 20.0% penalty for missing/inoperative PAN.
- *    - Section 206AB omitted w.e.f. 1 April 2025 by Finance Act, 2025.
- * 5. Compliance Return:
- *    - Form 26QD challan-cum-statement within 30 days of month-end; Form 16D certificate. No TAN required.
- * 6. Statutory Invariant:
- *    - Always returns isAuthorizedToDisburse: false.
- */
-/**
- * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
- */
-export function evaluateSection194M({
-    currentPaymentAmountInr,
-    cumulativePriorPaymentsInr = 0,
-    isPayerCoveredBy194C_H_J = false,
-    hasPan = true,
-    isPanInoperative = false,
-    isSpecifiedPerson206AB = false,
-    effectiveDate = null
-} = {}) {
-    const currentAmt = roundToPaisa(Math.max(0, assertMandatoryNumeric(currentPaymentAmountInr, 'currentPaymentAmountInr', 'evaluateSection194M')));
-    const priorAmt = roundToPaisa(Math.max(0, cleanNumericAmount(cumulativePriorPaymentsInr)));
-    const totalCumulative = roundToPaisa(priorAmt + currentAmt);
-    const dateStr = effectiveDate ? String(effectiveDate).slice(0, 10) : new Date().toISOString().slice(0, 10);
-
-    // Condition 1: Covered by standard 194C, 194H, or 194J
-    if (isPayerCoveredBy194C_H_J) {
-        return {
-            status: 'SUCCESS',
-            statutoryDetermination: 'GOVERNED_BY_PRIMARY_SECTIONS',
-            applicableTdsRatePercent: null,
-            taxableBaseInr: null,
-            calculatedTdsInr: null,
-            isAuthorizedToDisburse: false,
-            governingLaw: 'Income-tax Act, 1961 Section 194C, 194H, or 194J',
-            statutoryRationale: 'Payer is covered under tax audit or entity thresholds of Section 194C, 194H, or 194J. Payments must be routed through standard quarterly Form 26Q reporting with TAN, not Section 194M.'
-        };
-    }
-
-    // Condition 2: Cumulative Annual Threshold (<= INR 50,00,000)
-    const STATUTORY_ANNUAL_THRESHOLD_INR = 5000000;
-    if (totalCumulative <= STATUTORY_ANNUAL_THRESHOLD_INR) {
-        return {
-            status: 'SUCCESS',
-            statutoryDetermination: 'EXEMPT_BELOW_THRESHOLD',
-            applicableTdsRatePercent: 0,
-            taxableBaseInr: 0,
-            calculatedTdsInr: 0,
-            currentPaymentInr: currentAmt,
-            cumulativePriorPaymentsInr: priorAmt,
-            totalCumulativeInr: totalCumulative,
-            thresholdCeilingInr: STATUTORY_ANNUAL_THRESHOLD_INR,
-            netPayableToPayeeInr: currentAmt,
-            isAuthorizedToDisburse: false,
-            governingLaw: 'Income-tax Act, 1961 Section 194M(1)',
-            statutoryRationale: `Cumulative payments in financial year (INR ${totalCumulative.toLocaleString('en-IN')}) do not exceed statutory threshold of INR 50 Lakhs. No tax deduction is required.`
-        };
-    }
-
-    // Rate Determination
-    const isPostRateCut = dateStr >= '2024-10-01';
-    let applicableRate = isPostRateCut ? 2.0 : 5.0;
-    let rateDescription = isPostRateCut
-        ? 'Section 194M amended rate (2% w.e.f. 1 October 2024 by Finance (No. 2) Act, 2024)'
-        : 'Section 194M historical rate (5% prior to 1 October 2024)';
-
-    // Section 206AA: Missing or inoperative PAN
-    if (!hasPan || isPanInoperative) {
-        applicableRate = 20.0;
-        rateDescription = 'Section 206AA penal rate (20%) due to missing or inoperative Payee PAN';
-    } else if (isSpecifiedPerson206AB) {
-        // Section 206AB: Non-filer higher rate (omitted w.e.f. 1 April 2025)
-        if (dateStr < '2025-04-01') {
-            applicableRate = 20.0;
-            rateDescription = 'Section 206AB higher rate (20%) for non-filer prior to 1 April 2025';
-        } else {
-            applicableRate = isPostRateCut ? 2.0 : 5.0;
-            rateDescription = `${rateDescription} - Section 206AB omitted w.e.f. 1 April 2025`;
-        }
-    }
-
-    const calculatedTds = roundToPaisa((currentAmt * applicableRate) / 100);
-    const netPayable = roundToPaisa(Math.max(0, currentAmt - calculatedTds));
-
-    return {
-        status: 'SUCCESS',
-        statutoryDetermination: 'DEDUCTION_MANDATORY',
-        applicableTdsRatePercent: applicableRate,
-        taxableBaseInr: currentAmt,
-        calculatedTdsInr: calculatedTds,
-        currentPaymentInr: currentAmt,
-        cumulativePriorPaymentsInr: priorAmt,
-        totalCumulativeInr: totalCumulative,
-        netPayableToPayeeInr: netPayable,
-        complianceRequirements: {
-            challanCumStatementForm: 'Form 26QD (Electronic)',
-            challanFilingCutoff: 'Within 30 days from the end of the month in which deduction was made',
-            tdsCertificateForm: 'Form 16D (TRACES)',
-            certificateIssuanceCutoff: 'Within 15 days from the due date for furnishing Form 26QD',
-            tanRequired: false
-        },
-        governingLaw: `Income-tax Act, 1961 Section 194M read with ${rateDescription}`,
-        isAuthorizedToDisburse: false,
-        statutoryRationale: `Cumulative payments (INR ${totalCumulative.toLocaleString('en-IN')}) exceed statutory threshold of INR 50 Lakhs. Current payment of INR ${currentAmt.toLocaleString('en-IN')} taxed at ${applicableRate}% = INR ${calculatedTds.toLocaleString('en-IN')}. Net payable: INR ${netPayable.toLocaleString('en-IN')}. File Form 26QD within 30 days of month-end.`
-    };
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// CORPORATE FINANCE, ACCOUNTING STANDARDS & REPORTING ENGINES
-// ═══════════════════════════════════════════════════════════════════════════
-
-/**
- * Ind AS 103 / IFRS 3 / US GAAP ASC 805: Business Combinations & Purchase Price Allocation (PPA) Calculator.
- *
- * Implements deterministic PPA accounting under the acquisition method:
- * 1. Computes total consideration transferred:
- *    - Upfront cash consideration
- *    - Fair value of equity shares issued (sharesCount * sharePrice)
- *    - Fair value of contingent consideration / earnouts (probability-weighted discounted payout)
- *    - Present value of deferred cash consideration (discounted at discountRate / WACC)
- *    - Fair value of pre-existing non-controlling equity interest (for step acquisitions)
- * 2. Identifies and aggregates Net Identifiable Assets acquired:
- *    - Fair value of tangible assets (PPE, working capital, inventory)
- *    - Fair value of separately identifiable intangible assets (customer relationships, software, brand, patents, order backlog)
- *    - Less: Fair value of liabilities assumed (current liabilities, borrowings, contingent liabilities)
- *    - Less: Net deferred tax liability (DTL) arising on fair value adjustments:
- *      (fairValueIntangiblesStepUp - taxBaseIntangibles) * taxRate
- * 3. Incorporates Non-Controlling Interest (NCI):
- *    - 'PROPORTIONATE_SHARE': nciPercentage * netIdentifiableAssets
- *    - 'FAIR_VALUE': nciFairValue
- * 4. Determines Goodwill or Gain on Bargain Purchase (Capital Reserve):
- *    - Acquisition Basis = Consideration Transferred + NCI
- *    - If Acquisition Basis > Net Identifiable Assets:
- *        Goodwill = Acquisition Basis - Net Identifiable Assets (capitalized as indefinite-life intangible, tested under Ind AS 36)
- *    - If Net Identifiable Assets > Acquisition Basis:
- *        Bargain Purchase Gain = Net Identifiable Assets - Acquisition Basis (requires reassessment; recognized in OCI and accumulated in Capital Reserve)
- * 5. Expensing of Transaction Costs:
- *    - Legal, investment banking, due diligence, valuation fees are expensed immediately in P&L (not capitalized into Goodwill)
- * 6. Generates balanced double-entry vouchers to exact paisa.
- * 7. Enforces statutory invariant: isAuthorizedToDisburse: false.
  */
 /**
  * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
@@ -8504,5 +4449,483 @@ export function evaluateSection52GstTcs({
         governingLaw: 'CGST Act, 2017 Section 52 / SGST Act Section 52 / IGST Act Section 20',
         isAuthorizedToDisburse: false,
         statutoryRationale: `E-commerce net supplies of INR ${netValue.toLocaleString('en-IN')} subject to 1% TCS = INR ${calculatedTcs.toLocaleString('en-IN')}. Net disbursed to supplier: INR ${netDisbursedToSupplier.toLocaleString('en-IN')}. File Form GSTR-8 by 10th.`
+    };
+}
+
+
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
+export function evaluatePlaceOfSupplyAndLut({
+    transactionType = 'DOMESTIC_SERVICES',
+    supplierStateCode = null,
+    supplierGstin = null,
+    recipientStateCode = null,
+    recipientGstin = null,
+    recipientCountryCode = 'IN',
+    invoiceAmountInr = 0,
+    gstRate = 0.18,
+    isB2B = true,
+    placeOfSupplyStateCode = null,
+    immovablePropertyLocationStateCode = null,
+    isSupplierInIndia = true,
+    isRecipientOutsideIndia = null,
+    isPlaceOfSupplyOutsideIndia = null,
+    isConvertibleForexReceivedOrRbiInr = null,
+    isDistinctPersonEstablishment = false,
+    isIntermediaryService = false,
+    hasValidLut = false,
+    lutArn = null
+} = {}) {
+    const amount = cleanNumericAmount(invoiceAmountInr);
+    const rate = Number(gstRate) || 0.18;
+    const isTransExport = transactionType === 'EXPORT_SERVICES' || transactionType === 'EXPORT_GOODS' || (recipientCountryCode && recipientCountryCode.toUpperCase() !== 'IN');
+
+    // Extract state codes
+    let supState = supplierStateCode;
+    if (!supState && supplierGstin && typeof supplierGstin === 'string' && supplierGstin.length >= 2) {
+        supState = supplierGstin.slice(0, 2);
+    }
+    let recState = recipientStateCode;
+    if (!recState && recipientGstin && typeof recipientGstin === 'string' && recipientGstin.length >= 2) {
+        recState = recipientGstin.slice(0, 2);
+    }
+
+    if (isTransExport) {
+        // Evaluate Section 2(6) 5 Cumulative Conditions for Export of Services
+        const cond1SupplierInIndia = isSupplierInIndia === true;
+        const cond2RecipientOutsideIndia = recipientCountryCode.toUpperCase() !== 'IN' && (isRecipientOutsideIndia === null || isRecipientOutsideIndia === true);
+        // Intermediary services under Section 13(8)(b) have POS at supplier location in India!
+        const cond3PosOutsideIndia = !isIntermediaryService && (isPlaceOfSupplyOutsideIndia === null || isPlaceOfSupplyOutsideIndia === true);
+        const cond4ForexReceived = isConvertibleForexReceivedOrRbiInr === true;
+        const cond5NotDistinctPersons = isDistinctPersonEstablishment === false;
+
+        const conditionAudit = [
+            { condition: '1. Supplier located in India (Sec 2(6)(i))', status: cond1SupplierInIndia ? 'PASS' : 'FAIL' },
+            { condition: '2. Recipient located outside India (Sec 2(6)(ii))', status: cond2RecipientOutsideIndia ? 'PASS' : 'FAIL' },
+            { condition: '3. Place of supply outside India (Sec 2(6)(iii) & Sec 13)', status: cond3PosOutsideIndia ? 'PASS' : (isIntermediaryService ? 'FAIL_INTERMEDIARY_SEC_13_8_B' : 'FAIL') },
+            { condition: '4. Convertible forex / RBI permitted INR received (Sec 2(6)(iv))', status: cond4ForexReceived ? 'PASS' : 'FAIL_NO_FIRC_EBRC' },
+            { condition: '5. Not merely establishments of distinct persons (Sec 2(6)(v))', status: cond5NotDistinctPersons ? 'PASS' : 'FAIL_DISTINCT_PERSON_BRANCH' }
+        ];
+
+        const isFullyQualifiedExport = cond1SupplierInIndia && cond2RecipientOutsideIndia && cond3PosOutsideIndia && cond4ForexReceived && cond5NotDistinctPersons;
+
+        if (isFullyQualifiedExport) {
+            if (hasValidLut) {
+                return {
+                    status: 'SUCCESS',
+                    statutoryDetermination: 'ZERO_RATED_EXPORT_UNDER_LUT',
+                    governingLaw: 'IGST Act, 2017 Sections 2(6), 16(1)(a) & 16(3)(a); CGST Rules, 2017 Rule 96A',
+                    transactionType: 'EXPORT_SERVICES',
+                    invoiceAmountInr: amount,
+                    gstRate: 0,
+                    igstPayableInr: 0,
+                    cgstPayableInr: 0,
+                    sgstPayableInr: 0,
+                    lutArn: lutArn || 'LUT_ARN_ACTIVE_ON_RECORD',
+                    isZeroRated: true,
+                    itcRefundEligible: true,
+                    reportingTable: 'GSTR-1 Table 6A (Export without payment of tax)',
+                    conditionAudit,
+                    isAuthorizedToDisburse: false,
+                    statutoryRationale: `Zero-Rated Export of Services under LUT: All 5 conditions of Section 2(6) IGST Act verified. Export proceeds in convertible foreign exchange/RBI INR confirmed. Supply is zero-rated at 0% IGST under valid LUT ARN ${lutArn || 'ACTIVE'}. Accumulated unutilized ITC is eligible for refund under Section 54(3).`
+                };
+            } else {
+                const igstTax = roundToPaisa(amount * rate);
+                return {
+                    status: 'SUCCESS',
+                    statutoryDetermination: 'ZERO_RATED_EXPORT_WITH_TAX_PAYMENT',
+                    governingLaw: 'IGST Act, 2017 Sections 2(6), 16(1)(a) & 16(3)(b); CGST Act Section 54',
+                    transactionType: 'EXPORT_SERVICES',
+                    invoiceAmountInr: amount,
+                    gstRate: rate,
+                    igstPayableInr: igstTax,
+                    cgstPayableInr: 0,
+                    sgstPayableInr: 0,
+                    isZeroRated: true,
+                    itcRefundEligible: true,
+                    reportingTable: 'GSTR-1 Table 6A (Export with payment of tax)',
+                    conditionAudit,
+                    isAuthorizedToDisburse: false,
+                    statutoryRationale: `Zero-Rated Export with payment of tax: All 5 conditions of Section 2(6) satisfied, but no valid LUT on record. IGST of INR ${igstTax.toLocaleString('en-IN')} (at ${(rate * 100)}%) is charged and eligible for refund under Section 54(1).`
+                };
+            }
+        } else {
+            const igstTax = roundToPaisa(amount * rate);
+            const failedReasons = conditionAudit.filter(c => c.status !== 'PASS').map(c => c.condition);
+            return {
+                status: 'SUCCESS',
+                statutoryDetermination: 'DISQUALIFIED_FROM_ZERO_RATING',
+                governingLaw: 'IGST Act, 2017 Sections 2(6), 7(5)(a) & 13',
+                transactionType: 'DISQUALIFIED_EXPORT_SERVICES',
+                invoiceAmountInr: amount,
+                gstRate: rate,
+                igstPayableInr: igstTax,
+                cgstPayableInr: 0,
+                sgstPayableInr: 0,
+                isZeroRated: false,
+                itcRefundEligible: false,
+                disqualificationReasons: failedReasons,
+                conditionAudit,
+                isAuthorizedToDisburse: false,
+                statutoryRationale: `Disqualified from Zero-Rated Export: Supply failed statutory condition(s): ${failedReasons.join('; ')}. Treated as standard domestic inter-state supply to foreign person subject to standard ${(rate * 100)}% IGST (INR ${igstTax.toLocaleString('en-IN')}).`
+            };
+        }
+    }
+
+    // Domestic Transaction Place of Supply Determination
+    let posState = placeOfSupplyStateCode;
+    let posLegalRule = '';
+
+    if (immovablePropertyLocationStateCode) {
+        posState = immovablePropertyLocationStateCode;
+        posLegalRule = 'IGST Act Section 12(3) (Directly related to immovable property - location of property)';
+    } else if (transactionType === 'DOMESTIC_GOODS') {
+        posState = posState || recState || supState;
+        posLegalRule = 'IGST Act Section 10(1)(a) (Location of goods at termination of delivery)';
+    } else {
+        if (isB2B && recState) {
+            posState = recState;
+            posLegalRule = 'IGST Act Section 12(2)(a) (B2B supply - location of registered recipient)';
+        } else if (recState) {
+            posState = recState;
+            posLegalRule = 'IGST Act Section 12(2)(b) (B2C supply with address on record)';
+        } else {
+            posState = supState;
+            posLegalRule = 'IGST Act Section 12(2)(b) proviso (B2C supply without address - location of supplier)';
+        }
+    }
+
+    const isIntraState = supState && posState && (supState === posState);
+    let cgstRate = 0, sgstRate = 0, igstRate = 0;
+    let cgstAmountInr = 0, sgstAmountInr = 0, igstAmountInr = 0;
+
+    if (isIntraState) {
+        cgstRate = rate / 2;
+        sgstRate = rate / 2;
+        cgstAmountInr = roundToPaisa(amount * cgstRate);
+        sgstAmountInr = roundToPaisa(amount * sgstRate);
+    } else {
+        igstRate = rate;
+        igstAmountInr = roundToPaisa(amount * igstRate);
+    }
+    const totalGstInr = roundToPaisa(cgstAmountInr + sgstAmountInr + igstAmountInr);
+
+    return {
+        status: 'SUCCESS',
+        statutoryDetermination: isIntraState ? 'INTRA_STATE_SUPPLY' : 'INTER_STATE_SUPPLY',
+        governingLaw: isIntraState ? 'CGST Act Section 9 & SGST Act Section 9' : 'IGST Act Section 5 & Section 7',
+        posLegalRule,
+        supplierStateCode: supState,
+        placeOfSupplyStateCode: posState,
+        recipientStateCode: recState,
+        invoiceAmountInr: amount,
+        supplyNature: isIntraState ? 'INTRA_STATE' : 'INTER_STATE',
+        taxBreakdown: {
+            cgstRate,
+            cgstAmountInr,
+            sgstRate,
+            sgstAmountInr,
+            igstRate,
+            igstAmountInr,
+            totalGstAmountInr: totalGstInr
+        },
+        isAuthorizedToDisburse: false,
+        statutoryRationale: isIntraState
+            ? `Intra-State Supply: Supplier state (${supState}) matches Place of Supply (${posState}). CGST (${(cgstRate * 100)}%: INR ${cgstAmountInr.toLocaleString('en-IN')}) and SGST (${(sgstRate * 100)}%: INR ${sgstAmountInr.toLocaleString('en-IN')}) levied under Section 9.`
+            : `Inter-State Supply: Supplier state (${supState}) differs from Place of Supply (${posState}). IGST (${(igstRate * 100)}%: INR ${igstAmountInr.toLocaleString('en-IN')}) levied under Section 5 of IGST Act.`
+    };
+}
+
+/**
+ * @deprecated Use evaluateStatutoryAst from '@mudraforge/statutory/usvm' for declarative AST evaluation. Legacy procedural functions are retained for backward compatibility throughout v2.x and will be sunset in v3.0.
+ */
+export function evaluateSection43BStatutoryPayables({
+    financialYear = '2025-26',
+    assessmentYear = null,
+    itrFilingDueDate = '2026-10-31', // Section 139(1) due date for assessees subject to tax audit
+    payables = []
+} = {}) {
+    const defaultAy = assessmentYear || (() => {
+        const parts = String(financialYear).split('-');
+        if (parts.length === 2 && !isNaN(Number(parts[0]))) {
+            const startYr = Number(parts[0]);
+            return `${startYr + 1}-${String(startYr + 2).slice(-2)}`;
+        }
+        return '2026-27';
+    })();
+
+    if (!Array.isArray(payables) || payables.length === 0) {
+        return {
+            status: 'SUCCESS',
+            statutoryDetermination: 'NO_PAYABLES_EVALUATED',
+            financialYear,
+            assessmentYear: defaultAy,
+            itrFilingDueDate,
+            totalPayablesCount: 0,
+            summary: {
+                totalIncurredInr: 0,
+                totalAllowedInr: 0,
+                totalDisallowedInr: 0,
+                totalTimingDifferencesInr: 0,
+                totalPermanentDisallowancesInr: 0,
+                form3CdClause26DisallowanceInr: 0,
+                form3CdClause20bDisallowanceInr: 0
+            },
+            evaluatedPayables: [],
+            isAuthorizedToDisburse: false,
+            statutoryRationale: 'No statutory payable items submitted for Section 43B / 36(1)(va) evaluation.'
+        };
+    }
+
+    const evaluatedPayables = [];
+    let totalIncurredInr = 0;
+    let totalAllowedInr = 0;
+    let totalDisallowedInr = 0;
+    let totalTimingDifferencesInr = 0;
+    let totalPermanentDisallowancesInr = 0;
+    let form3CdClause26DisallowanceInr = 0;
+    let form3CdClause20bDisallowanceInr = 0;
+
+    const clauseBreakdown = {};
+
+    payables.forEach((item, idx) => {
+        const payableId = item.payableId || `PAY-${String(idx + 1).padStart(3, '0')}`;
+        const rawClause = String(item.clause || '43B(a)').trim();
+        const normalizedClause = rawClause.toLowerCase().includes('36')
+            ? '36(1)(va)'
+            : rawClause.toUpperCase(); // e.g. '43B(A)', '43B(B)', '43B(C)', etc.
+        const description = item.description || `Statutory Liability under ${normalizedClause}`;
+        const amountInr = roundToPaisa(Math.max(0, Number(item.amountInr) || 0));
+        const statutoryDueDate = item.statutoryDueDate ? String(item.statutoryDueDate).trim() : null;
+        const paidDate = item.paidDate ? String(item.paidDate).trim() : null;
+        const paidAmountInr = paidDate
+            ? roundToPaisa(item.paidAmountInr !== undefined && item.paidAmountInr !== null
+                ? Math.max(0, Number(item.paidAmountInr) || 0)
+                : amountInr)
+            : 0;
+        const isInterestConvertedToLoan = Boolean(item.isInterestConvertedToLoan);
+
+        totalIncurredInr = roundToPaisa(totalIncurredInr + amountInr);
+
+        if (!clauseBreakdown[normalizedClause]) {
+            clauseBreakdown[normalizedClause] = {
+                incurredInr: 0,
+                allowedInr: 0,
+                disallowedInr: 0
+            };
+        }
+        clauseBreakdown[normalizedClause].incurredInr = roundToPaisa(clauseBreakdown[normalizedClause].incurredInr + amountInr);
+
+        // ── CATEGORY 1: EMPLOYEE WELFARE CONTRIBUTIONS (Section 36(1)(va)) ──
+        if (normalizedClause === '36(1)(va)') {
+            // Checkmate Doctrine: Must be deposited on or before statutory due date under EPF/ESIC regulations
+            const effectiveDueDate = statutoryDueDate || '2026-04-15';
+            const isOnTime = Boolean(paidDate && paidDate <= effectiveDueDate);
+
+            if (isOnTime) {
+                const allowedAmt = roundToPaisa(Math.min(paidAmountInr, amountInr));
+                const disallowedAmt = roundToPaisa(amountInr - allowedAmt);
+
+                totalAllowedInr = roundToPaisa(totalAllowedInr + allowedAmt);
+                clauseBreakdown[normalizedClause].allowedInr = roundToPaisa(clauseBreakdown[normalizedClause].allowedInr + allowedAmt);
+
+                if (disallowedAmt > 0) {
+                    totalDisallowedInr = roundToPaisa(totalDisallowedInr + disallowedAmt);
+                    totalPermanentDisallowancesInr = roundToPaisa(totalPermanentDisallowancesInr + disallowedAmt);
+                    form3CdClause20bDisallowanceInr = roundToPaisa(form3CdClause20bDisallowanceInr + disallowedAmt);
+                    clauseBreakdown[normalizedClause].disallowedInr = roundToPaisa(clauseBreakdown[normalizedClause].disallowedInr + disallowedAmt);
+                }
+
+                evaluatedPayables.push({
+                    payableId,
+                    clause: normalizedClause,
+                    description,
+                    amountInr,
+                    statutoryDueDate: effectiveDueDate,
+                    paidDate,
+                    paidAmountInr,
+                    isAllowed: disallowedAmt === 0,
+                    allowedAmountInr: allowedAmt,
+                    disallowedAmountInr: disallowedAmt,
+                    disallowanceType: disallowedAmt > 0 ? 'PERMANENT_ADD_BACK' : 'NONE',
+                    governingRule: 'Section 36(1)(va) read with Section 2(24)(x) & Checkmate Doctrine',
+                    taxAuditReporting: {
+                        form: 'Form 3CD',
+                        clause: 'Clause 20(b)',
+                        status: disallowedAmt > 0 ? 'PARTIAL_DISALLOWANCE_REPORTABLE' : 'COMPLIANT'
+                    },
+                    statutoryOutcome: disallowedAmt > 0 ? 'DISALLOWED_PERMANENT_CHECKMATE' : 'ALLOWED',
+                    statutoryAction: disallowedAmt > 0
+                        ? `Unpaid portion of INR ${disallowedAmt.toLocaleString('en-IN')} permanently disallowed under Section 36(1)(va).`
+                        : `Employee contribution deposited on or before statutory due date (${effectiveDueDate}). Fully deductible under Section 36(1)(va).`
+                });
+            } else {
+                // Late deposit or unpaid -> Permanent Disallowance under Checkmate Services (2022)
+                totalDisallowedInr = roundToPaisa(totalDisallowedInr + amountInr);
+                totalPermanentDisallowancesInr = roundToPaisa(totalPermanentDisallowancesInr + amountInr);
+                form3CdClause20bDisallowanceInr = roundToPaisa(form3CdClause20bDisallowanceInr + amountInr);
+                clauseBreakdown[normalizedClause].disallowedInr = roundToPaisa(clauseBreakdown[normalizedClause].disallowedInr + amountInr);
+
+                evaluatedPayables.push({
+                    payableId,
+                    clause: normalizedClause,
+                    description,
+                    amountInr,
+                    statutoryDueDate: effectiveDueDate,
+                    paidDate,
+                    paidAmountInr,
+                    isAllowed: false,
+                    allowedAmountInr: 0,
+                    disallowedAmountInr: amountInr,
+                    disallowanceType: 'PERMANENT_ADD_BACK',
+                    governingRule: 'Section 36(1)(va) read with Section 2(24)(x) & Supreme Court ruling in Checkmate Services (2022) 448 ITR 518 (SC)',
+                    taxAuditReporting: {
+                        form: 'Form 3CD',
+                        clause: 'Clause 20(b)',
+                        status: 'MANDATORY_PERMANENT_DISALLOWANCE'
+                    },
+                    statutoryOutcome: 'DISALLOWED_PERMANENT_CHECKMATE',
+                    statutoryAction: paidDate
+                        ? `Deposited after statutory due date (${paidDate} > ${effectiveDueDate}). Under Supreme Court Checkmate Doctrine read with Explanation 5 to Section 36(1)(va) and Section 2(24)(x), late deposit of employee contribution is permanently disallowed. Cannot be claimed under Section 43B or in any subsequent year.`
+                        : `Unpaid employee contribution past statutory due date (${effectiveDueDate}). Permanently disallowed under Section 36(1)(va) read with Section 2(24)(x).`
+                });
+            }
+        }
+        // ── CATEGORY 2: EMPLOYER STATUTORY PAYABLES (Section 43B(a) to 43B(g)) ──
+        else {
+            // Check Explanation 3C & 3D for loan conversion
+            if (isInterestConvertedToLoan) {
+                totalDisallowedInr = roundToPaisa(totalDisallowedInr + amountInr);
+                totalTimingDifferencesInr = roundToPaisa(totalTimingDifferencesInr + amountInr);
+                form3CdClause26DisallowanceInr = roundToPaisa(form3CdClause26DisallowanceInr + amountInr);
+                clauseBreakdown[normalizedClause].disallowedInr = roundToPaisa(clauseBreakdown[normalizedClause].disallowedInr + amountInr);
+
+                evaluatedPayables.push({
+                    payableId,
+                    clause: normalizedClause,
+                    description,
+                    amountInr,
+                    itrFilingDueDate,
+                    paidDate,
+                    paidAmountInr,
+                    isAllowed: false,
+                    allowedAmountInr: 0,
+                    disallowedAmountInr: amountInr,
+                    disallowanceType: 'TIMING_DIFFERENCE_ADD_BACK',
+                    governingRule: 'Section 43B Explanations 3C & 3D (No actual payment via debt restructuring)',
+                    taxAuditReporting: {
+                        form: 'Form 3CD',
+                        clause: 'Clause 26',
+                        status: 'DISALLOWANCE_REPORTABLE'
+                    },
+                    statutoryOutcome: 'DISALLOWED_INTEREST_CONVERSION',
+                    statutoryAction: 'Conversion of unpaid interest into a loan, advance, debenture, or funded interest term loan does NOT constitute actual payment under Explanation 3C/3D to Section 43B. Disallowed until actual cash/bank outflow occurs.'
+                });
+            } else {
+                // First Proviso evaluation: Paid on or before Section 139(1) due date
+                const isPaidBeforeItrDue = Boolean(paidDate && paidDate <= itrFilingDueDate);
+
+                if (isPaidBeforeItrDue) {
+                    const allowedAmt = roundToPaisa(Math.min(paidAmountInr, amountInr));
+                    const disallowedAmt = roundToPaisa(amountInr - allowedAmt);
+
+                    totalAllowedInr = roundToPaisa(totalAllowedInr + allowedAmt);
+                    clauseBreakdown[normalizedClause].allowedInr = roundToPaisa(clauseBreakdown[normalizedClause].allowedInr + allowedAmt);
+
+                    if (disallowedAmt > 0) {
+                        totalDisallowedInr = roundToPaisa(totalDisallowedInr + disallowedAmt);
+                        totalTimingDifferencesInr = roundToPaisa(totalTimingDifferencesInr + disallowedAmt);
+                        form3CdClause26DisallowanceInr = roundToPaisa(form3CdClause26DisallowanceInr + disallowedAmt);
+                        clauseBreakdown[normalizedClause].disallowedInr = roundToPaisa(clauseBreakdown[normalizedClause].disallowedInr + disallowedAmt);
+                    }
+
+                    evaluatedPayables.push({
+                        payableId,
+                        clause: normalizedClause,
+                        description,
+                        amountInr,
+                        itrFilingDueDate,
+                        paidDate,
+                        paidAmountInr,
+                        isAllowed: disallowedAmt === 0,
+                        allowedAmountInr: allowedAmt,
+                        disallowedAmountInr: disallowedAmt,
+                        disallowanceType: disallowedAmt > 0 ? 'TIMING_DIFFERENCE_ADD_BACK' : 'NONE',
+                        governingRule: 'Section 43B First Proviso (Actual payment before return filing cutoff)',
+                        taxAuditReporting: {
+                            form: 'Form 3CD',
+                            clause: 'Clause 26',
+                            status: disallowedAmt > 0 ? 'PARTIAL_DISALLOWANCE_REPORTABLE' : 'COMPLIANT'
+                        },
+                        statutoryOutcome: disallowedAmt > 0 ? 'DISALLOWED_TIMING_DIFFERENCE' : 'ALLOWED_FIRST_PROVISO',
+                        statutoryAction: disallowedAmt > 0
+                            ? `Unpaid balance of INR ${disallowedAmt.toLocaleString('en-IN')} disallowed in current FY; allowable upon actual payment in subsequent FY.`
+                            : `Paid on or before Section 139(1) return filing due date (${paidDate} <= ${itrFilingDueDate}). Fully deductible in current financial year (${financialYear}) under Section 43B First Proviso.`
+                    });
+                } else {
+                    // Late payment or unpaid -> Timing Difference Disallowance under Section 43B
+                    totalDisallowedInr = roundToPaisa(totalDisallowedInr + amountInr);
+                    totalTimingDifferencesInr = roundToPaisa(totalTimingDifferencesInr + amountInr);
+                    form3CdClause26DisallowanceInr = roundToPaisa(form3CdClause26DisallowanceInr + amountInr);
+                    clauseBreakdown[normalizedClause].disallowedInr = roundToPaisa(clauseBreakdown[normalizedClause].disallowedInr + amountInr);
+
+                    evaluatedPayables.push({
+                        payableId,
+                        clause: normalizedClause,
+                        description,
+                        amountInr,
+                        itrFilingDueDate,
+                        paidDate,
+                        paidAmountInr,
+                        isAllowed: false,
+                        allowedAmountInr: 0,
+                        disallowedAmountInr: amountInr,
+                        disallowanceType: 'TIMING_DIFFERENCE_ADD_BACK',
+                        governingRule: 'Section 43B (Payment not made on or before Section 139(1) due date)',
+                        taxAuditReporting: {
+                            form: 'Form 3CD',
+                            clause: 'Clause 26',
+                            status: 'MANDATORY_DISALLOWANCE_REPORTABLE'
+                        },
+                        statutoryOutcome: 'DISALLOWED_TIMING_DIFFERENCE',
+                        statutoryAction: paidDate
+                            ? `Paid after Section 139(1) return filing due date (${paidDate} > ${itrFilingDueDate}). Strictly DISALLOWED in current FY (${financialYear}) and carried forward as deductible in the subsequent FY of actual disbursement.`
+                            : `Unpaid as of Section 139(1) return filing due date (${itrFilingDueDate}). Disallowed in current FY (${financialYear}); will become deductible upon actual payment in subsequent financial year.`
+                    });
+                }
+            }
+        }
+    });
+
+    let overallDetermination = 'ALL_PAYABLES_QUALIFIED';
+    if (totalPermanentDisallowancesInr > 0 && totalTimingDifferencesInr > 0) {
+        overallDetermination = 'DISALLOWED_MIXED_PERMANENT_AND_TIMING';
+    } else if (totalPermanentDisallowancesInr > 0) {
+        overallDetermination = 'DISALLOWED_PERMANENT_CHECKMATE';
+    } else if (totalTimingDifferencesInr > 0) {
+        overallDetermination = 'DISALLOWED_TIMING_DIFFERENCE';
+    }
+
+    return {
+        status: 'SUCCESS',
+        statutoryDetermination: overallDetermination,
+        financialYear,
+        assessmentYear: defaultAy,
+        itrFilingDueDate,
+        totalPayablesCount: evaluatedPayables.length,
+        summary: {
+            totalIncurredInr,
+            totalAllowedInr,
+            totalDisallowedInr,
+            totalTimingDifferencesInr,
+            totalPermanentDisallowancesInr,
+            form3CdClause26DisallowanceInr,
+            form3CdClause20bDisallowanceInr,
+            clauseBreakdown
+        },
+        evaluatedPayables,
+        isAuthorizedToDisburse: false,
+        statutoryRationale: `Section 43B / 36(1)(va) Evaluation: Evaluated ${evaluatedPayables.length} liabilities (Total INR ${totalIncurredInr.toLocaleString('en-IN')}). Allowed: INR ${totalAllowedInr.toLocaleString('en-IN')}; Total Disallowed: INR ${totalDisallowedInr.toLocaleString('en-IN')} (Permanent Clause 20(b) Checkmate: INR ${totalPermanentDisallowancesInr.toLocaleString('en-IN')}; Timing Difference Clause 26: INR ${totalTimingDifferencesInr.toLocaleString('en-IN')}). Statutory audit calculations do not authorize payment disbursement.`
     };
 }

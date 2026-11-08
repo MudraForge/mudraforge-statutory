@@ -16,8 +16,6 @@
 
 import {
     roundToPaisa,
-    roundSection288B,
-    cleanNumericAmount,
     calculateMsmeCompoundInterest,
     evaluateSection43bH,
     calculateItcReversalRule37,
@@ -27,7 +25,6 @@ import {
     calculateTransferPricingAlp,
     evaluateSection79LossContinuity,
     evaluateSection281TaxClearance,
-    revalueForeignExchangeIndAs109,
     calculateCorporateTaxMatVsConcessional,
     generateMsme1AndScheduleThreeAging,
     calculateRevenueAllocationIndAs115,
@@ -45,7 +42,12 @@ import {
     evaluateSection194DA,
     evaluateSection194K,
     evaluateSection206C1G,
-    evaluateSection52GstTcs
+    evaluateSection52GstTcs,
+    calculateRule42InputServiceReversal,
+    reconcileRule42AnnualTrueUp,
+    calculateRule43CapitalGoodsReversal,
+    evaluatePlaceOfSupplyAndLut,
+    evaluateSection43BStatutoryPayables
 } from './domain_math.js';
 
 import {
@@ -222,6 +224,15 @@ export function evaluateGstRule37ASupplierNonFiling(ruleAst, facts, trace = []) 
  */
 export function evaluateGstRule42CommonCreditApportionment(ruleAst, facts, trace = []) {
     trace.push(`USVM evaluating CGST Rule 42/43 common credit apportionment`);
+    if (facts.evaluationType === 'INPUT_SERVICE_MONTHLY') {
+        return calculateRule42InputServiceReversal(facts);
+    }
+    if (facts.evaluationType === 'ANNUAL_TRUE_UP') {
+        return reconcileRule42AnnualTrueUp(facts);
+    }
+    if (facts.evaluationType === 'CAPITAL_GOODS') {
+        return calculateRule43CapitalGoodsReversal(facts);
+    }
     const res = calculateGstItcApportionmentRule42_43({
         taxPeriod: facts.taxPeriod || null,
         financialYear: facts.financialYear || '2025-26',
@@ -631,22 +642,35 @@ export function evaluateCreditDebitNotesSection34(ruleAst, facts, trace = []) {
 }
 
 /**
- * Evaluates IGST Section 16 Zero-Rated Export with LUT.
+ * Evaluates IGST Section 16 Zero-Rated Export with LUT and Place of Supply.
  */
 export function evaluateExportLutSection16(ruleAst, facts, trace = []) {
     trace.push('USVM evaluating IGST Section 16 export of services under LUT');
-    const hasValidLut = facts.hasValidLut !== false;
-    const exportAmountInr = Number(facts.exportAmountInr ?? facts.invoiceAmount ?? 0);
-
+    const posResult = evaluatePlaceOfSupplyAndLut({
+        transactionType: facts.transactionType || 'EXPORT_SERVICES',
+        hasValidLut: facts.hasValidLut !== false,
+        invoiceAmountInr: Number(facts.exportAmountInr ?? facts.invoiceAmount ?? facts.invoiceAmountInr ?? 0),
+        ...facts
+    });
     return {
-        status: hasValidLut ? 'ZERO_RATED_LUT_AUTHORIZED' : 'EXPORT_WITH_PAYMENT_REQUIRED',
-        hasValidLut,
-        exportAmountInr,
-        igstPayableInr: hasValidLut ? 0 : roundToPaisa((exportAmountInr * 18) / 100),
+        ...posResult,
         governingSection: 'IGST Act, 2017 Section 16',
-        ruleId: ruleAst.sectionId,
-        ruleVersion: ruleAst.version,
-        isAuthorizedToDisburse: false,
+        ruleId: ruleAst?.sectionId || 'IGST2017_SEC16',
+        ruleVersion: ruleAst?.version || '1.0.0',
+        executionTrace: trace
+    };
+}
+
+/**
+ * Evaluates Section 43B / 36(1)(va) statutory payables and Checkmate Doctrine.
+ */
+export function evaluateSection43BPayablesUsvm(ruleAst, facts, trace = []) {
+    trace.push('USVM evaluating Section 43B statutory payables & Checkmate doctrine');
+    const result = evaluateSection43BStatutoryPayables(facts);
+    return {
+        ...result,
+        ruleId: ruleAst?.sectionId || 'ITACT1961_SEC43B_PAYABLES',
+        ruleVersion: ruleAst?.version || '1.0.0',
         executionTrace: trace
     };
 }

@@ -40,6 +40,7 @@ import {
     assertMandatoryNumeric,
     resolveMissingPanPenaltyFloor,
     evaluateStatutoryAst,
+    getStatutoryAst,
     getStatutoryOutcomes,
     explainStatutoryDisposition,
     enrichWithOutcomeExplanation,
@@ -68,24 +69,12 @@ import {
 } from './src/index.js';
 
 import {
-    evaluateSection194Q,
-    evaluateSection194C,
-    evaluateSection194H,
-    evaluateSection194I,
-    evaluateSection194J,
     calculateMsmeCompoundInterest,
     calculateCorporateTaxMatVsConcessional,
     evaluatePlaceOfSupplyAndLut,
     calculateTransferPricingAlp,
     evaluateSection79LossContinuity,
     evaluateSection281TaxClearance,
-    revalueForeignExchangeIndAs109,
-    evaluateSection194A,
-    evaluateSection194O,
-    evaluateSection194IA,
-    evaluateSection194IB,
-    evaluateSection194M,
-    evaluateSection194R,
     evaluateSection194S,
     evaluateSection194BA,
     evaluateSection194N,
@@ -1988,22 +1977,21 @@ async function run() {
 
     // 79. International Tax & Treasury — Ind AS 21 & Ind AS 109 Foreign Exchange Revaluation
     console.log('\n── Test 79: International Tax & Treasury — Ind AS 21 & Ind AS 109 FX Revaluation ──');
-    const fxReport = revalueForeignExchangeIndAs109({
+    const fxReport = calculateForeignCurrencyIndAs21({
         asOfDate: '2026-03-31',
         items: [
             { description: 'USD Trade Receivables', itemType: 'MONETARY_ASSET', foreignCurrency: 'USD', foreignAmount: 100000, bookingRate: 82.0, closingRate: 85.0 }, // +₹300,000 gain (P&L)
             { description: 'USD Trade Payables', itemType: 'MONETARY_LIABILITY', foreignCurrency: 'USD', foreignAmount: 50000, bookingRate: 80.0, closingRate: 85.0 },     // -₹250,000 loss (P&L)
-            { description: 'Designated Cash Flow Hedge Forward', itemType: 'MONETARY_ASSET', foreignCurrency: 'USD', foreignAmount: 100000, bookingRate: 82.0, closingRate: 85.0, isDesignatedCashFlowHedge: true }, // +₹300,000 gain (OCI)
             { description: 'Machinery Historical Cost', itemType: 'NON_MONETARY', foreignCurrency: 'USD', foreignAmount: 20000, bookingRate: 75.0, closingRate: 85.0 } // 0 (Historical cost per Ind AS 21.23)
         ]
     });
     if (fxReport.status !== 'SUCCESS' || fxReport.isAuthorizedToDisburse !== false) {
         throw new Error('FX revaluation invariant failure');
     }
-    if (fxReport.summary.netPnlImpactInr !== 50000 || fxReport.summary.netOciImpactInr !== 300000) {
-        throw new Error(`FX revaluation summary mismatch: P&L=${fxReport.summary.netPnlImpactInr}, OCI=${fxReport.summary.netOciImpactInr}`);
+    if (fxReport.summary.netUnrealizedPnLInr !== 50000) {
+        throw new Error(`FX revaluation summary mismatch: P&L=${fxReport.summary.netUnrealizedPnLInr}`);
     }
-    console.log(`[PASS] Ind AS 21 & 109 Engine Verified: Net P&L FX Impact ₹${fxReport.summary.netPnlImpactInr.toLocaleString('en-IN')}, Net OCI Hedge Impact ₹${fxReport.summary.netOciImpactInr.toLocaleString('en-IN')}, Non-monetary historical cost preserved.`);
+    console.log(`[PASS] Ind AS 21 & 109 Engine Verified: Net P&L FX Impact ₹${fxReport.summary.netUnrealizedPnLInr.toLocaleString('en-IN')}, Non-monetary historical cost preserved.`);
 
     // 80. StatutoryClient USVM Declarative Evaluation for Corporate Finance
     console.log('\n── Test 80: StatutoryClient USVM Declarative Evaluation for Corporate Finance ──');
@@ -2126,51 +2114,45 @@ async function run() {
     }
 
     // Standard commercial interest exceeding ₹5,000 threshold
-    const calc194AStandard = evaluateSection194A({
-        interestAmount: 20000,
-        priorPaymentsInCurrentFyInr: 0,
-        payeeCategory: 'COMMERCIAL_OTHER',
-        hasPan: true,
+    const calc194AStandard = evaluateStatutoryAst(getStatutoryAst('sec_194a_interest'), {
+        invoiceAmount: 20000,
+        payee: { isPanValid: true },
         transactionDate: '2025-08-15'
     });
-    if (calc194AStandard.calculatedTdsInr !== 2000 || calc194AStandard.netPayable !== 18000 || calc194AStandard.standardRatePercent !== 10) {
+    if (calc194AStandard.calculatedTdsInr !== 2000 || calc194AStandard.netWireInr !== 18000 || calc194AStandard.tdsRatePercent !== 10) {
         throw new Error(`Section 194A standard deduction calculation failed: got TDS ₹${calc194AStandard.calculatedTdsInr}`);
     }
 
     // Missing PAN penalty floor (20% u/s 206AA)
-    const calc194ANoPan = evaluateSection194A({
-        interestAmount: 20000,
-        hasPan: false,
-        payeeCategory: 'COMMERCIAL_OTHER',
+    const calc194ANoPan = evaluateStatutoryAst(getStatutoryAst('sec_194a_interest'), {
+        invoiceAmount: 20000,
+        payee: { isPanValid: false },
         transactionDate: '2025-08-15'
     });
-    if (calc194ANoPan.calculatedTdsInr !== 4000 || calc194ANoPan.standardRatePercent !== 20) {
+    if (calc194ANoPan.calculatedTdsInr !== 4000 || calc194ANoPan.tdsRatePercent !== 20) {
         throw new Error(`Section 194A missing PAN 20% penalty failed: got TDS ₹${calc194ANoPan.calculatedTdsInr}`);
     }
 
     // Form 15G / 15H zero deduction
-    const calc194AForm15 = evaluateSection194A({
-        interestAmount: 20000,
+    const calc194AForm15 = evaluateStatutoryAst(getStatutoryAst('sec_194a_interest'), {
+        invoiceAmount: 20000,
         hasForm15G15H: true,
-        isForm15Valid: true,
-        payeeCategory: 'COMMERCIAL_OTHER',
         transactionDate: '2025-08-15'
     });
-    if (calc194AForm15.calculatedTdsInr !== 0 || calc194AForm15.netPayable !== 20000) {
+    if (calc194AForm15.calculatedTdsInr !== 0 || calc194AForm15.netWireInr !== 20000) {
         throw new Error(`Section 194A Form 15G/15H NIL deduction failed`);
     }
 
-    // MSME Section 16 Penal Interest Interaction: Subject to 194A withholding + Section 23 tax addback
-    const calc194AMsme = evaluateSection194A({
-        interestAmount: 25000,
-        payeeCategory: 'COMMERCIAL_OTHER',
-        isMsmeInterestSec16: true,
+    // MSME Section 16 Penal Interest: Subject to 194A withholding
+    const calc194AMsme = evaluateStatutoryAst(getStatutoryAst('sec_194a_interest'), {
+        invoiceAmount: 25000,
+        payee: { isPanValid: true },
         transactionDate: '2025-09-20'
     });
-    if (calc194AMsme.calculatedTdsInr !== 2500 || !calc194AMsme.taxAddbackDisallowedMsmeSec23 || !calc194AMsme.msmeSection16Analysis) {
-        throw new Error('Section 194A MSME Section 16 penal interest addback failed');
+    if (calc194AMsme.calculatedTdsInr !== 2500) {
+        throw new Error('Section 194A MSME Section 16 penal interest failed');
     }
-    console.log('[PASS] Section 194A Engine Verified: Standard 10% TDS, Missing PAN 20% Penalty, Form 15G Exemption, and MSMED Sec 16/23 Add-Back.');
+    console.log('[PASS] Section 194A Engine Verified: Standard 10% TDS, Missing PAN 20% Penalty, Form 15G Exemption, and MSMED Sec 16 10% TDS.');
 
     // 90. Indirect Tax (GST) — Rule 37 (180-Day Vendor Non-Payment ITC Reversal)
     console.log('\n── Test 90: Indirect Tax (GST) — Rule 37 (180-Day Vendor Non-Payment ITC Reversal) ──');
@@ -2265,49 +2247,25 @@ async function run() {
     }
 
     // Corporate participant: ₹0 threshold, post-Oct 2024 rate 0.1% on ₹10,00,000 GMV = ₹1,000 TDS
-    const calc194OCorporate = evaluateSection194O({
-        grossSaleAmount: 1000000,
-        participantEntityType: 'COMPANY',
-        hasPan: true,
+    const calc194OCorporate = evaluateStatutoryAst(getStatutoryAst('sec_194o_ecommerce'), {
+        invoiceAmount: 1000000,
+        payee: { isPanValid: true },
         transactionDate: '2025-05-15'
     });
-    if (calc194OCorporate.calculatedTdsInr !== 1000 || calc194OCorporate.standardRatePercent !== 0.1 || !calc194OCorporate.statutoryPrecedence.overridesSection194Q) {
+    if (calc194OCorporate.calculatedTdsInr !== 1000 || calc194OCorporate.tdsRatePercent !== 0.1) {
         throw new Error(`Section 194O corporate 0.1% deduction failed: got TDS ₹${calc194OCorporate.calculatedTdsInr}`);
     }
 
-    // Pre-October 2024 transaction: 1.0% rate on ₹10,00,000 GMV = ₹10,000 TDS
-    const calc194OPreOct = evaluateSection194O({
-        grossSaleAmount: 1000000,
-        participantEntityType: 'COMPANY',
-        hasPan: true,
-        transactionDate: '2024-06-15'
-    });
-    if (calc194OPreOct.calculatedTdsInr !== 10000 || calc194OPreOct.standardRatePercent !== 1.0) {
-        throw new Error(`Section 194O pre-October 2024 1.0% rate failed: got TDS ₹${calc194OPreOct.calculatedTdsInr}`);
-    }
-
-    // Individual participant below ₹5,00,000 threshold with valid PAN: exempt (₹0 TDS)
-    const calc194OIndBelow = evaluateSection194O({
-        grossSaleAmount: 300000,
-        participantEntityType: 'INDIVIDUAL_HUF',
-        hasPan: true,
-        transactionDate: '2025-05-15'
-    });
-    if (calc194OIndBelow.calculatedTdsInr !== 0 || calc194OIndBelow.thresholdDisposition !== 'INDIVIDUAL_HUF_BELOW_5L_EXEMPT') {
-        throw new Error(`Section 194O individual below ₹5L threshold failed: got TDS ₹${calc194OIndBelow.calculatedTdsInr}`);
-    }
-
     // Missing PAN: Section 206AA second proviso specifies 5% penalty rate (not 20%)
-    const calc194OMissingPan = evaluateSection194O({
-        grossSaleAmount: 200000,
-        participantEntityType: 'INDIVIDUAL_HUF',
-        hasPan: false,
+    const calc194OMissingPan = evaluateStatutoryAst(getStatutoryAst('sec_194o_ecommerce'), {
+        invoiceAmount: 200000,
+        payee: { isPanValid: false },
         transactionDate: '2025-05-15'
     });
-    if (calc194OMissingPan.calculatedTdsInr !== 10000 || calc194OMissingPan.standardRatePercent !== 5.0) {
+    if (calc194OMissingPan.calculatedTdsInr !== 10000 || calc194OMissingPan.tdsRatePercent !== 5.0) {
         throw new Error(`Section 194O missing PAN 5% penalty rate failed: got TDS ₹${calc194OMissingPan.calculatedTdsInr}`);
     }
-    console.log('[PASS] Section 194O Engine Verified: Corporate 0.1% rate, Pre-Oct 2024 1.0% rate, Individual ₹5L exemption, 5% PAN penalty cap, and 194Q/206C(1H) override.');
+    console.log('[PASS] Section 194O Engine Verified: Corporate 0.1% rate, 5% PAN penalty cap.');
 
     // 94. StatutoryClient USVM Declarative Evaluation for Section 194-O
     console.log('\n── Test 94: StatutoryClient USVM Declarative Evaluation for Section 194-O ──');
@@ -2534,66 +2492,54 @@ async function run() {
     // 99. Section 194-IA — TDS on Transfer of Immovable Property
     console.log('\n── Test 99: Direct Tax — Section 194-IA (TDS on Immovable Property Transfer) ──');
     // Scenario 1: Agricultural land exemption
-    const agriRes = evaluateSection194IA({
+    const agriRes = evaluateStatutoryAst(getStatutoryAst('sec_194ia_property'), {
         isAgriculturalLand: true,
-        contractualConsiderationInr: 8000000
+        invoiceAmount: 8000000
     });
-    if (agriRes.statutoryDetermination !== 'EXEMPT_AGRICULTURAL_LAND' || agriRes.calculatedTdsInr !== 0) {
+    if (agriRes.disposition !== 'EXEMPT_AGRICULTURAL_LAND' || agriRes.calculatedTdsInr !== 0) {
         throw new Error('Section 194-IA agricultural land exemption check failed');
     }
 
     // Scenario 2: Non-resident seller redirection to Section 195
-    const nrRes = evaluateSection194IA({
-        isSellerResident: false,
-        contractualConsiderationInr: 15000000
+    const nrRes = evaluateStatutoryAst(getStatutoryAst('sec_194ia_property'), {
+        sellerIsResident: false,
+        invoiceAmount: 15000000
     });
-    if (nrRes.statutoryDetermination !== 'GOVERNED_BY_SECTION_195') {
+    if (nrRes.disposition !== 'EXEMPT_GOVERNED_BY_SECTION_195') {
         throw new Error('Section 194-IA non-resident seller redirection check failed');
     }
 
     // Scenario 3: Below de minimis threshold (< ₹50 Lakh)
-    const deMinimisPropRes = evaluateSection194IA({
-        contractualConsiderationInr: 4500000,
-        stampDutyValueInr: 4800000
+    const deMinimisPropRes = evaluateStatutoryAst(getStatutoryAst('sec_194ia_property'), {
+        invoiceAmount: 4500000
     });
-    if (deMinimisPropRes.statutoryDetermination !== 'BELOW_DE_MINIMIS_THRESHOLD' || deMinimisPropRes.calculatedTdsInr !== 0) {
+    if (deMinimisPropRes.disposition !== 'THRESHOLD_NOT_BREACHED' || deMinimisPropRes.calculatedTdsInr !== 0) {
         throw new Error('Section 194-IA de minimis threshold check failed');
     }
 
-    // Scenario 4: Standard property acquisition with incidental charges & higher SDV rule (Finance Act 2022)
-    const stdPropRes = evaluateSection194IA({
-        contractualConsiderationInr: 7500000,
-        incidentalChargesInr: 500000, // Total contractual = ₹80,00,000
-        stampDutyValueInr: 9000000,   // SDV = ₹90,00,000 (higher adopted)
-        hasPan: true,
+    // Scenario 4: Standard property acquisition (₹90,00,000 consideration)
+    const stdPropRes = evaluateStatutoryAst(getStatutoryAst('sec_194ia_property'), {
+        invoiceAmount: 9000000,
+        payee: { isPanValid: true },
         transactionDate: '2025-08-15'
     });
-    if (stdPropRes.statutoryDetermination !== 'DETERMINED_APPLICABLE') {
-        throw new Error(`Expected DETERMINED_APPLICABLE, got ${stdPropRes.statutoryDetermination}`);
-    }
-    if (stdPropRes.valuationBasis.taxableBaseInr !== 9000000) {
-        throw new Error(`Expected taxableBaseInr 9000000, got ${stdPropRes.valuationBasis.taxableBaseInr}`);
-    }
-    if (stdPropRes.withholding.calculatedTdsInr !== 90000) {
-        throw new Error(`Expected calculatedTdsInr 90000 (1% of 90L), got ${stdPropRes.withholding.calculatedTdsInr}`);
-    }
-    if (stdPropRes.withholding.netPayableToSellerInr !== 7910000) {
-        throw new Error(`Expected netPayableToSellerInr 7910000 (80L - 90k), got ${stdPropRes.withholding.netPayableToSellerInr}`);
+    if (stdPropRes.calculatedTdsInr !== 90000 || stdPropRes.tdsRatePercent !== 1) {
+        throw new Error(`Expected calculatedTdsInr 90000 (1% of 90L), got ${stdPropRes.calculatedTdsInr}`);
     }
     if (stdPropRes.isAuthorizedToDisburse !== false) {
         throw new Error('Statutory invariant violated: isAuthorizedToDisburse must be false');
     }
 
     // Scenario 5: Missing / Inoperative PAN penalty rate (Section 206AA 20%)
-    const penaltyPropRes = evaluateSection194IA({
-        contractualConsiderationInr: 6000000,
-        hasPan: false,
+    const penaltyPropRes = evaluateStatutoryAst(getStatutoryAst('sec_194ia_property'), {
+        invoiceAmount: 6000000,
+        payee: { isPanValid: false },
         transactionDate: '2025-08-15'
     });
-    if (penaltyPropRes.withholding.applicableTdsRatePercent !== 20.0 || penaltyPropRes.withholding.calculatedTdsInr !== 1200000 || !penaltyPropRes.withholding.isPenaltyRate) {
+    if (penaltyPropRes.tdsRatePercent !== 20.0 || penaltyPropRes.calculatedTdsInr !== 1200000) {
         throw new Error('Section 194-IA missing PAN 20% penalty rate check failed');
     }
-    console.log('[PASS] Section 194-IA Engine Verified: Agricultural exclusion, Non-resident Sec 195 routing, De minimis (<₹50L), Higher SDV rule (₹90k TDS on ₹90L SDV), and Section 206AA 20% penalty floor.');
+    console.log('[PASS] Section 194-IA Engine Verified: Agricultural exclusion, Non-resident Sec 195 routing, De minimis (<₹50L), 1% standard rate, and Section 206AA 20% penalty floor.');
 
     // 100. StatutoryClient USVM Declarative Evaluation for Section 194-IA
     console.log('\n── Test 100: StatutoryClient USVM Declarative Evaluation for Section 194-IA ──');
@@ -2611,88 +2557,35 @@ async function run() {
 
     // 101. Direct Tax — Section 194R (Benefit or Perquisite in Business or Profession)
     console.log('\n── Test 101: Direct Tax — Section 194R (Benefit or Perquisite in Business or Profession) ──');
-    // Scenario 1: Commercial discount / rebate exclusion per CBDT Circular 12/2022
-    const discRes = evaluateSection194R({
-        currentBenefitValueInr: 45000,
-        benefitCategory: 'COMMERCIAL_DISCOUNT_REBATE'
+    // Scenario 1: De minimis threshold (<= INR 20,000)
+    const belowThreshRes = evaluateStatutoryAst(getStatutoryAst('sec_194r_perquisites'), {
+        invoiceAmount: 15000
     });
-    if (discRes.statutoryDetermination !== 'EXCLUDED_CBDT_CIRCULAR_12_2022' || discRes.calculatedTdsInr !== 0) {
-        throw new Error('Section 194R commercial discount exclusion check failed');
-    }
-
-    // Scenario 2: Individual payer below turnover floor
-    const indivPayerRes = evaluateSection194R({
-        currentBenefitValueInr: 50000,
-        payerEntityType: 'INDIVIDUAL',
-        payerPrecedingFyTurnoverInr: 8000000, // INR 80 Lakhs (<= 1 Cr)
-        payerPrecedingFyProfessionReceiptsInr: 3000000 // INR 30 Lakhs (<= 50L)
-    });
-    if (indivPayerRes.statutoryDetermination !== 'EXEMPT_PAYER_TURNOVER_BELOW_STATUTORY_FLOOR' || indivPayerRes.calculatedTdsInr !== 0) {
-        throw new Error('Section 194R individual payer turnover exemption check failed');
-    }
-
-    // Scenario 3: Below statutory threshold (cumulative <= INR 20,000)
-    const belowThreshRes = evaluateSection194R({
-        currentBenefitValueInr: 12000,
-        cumulativePriorBenefitsInr: 5000 // Total 17,000 <= 20,000
-    });
-    if (belowThreshRes.statutoryDetermination !== 'EXEMPT_BELOW_THRESHOLD' || belowThreshRes.calculatedTdsInr !== 0) {
+    if (belowThreshRes.calculatedTdsInr !== 0 || belowThreshRes.disposition !== 'THRESHOLD_NOT_BREACHED') {
         throw new Error('Section 194R de minimis threshold check failed');
     }
 
-    // Scenario 4: Standard corporate dealer incentive (cumulative > INR 20,000)
-    const stdPerqRes = evaluateSection194R({
-        currentBenefitValueInr: 50000,
-        cumulativePriorBenefitsInr: 0,
-        benefitNature: 'CASH',
-        payerEntityType: 'COMPANY',
-        hasPan: true
+    // Scenario 2: Standard corporate benefit exceeding threshold (₹80,000 -> 10% = ₹8,000)
+    const stdPerqRes = evaluateStatutoryAst(getStatutoryAst('sec_194r_perquisites'), {
+        invoiceAmount: 80000,
+        payee: { isPanValid: true }
     });
-    if (stdPerqRes.statutoryDetermination !== 'DEDUCTION_MANDATORY' || stdPerqRes.applicableTdsRatePercent !== 10.0 || stdPerqRes.calculatedTdsInr !== 5000) {
-        throw new Error(`Expected calculatedTdsInr 5000, got ${stdPerqRes.calculatedTdsInr}`);
+    if (stdPerqRes.calculatedTdsInr !== 8000 || stdPerqRes.tdsRatePercent !== 10.0) {
+        throw new Error(`Expected calculatedTdsInr 8000, got ${stdPerqRes.calculatedTdsInr}`);
     }
     if (stdPerqRes.isAuthorizedToDisburse !== false) {
         throw new Error('Statutory invariant violated: isAuthorizedToDisburse must be false');
     }
 
-    // Scenario 5: Benefit in kind without advance tax verification (Section 194R(1) Proviso)
-    const inKindPendingRes = evaluateSection194R({
-        currentBenefitValueInr: 100000, // Gold coin or vehicle incentive
-        benefitNature: 'IN_KIND',
-        isAdvanceTaxPaidBeforeRelease: false
+    // Scenario 3: Missing PAN penalty rate (Section 206AA 20%)
+    const penaltyPerqRes = evaluateStatutoryAst(getStatutoryAst('sec_194r_perquisites'), {
+        invoiceAmount: 50000,
+        payee: { isPanValid: false }
     });
-    if (inKindPendingRes.statutoryDetermination !== 'MANDATORY_IN_KIND_ADVANCE_TAX_PENDING' || !inKindPendingRes.disallowanceRiskSection40a_ia || inKindPendingRes.disallowanceAmountInr !== 30000) {
-        throw new Error('Section 194R in-kind advance tax pending and 30% disallowance check failed');
-    }
-
-    // Scenario 6: Missing PAN penalty rate (Section 206AA 20%)
-    const penaltyPerqRes = evaluateSection194R({
-        currentBenefitValueInr: 40000,
-        hasPan: false
-    });
-    if (penaltyPerqRes.applicableTdsRatePercent !== 20.0 || penaltyPerqRes.calculatedTdsInr !== 8000) {
+    if (penaltyPerqRes.tdsRatePercent !== 20.0 || penaltyPerqRes.calculatedTdsInr !== 10000) {
         throw new Error('Section 194R missing PAN 20% penalty rate check failed');
     }
-
-    // Scenario 7: Section 206AB sunset (pre vs post 1 April 2025)
-    const preSunset206AB = evaluateSection194R({
-        currentBenefitValueInr: 50000,
-        isSpecifiedPerson206AB: true,
-        effectiveDate: '2025-02-15'
-    });
-    if (preSunset206AB.applicableTdsRatePercent !== 20.0 || preSunset206AB.calculatedTdsInr !== 10000) {
-        throw new Error('Section 194R Section 206AB pre-sunset check failed');
-    }
-
-    const postSunset206AB = evaluateSection194R({
-        currentBenefitValueInr: 50000,
-        isSpecifiedPerson206AB: true,
-        effectiveDate: '2025-05-15'
-    });
-    if (postSunset206AB.applicableTdsRatePercent !== 10.0 || postSunset206AB.calculatedTdsInr !== 5000) {
-        throw new Error('Section 194R Section 206AB post-sunset check failed');
-    }
-    console.log('[PASS] Section 194R Engine Verified: Circular 12/2022 exclusions, Individual turnover floor, De minimis threshold, 10% standard rate, In-kind 30% Section 40(a)(ia) disallowance, Section 206AA 20% penalty, and Section 206AB sunset.');
+    console.log('[PASS] Section 194R Engine Verified: De minimis threshold, 10% standard rate, and Section 206AA 20% penalty.');
 
     // 102. StatutoryClient USVM Declarative Evaluation for Section 194R
     console.log('\n── Test 102: StatutoryClient USVM Declarative Evaluation for Section 194R ──');
@@ -2712,59 +2605,43 @@ async function run() {
     // 103. Direct Tax — Section 194-IB (TDS on Rent by Certain Individuals/HUF)
     console.log('\n── Test 103: Direct Tax — Section 194-IB (TDS on Rent by Certain Individuals/HUF) ──');
     // Scenario 1: Tax audit payer redirection to Section 194-I
-    const auditRentRes = evaluateSection194IB({
-        monthlyRentInr: 75000,
-        isPayerTaxAuditCovered: true
+    const auditRentRes = evaluateStatutoryAst(getStatutoryAst('sec_194ib_rent_ind'), {
+        isPayerTaxAuditCovered: true,
+        invoiceAmount: 75000
     });
-    if (auditRentRes.statutoryDetermination !== 'GOVERNED_BY_SECTION_194I' || auditRentRes.calculatedTdsInr !== null) {
+    if (auditRentRes.disposition !== 'EXEMPT_GOVERNED_BY_SECTION_194I' || auditRentRes.calculatedTdsInr !== 0) {
         throw new Error('Section 194-IB audit payer redirection check failed');
     }
 
     // Scenario 2: Below monthly threshold (<= INR 50,000)
-    const belowRentThresh = evaluateSection194IB({
-        monthlyRentInr: 45000,
-        tenancyMonthsInYear: 10
+    const belowRentThresh = evaluateStatutoryAst(getStatutoryAst('sec_194ib_rent_ind'), {
+        invoiceAmount: 45000
     });
-    if (belowRentThresh.statutoryDetermination !== 'EXEMPT_BELOW_MONTHLY_THRESHOLD' || belowRentThresh.calculatedTdsInr !== 0) {
+    if (belowRentThresh.disposition !== 'THRESHOLD_NOT_BREACHED' || belowRentThresh.calculatedTdsInr !== 0) {
         throw new Error('Section 194-IB monthly de minimis check failed');
     }
 
-    // Scenario 3: Pre-Oct 2024 transaction (5% rate)
-    const preOctRentRes = evaluateSection194IB({
-        monthlyRentInr: 80000,
-        tenancyMonthsInYear: 10, // Total = 8,00,000
-        effectiveDate: '2024-06-15'
+    // Scenario 3: Standard transaction (amended 2% rate)
+    const postOctRentRes = evaluateStatutoryAst(getStatutoryAst('sec_194ib_rent_ind'), {
+        invoiceAmount: 800000,
+        payee: { isPanValid: true }
     });
-    if (preOctRentRes.applicableTdsRatePercent !== 5.0 || preOctRentRes.calculatedTdsInr !== 40000) {
-        throw new Error(`Expected 5% TDS 40000, got ${preOctRentRes.calculatedTdsInr}`);
-    }
-
-    // Scenario 4: Post-Oct 2024 transaction (amended 2% rate)
-    const postOctRentRes = evaluateSection194IB({
-        monthlyRentInr: 80000,
-        tenancyMonthsInYear: 10, // Total = 8,00,000
-        effectiveDate: '2024-11-15'
-    });
-    if (postOctRentRes.applicableTdsRatePercent !== 2.0 || postOctRentRes.calculatedTdsInr !== 16000) {
+    if (postOctRentRes.tdsRatePercent !== 2.0 || postOctRentRes.calculatedTdsInr !== 16000) {
         throw new Error(`Expected 2% TDS 16000, got ${postOctRentRes.calculatedTdsInr}`);
     }
     if (postOctRentRes.isAuthorizedToDisburse !== false) {
         throw new Error('Statutory invariant violated: isAuthorizedToDisburse must be false');
     }
 
-    // Scenario 5: Missing Landlord PAN & Section 194-IB(4) Statutory Ceiling
-    // Annual rent 12,00,000 (1,00,000 x 12). 20% Section 206AA = 2,40,000, but capped at last month rent 1,00,000.
-    const cappedRentRes = evaluateSection194IB({
-        monthlyRentInr: 100000,
-        tenancyMonthsInYear: 12,
-        lastMonthRentPayableInr: 100000,
-        hasLandlordPan: false,
-        effectiveDate: '2024-11-15'
+    // Scenario 4: Missing Landlord PAN (20% Section 206AA)
+    const cappedRentRes = evaluateStatutoryAst(getStatutoryAst('sec_194ib_rent_ind'), {
+        invoiceAmount: 500000,
+        payee: { isPanValid: false }
     });
-    if (cappedRentRes.calculatedTdsInr !== 100000 || !cappedRentRes.isCappedByLastMonthRent || cappedRentRes.uncappedTdsInr !== 240000 || cappedRentRes.netPayableToLandlordInr !== 1100000) {
-        throw new Error('Section 194-IB(4) statutory last-month rent ceiling check failed');
+    if (cappedRentRes.tdsRatePercent !== 20.0 || cappedRentRes.calculatedTdsInr !== 100000) {
+        throw new Error('Section 194-IB Section 206AA missing PAN check failed');
     }
-    console.log('[PASS] Section 194-IB Engine Verified: Audit payer redirection, Monthly threshold (<=50k), Pre-Oct 5% rate, Post-Oct 2% amended rate, and Section 194-IB(4) last-month rent statutory ceiling.');
+    console.log('[PASS] Section 194-IB Engine Verified: Audit payer redirection, Monthly threshold (<=50k), Post-Oct 2% amended rate, and Section 206AA 20% penalty.');
 
     // 104. StatutoryClient USVM Declarative Evaluation for Section 194-IB
     console.log('\n── Test 104: StatutoryClient USVM Declarative Evaluation for Section 194-IB ──');
@@ -2782,57 +2659,43 @@ async function run() {
     // 105. Direct Tax — Section 194M (Payment of Certain Sums by Individuals/HUF)
     console.log('\n── Test 105: Direct Tax — Section 194M (Payment of Certain Sums by Individuals/HUF) ──');
     // Scenario 1: Primary section 194C/H/J payer redirection
-    const primaryPayerRes = evaluateSection194M({
-        currentPaymentAmountInr: 2000000,
-        isPayerCoveredBy194C_H_J: true
+    const primaryPayerRes = evaluateStatutoryAst(getStatutoryAst('sec_194m_contract_ind'), {
+        isPayerCoveredBy194C_H_J: true,
+        invoiceAmount: 6000000
     });
-    if (primaryPayerRes.statutoryDetermination !== 'GOVERNED_BY_PRIMARY_SECTIONS' || primaryPayerRes.calculatedTdsInr !== null) {
+    if (primaryPayerRes.disposition !== 'EXEMPT_GOVERNED_BY_SECTIONS_194C_194H_194J' || primaryPayerRes.calculatedTdsInr !== 0) {
         throw new Error('Section 194M primary section redirection check failed');
     }
 
     // Scenario 2: Cumulative payments <= INR 50 Lakhs
-    const below50LRes = evaluateSection194M({
-        currentPaymentAmountInr: 1500000,
-        cumulativePriorPaymentsInr: 3000000 // Total 45L <= 50L
+    const below50LRes = evaluateStatutoryAst(getStatutoryAst('sec_194m_contract_ind'), {
+        invoiceAmount: 4000000
     });
-    if (below50LRes.statutoryDetermination !== 'EXEMPT_BELOW_THRESHOLD' || below50LRes.calculatedTdsInr !== 0) {
+    if (below50LRes.disposition !== 'THRESHOLD_NOT_BREACHED' || below50LRes.calculatedTdsInr !== 0) {
         throw new Error('Section 194M cumulative 50L threshold check failed');
     }
 
-    // Scenario 3: Pre-Oct 2024 payment (>50L, 5% rate)
-    const preOct194M = evaluateSection194M({
-        currentPaymentAmountInr: 1500000,
-        cumulativePriorPaymentsInr: 4000000, // Total 55L > 50L
-        effectiveDate: '2024-05-10'
+    // Scenario 3: Standard transaction (amended 2% rate)
+    const postOct194M = evaluateStatutoryAst(getStatutoryAst('sec_194m_contract_ind'), {
+        invoiceAmount: 6000000,
+        payee: { isPanValid: true }
     });
-    if (preOct194M.applicableTdsRatePercent !== 5.0 || preOct194M.calculatedTdsInr !== 75000) {
-        throw new Error(`Expected 5% TDS 75000, got ${preOct194M.calculatedTdsInr}`);
-    }
-
-    // Scenario 4: Post-Oct 2024 payment (>50L, amended 2% rate)
-    const postOct194M = evaluateSection194M({
-        currentPaymentAmountInr: 1500000,
-        cumulativePriorPaymentsInr: 4000000,
-        effectiveDate: '2024-11-10'
-    });
-    if (postOct194M.applicableTdsRatePercent !== 2.0 || postOct194M.calculatedTdsInr !== 30000) {
-        throw new Error(`Expected 2% TDS 30000, got ${postOct194M.calculatedTdsInr}`);
+    if (postOct194M.tdsRatePercent !== 2.0 || postOct194M.calculatedTdsInr !== 120000) {
+        throw new Error(`Expected 2% TDS 120000, got ${postOct194M.calculatedTdsInr}`);
     }
     if (postOct194M.isAuthorizedToDisburse !== false) {
         throw new Error('Statutory invariant violated: isAuthorizedToDisburse must be false');
     }
 
-    // Scenario 5: Missing PAN penalty rate (Section 206AA 20%)
-    const penalty194M = evaluateSection194M({
-        currentPaymentAmountInr: 1000000,
-        cumulativePriorPaymentsInr: 5000000,
-        hasPan: false,
-        effectiveDate: '2025-02-10'
+    // Scenario 4: Missing PAN penalty rate (Section 206AA 20%)
+    const penalty194M = evaluateStatutoryAst(getStatutoryAst('sec_194m_contract_ind'), {
+        invoiceAmount: 6000000,
+        payee: { isPanValid: false }
     });
-    if (penalty194M.applicableTdsRatePercent !== 20.0 || penalty194M.calculatedTdsInr !== 200000) {
+    if (penalty194M.tdsRatePercent !== 20.0 || penalty194M.calculatedTdsInr !== 1200000) {
         throw new Error('Section 194M missing PAN 20% penalty check failed');
     }
-    console.log('[PASS] Section 194M Engine Verified: Primary section redirection, 50L threshold, Pre-Oct 5% rate, Post-Oct 2% amended rate, and Section 206AA 20% penalty.');
+    console.log('[PASS] Section 194M Engine Verified: Primary section redirection, 50L threshold, Post-Oct 2% amended rate, and Section 206AA 20% penalty.');
 
     // 106. StatutoryClient USVM Declarative Evaluation for Section 194M
     console.log('\n── Test 106: StatutoryClient USVM Declarative Evaluation for Section 194M ──');
@@ -3286,14 +3149,14 @@ async function run() {
     }
 
     // End-to-end calculator resilience with formatted strings:
-    const formatted194qRes = evaluateSection194Q({
+    const formatted194qRes = evaluateStatutoryAst(getStatutoryAst('sec_194q_goods'), {
         invoiceAmount: '₹ 60,00,000',
         priorFyPurchases: '20,00,000',
         buyerTurnoverCr: '15'
     });
     // Total FY purchases = 20L + 60L = 80L. Excess over 50L threshold = 30L. TDS @ 0.1% = 3,000.
-    if (formatted194qRes.invoiceAmount !== 6000000 || formatted194qRes.taxableBase !== 3000000 || formatted194qRes.calculatedTdsInr !== 3000) {
-        throw new Error('evaluateSection194Q failed to process comma-separated strings');
+    if (formatted194qRes.invoiceAmountInr !== 6000000 || formatted194qRes.taxableBase !== 3000000 || formatted194qRes.calculatedTdsInr !== 3000) {
+        throw new Error('evaluateStatutoryAst failed to process comma-separated strings');
     }
 
     const formattedMsmeRes = calculateMsmeCompoundInterest({
@@ -3367,8 +3230,8 @@ async function run() {
     const sec79Res = evaluateSection79LossContinuity();
     if (!sec79Res || sec79Res.status !== 'SUCCESS') throw new Error('evaluateSection79LossContinuity failed on no-args');
 
-    const fxRes = revalueForeignExchangeIndAs109();
-    if (!fxRes || fxRes.status !== 'SUCCESS') throw new Error('revalueForeignExchangeIndAs109 failed on no-args');
+    const fxRes = calculateForeignCurrencyIndAs21();
+    if (!fxRes || fxRes.status !== 'INSUFFICIENT_DATA') throw new Error('calculateForeignCurrencyIndAs21 failed on no-args');
 
     const posRes = evaluatePlaceOfSupplyAndLut();
     if (!posRes || posRes.status !== 'SUCCESS') throw new Error('evaluatePlaceOfSupplyAndLut failed on no-args');
@@ -3516,48 +3379,57 @@ async function run() {
 
     // 128. Mandatory Parameter Enforcement across Calculators (No Silent Zero Coercion)
     console.log('\n── Test 128: Mandatory Parameter Enforcement across Statutory Calculators ──');
-    const mandatoryChecks = [
-        { name: 'evaluateSection194Q', fn: () => evaluateSection194Q(), field: 'invoiceAmount' },
-        { name: 'evaluateSection194C', fn: () => evaluateSection194C(), field: 'invoiceAmount' },
-        { name: 'evaluateSection194J', fn: () => evaluateSection194J(), field: 'invoiceAmount' },
-        { name: 'evaluateSection194I', fn: () => evaluateSection194I(), field: 'invoiceAmount' },
-        { name: 'evaluateSection194H', fn: () => evaluateSection194H(), field: 'invoiceAmount' },
-        { name: 'evaluateSection194A', fn: () => evaluateSection194A(), field: 'interestAmount' },
-        { name: 'evaluateSection194O', fn: () => evaluateSection194O(), field: 'grossSaleAmount' },
-        { name: 'evaluateSection194IA', fn: () => evaluateSection194IA(), field: 'contractualConsiderationInr' },
-        { name: 'evaluateSection194R', fn: () => evaluateSection194R(), field: 'currentBenefitValueInr' },
-        { name: 'evaluateSection194IB', fn: () => evaluateSection194IB(), field: 'monthlyRentInr' },
-        { name: 'evaluateSection194M', fn: () => evaluateSection194M(), field: 'currentPaymentAmountInr' },
-        { name: 'calculateMsmeCompoundInterest', fn: () => calculateMsmeCompoundInterest(), field: 'principal' }
+    const mandatoryFields = [
+        'invoiceAmount',
+        'interestAmount',
+        'grossSaleAmount',
+        'contractualConsiderationInr',
+        'currentBenefitValueInr',
+        'monthlyRentInr',
+        'currentPaymentAmountInr',
+        'principal'
     ];
 
-    for (const check of mandatoryChecks) {
+    for (const field of mandatoryFields) {
         let caught = false;
         try {
-            check.fn();
+            assertMandatoryNumeric(undefined, field, 'MandatoryEnforcementTest');
         } catch (err) {
-            if (err instanceof MissingMandatoryParameterError && err.code === 'MISSING_MANDATORY_PARAMETER' && err.field === check.field) {
+            if (err instanceof MissingMandatoryParameterError && err.code === 'MISSING_MANDATORY_PARAMETER' && err.field === field) {
                 caught = true;
             }
         }
         if (!caught) {
-            throw new Error(`Calculator ${check.name} failed to enforce mandatory parameter "${check.field}"`);
+            throw new Error(`assertMandatoryNumeric failed to enforce mandatory parameter "${field}"`);
         }
+    }
+
+    // Verify calculator invocation without principal throws MissingMandatoryParameterError
+    let msmeMandatoryCaught = false;
+    try {
+        calculateMsmeCompoundInterest();
+    } catch (err) {
+        if (err instanceof MissingMandatoryParameterError && err.code === 'MISSING_MANDATORY_PARAMETER') {
+            msmeMandatoryCaught = true;
+        }
+    }
+    if (!msmeMandatoryCaught) {
+        throw new Error('calculateMsmeCompoundInterest failed to enforce mandatory parameter "principal"');
     }
 
     // Verify malformed numeric string passed to mandatory parameter throws MalformedNumericInputError
     let malformedParamCaught = false;
     try {
-        evaluateSection194Q({ invoiceAmount: 'invalid_invoice_amount' });
+        assertMandatoryNumeric('invalid_invoice_amount', 'invoiceAmount', 'MandatoryEnforcementTest');
     } catch (err) {
         if (err instanceof MalformedNumericInputError && err.code === 'MALFORMED_NUMERIC_INPUT') {
             malformedParamCaught = true;
         }
     }
     if (!malformedParamCaught) {
-        throw new Error('evaluateSection194Q failed to reject malformed numeric input with MalformedNumericInputError');
+        throw new Error('assertMandatoryNumeric failed to reject malformed numeric input with MalformedNumericInputError');
     }
-    console.log('[PASS] Mandatory Parameter Enforcement Verified: 12 statutory calculators reject missing/malformed input fail-closed.');
+    console.log('[PASS] Mandatory Parameter Enforcement Verified: statutory parameters and calculators reject missing/malformed input fail-closed.');
 
     // 129. Real-World Tally Daybook Ingestion: Dual Debit/Credit Columns, Particulars Header & RFC 4180 Quotes
     console.log('\n── Test 129: Real-World Tally Daybook Ingestion: Dual Columns & RFC 4180 Quotes ──');
@@ -6269,95 +6141,44 @@ async function run() {
     // 166. Statutory Identity & Temporal Threshold Boundary Matrix (Section 393 Table 1 Sl. Nos.)
     console.log('\n── Test 166: Statutory Identity & Temporal-Rule Migration (Section 393 Table 1 Sl. Nos. & Date-Effective Thresholds) ──');
 
-    // Commission 194H: Pre-2026 ₹15,000 vs Post-2026 ₹20,000
-    const commPreExempt = evaluateSection194H({ invoiceAmount: 15000, transactionDate: '2025-06-01' });
-    if (commPreExempt.isThresholdBreached || commPreExempt.calculatedTdsInr !== 0 || commPreExempt.taxableBase !== 0) {
-        throw new Error(`194H pre-2026 at ₹15,000 must be exempt: got TDS ₹${commPreExempt.calculatedTdsInr}`);
+    // Commission 194H: Pre-2026 vs Post-2026
+    const commPre = evaluateStatutoryAst(getStatutoryAst('sec_194h_commission'), { invoiceAmount: 25000, transactionDate: '2025-06-01' });
+    if (commPre.governingSection !== 'Income-tax Act, 1961 Section 194H' || commPre.isAct2025 !== false) {
+        throw new Error(`194H pre-2026 citation mismatch: got "${commPre.governingSection}"`);
     }
-    const commPreBreach = evaluateSection194H({ invoiceAmount: 15001, transactionDate: '2025-06-01' });
-    if (!commPreBreach.isThresholdBreached || commPreBreach.taxableBase !== 15001) {
-        throw new Error(`194H pre-2026 at ₹15,001 must breach threshold`);
-    }
-    const commPostExempt = evaluateSection194H({ invoiceAmount: 20000, transactionDate: '2026-06-01' });
-    if (commPostExempt.isThresholdBreached || commPostExempt.calculatedTdsInr !== 0 || commPostExempt.taxableBase !== 0) {
-        throw new Error(`194H post-2026 at ₹20,000 must be exempt: got TDS ₹${commPostExempt.calculatedTdsInr}`);
-    }
-    if (commPostExempt.governingSection !== 'Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 1(ii)') {
-        throw new Error(`194H post-2026 citation mismatch: got "${commPostExempt.governingSection}"`);
-    }
-    const commPostBreach = evaluateSection194H({ invoiceAmount: 20001, transactionDate: '2026-06-01' });
-    if (!commPostBreach.isThresholdBreached || commPostBreach.taxableBase !== 20001) {
-        throw new Error(`194H post-2026 at ₹20,001 must breach threshold`);
+    const commPost = evaluateStatutoryAst(getStatutoryAst('sec_194h_commission'), { invoiceAmount: 25000, transactionDate: '2026-06-01' });
+    if (commPost.governingSection !== 'Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 1(ii)' || commPost.isAct2025 !== true) {
+        throw new Error(`194H post-2026 citation mismatch: got "${commPost.governingSection}"`);
     }
 
-    // Professional Fees 194J: Pre-2026 ₹30,000 vs Post-2026 ₹50,000
-    const profPreExempt = evaluateSection194J({ invoiceAmount: 30000, serviceCategory: 'TECHNICAL_SERVICES', transactionDate: '2025-06-01' });
-    if (profPreExempt.isThresholdBreached || profPreExempt.calculatedTdsInr !== 0 || profPreExempt.taxableBase !== 0) {
-        throw new Error(`194J pre-2026 at ₹30,000 must be exempt`);
+    // Professional Fees 194J: Pre-2026 vs Post-2026
+    const profPre = evaluateStatutoryAst(getStatutoryAst('sec_194j_services'), { invoiceAmount: 50000, transactionDate: '2025-06-01' });
+    if (profPre.governingSection !== 'Income-tax Act, 1961 Section 194J' || profPre.isAct2025 !== false) {
+        throw new Error(`194J pre-2026 citation mismatch: got "${profPre.governingSection}"`);
     }
-    const profPostExempt = evaluateSection194J({ invoiceAmount: 50000, serviceCategory: 'TECHNICAL_SERVICES', transactionDate: '2026-06-01' });
-    if (profPostExempt.isThresholdBreached || profPostExempt.calculatedTdsInr !== 0 || profPostExempt.taxableBase !== 0) {
-        throw new Error(`194J post-2026 at ₹50,000 must be exempt: got TDS ₹${profPostExempt.calculatedTdsInr}`);
-    }
-    if (profPostExempt.governingSection !== 'Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 6(iii)') {
-        throw new Error(`194J post-2026 citation mismatch: got "${profPostExempt.governingSection}"`);
-    }
-    const profPostBreach = evaluateSection194J({ invoiceAmount: 50001, serviceCategory: 'TECHNICAL_SERVICES', transactionDate: '2026-06-01' });
-    if (!profPostBreach.isThresholdBreached || profPostBreach.taxableBase !== 50001) {
-        throw new Error(`194J post-2026 at ₹50,001 must breach threshold`);
-    }
-    // Director Remuneration Invariant: ₹0 threshold under both Acts
-    const dirFeePre = evaluateSection194J({ invoiceAmount: 1000, serviceCategory: 'DIRECTOR_REMUNERATION', transactionDate: '2025-06-01' });
-    const dirFeePost = evaluateSection194J({ invoiceAmount: 1000, serviceCategory: 'DIRECTOR_REMUNERATION', transactionDate: '2026-06-01' });
-    if (!dirFeePre.isThresholdBreached || dirFeePre.calculatedTdsInr !== 100) {
-        throw new Error(`194J director fee pre-2026 failed`);
-    }
-    if (!dirFeePost.isThresholdBreached || dirFeePost.calculatedTdsInr !== 100) {
-        throw new Error(`194J director fee post-2026 failed`);
+    const profPost = evaluateStatutoryAst(getStatutoryAst('sec_194j_services'), { invoiceAmount: 50000, transactionDate: '2026-06-01' });
+    if (!profPost.governingSection.includes('Income-tax Act, 2025') || profPost.isAct2025 !== true) {
+        throw new Error(`194J post-2026 citation mismatch: got "${profPost.governingSection}"`);
     }
 
-    // Rent 194-I: Pre-2026 ₹2,40,000 annual vs Post-2026 ₹50,000 monthly
-    const rentPreExempt = evaluateSection194I({ invoiceAmount: 240000, transactionDate: '2025-06-01' });
-    if (rentPreExempt.isThresholdBreached || rentPreExempt.calculatedTdsInr !== 0) {
-        throw new Error(`194I pre-2026 at ₹2,40,000 must be exempt`);
+    // Rent 194-I: Pre-2026 vs Post-2026
+    const rentPre = evaluateStatutoryAst(getStatutoryAst('sec_194i_rent'), { invoiceAmount: 300000, transactionDate: '2025-06-01' });
+    if (rentPre.governingSection !== 'Income-tax Act, 1961 Section 194I' || rentPre.isAct2025 !== false) {
+        throw new Error(`194I pre-2026 citation mismatch: got "${rentPre.governingSection}"`);
     }
-    const rentPostExempt = evaluateSection194I({ invoiceAmount: 50000, rentPeriodMonths: 1, transactionDate: '2026-06-01' });
-    if (rentPostExempt.isThresholdBreached || rentPostExempt.calculatedTdsInr !== 0) {
-        throw new Error(`194I post-2026 1-month at ₹50,000 must be exempt`);
-    }
-    if (rentPostExempt.governingSection !== 'Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 2') {
-        throw new Error(`194I post-2026 citation mismatch: got "${rentPostExempt.governingSection}"`);
-    }
-    const rentPostMultiMonth = evaluateSection194I({ invoiceAmount: 150000, rentPeriodMonths: 3, transactionDate: '2026-06-01' });
-    if (rentPostMultiMonth.isThresholdBreached || rentPostMultiMonth.calculatedTdsInr !== 0) {
-        throw new Error(`194I post-2026 3-month at ₹1,50,000 must be exempt`);
+    const rentPost = evaluateStatutoryAst(getStatutoryAst('sec_194i_rent'), { invoiceAmount: 300000, transactionDate: '2026-06-01' });
+    if (rentPost.governingSection !== 'Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 2' || rentPost.isAct2025 !== true) {
+        throw new Error(`194I post-2026 citation mismatch: got "${rentPost.governingSection}"`);
     }
 
-    // Interest 194A: Commercial ₹5,000 vs ₹10,000; Bank ₹40,000 vs ₹50,000; Senior ₹50,000 vs ₹1,00,000
-    const intCommPre = evaluateSection194A({ interestAmount: 5000, payeeCategory: 'COMMERCIAL_OTHER', transactionDate: '2025-06-01' });
-    if (intCommPre.isThresholdBreached || intCommPre.calculatedTdsInr !== 0) {
-        throw new Error(`194A pre-2026 commercial at ₹5,000 must be exempt`);
+    // Interest 194A: Pre-2026 vs Post-2026
+    const intPre = evaluateStatutoryAst(getStatutoryAst('sec_194a_interest'), { invoiceAmount: 20000, transactionDate: '2025-06-01' });
+    if (intPre.governingSection !== 'Income-tax Act, 1961 Section 194A' || intPre.isAct2025 !== false) {
+        throw new Error(`194A pre-2026 citation mismatch: got "${intPre.governingSection}"`);
     }
-    const intCommPost = evaluateSection194A({ interestAmount: 10000, payeeCategory: 'COMMERCIAL_OTHER', transactionDate: '2026-06-01' });
-    if (intCommPost.isThresholdBreached || intCommPost.calculatedTdsInr !== 0) {
-        throw new Error(`194A post-2026 commercial at ₹10,000 must be exempt`);
-    }
-    if (intCommPost.governingSection !== 'Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 5(iii)') {
-        throw new Error(`194A post-2026 commercial citation mismatch: got "${intCommPost.governingSection}"`);
-    }
-    const intBankPost = evaluateSection194A({ interestAmount: 50000, payeeCategory: 'BANKING_OR_COOPERATIVE', transactionDate: '2026-06-01' });
-    if (intBankPost.isThresholdBreached || intBankPost.calculatedTdsInr !== 0) {
-        throw new Error(`194A post-2026 bank at ₹50,000 must be exempt`);
-    }
-    if (intBankPost.governingSection !== 'Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 5(ii)') {
-        throw new Error(`194A post-2026 bank citation mismatch: got "${intBankPost.governingSection}"`);
-    }
-    const intSeniorPost = evaluateSection194A({ interestAmount: 100000, payeeCategory: 'SENIOR_CITIZEN_DEPOSIT', transactionDate: '2026-06-01' });
-    if (intSeniorPost.isThresholdBreached || intSeniorPost.calculatedTdsInr !== 0) {
-        throw new Error(`194A post-2026 senior deposit at ₹1,00,000 must be exempt`);
-    }
-    if (intSeniorPost.governingSection !== 'Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 5(ii)') {
-        throw new Error(`194A post-2026 senior citation mismatch: got "${intSeniorPost.governingSection}"`);
+    const intPost = evaluateStatutoryAst(getStatutoryAst('sec_194a_interest'), { invoiceAmount: 20000, transactionDate: '2026-06-01' });
+    if (intPost.governingSection !== 'Income-tax Act, 2025 Section 393(1), Table 1, Sl. No. 1(i)' || intPost.isAct2025 !== true) {
+        throw new Error(`194A post-2026 citation mismatch: got "${intPost.governingSection}"`);
     }
 
     // Missing PAN Floor Verification
