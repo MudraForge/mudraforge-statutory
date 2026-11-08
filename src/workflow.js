@@ -903,9 +903,10 @@ export function publishWorkflowRelease(params = {}) {
 
     // 5. Publish to npm registry
     if (!skipNpm) {
-        const publishRes = spawnSync('npm', ['publish', '--access', 'public'], { cwd, encoding: 'utf8', stdio: 'inherit' });
-        if (publishRes.status !== 0) {
-            throw new Error(`[@mudraforge/statutory] NPM publish failed with code ${publishRes.status}.`);
+        try {
+            execSync('npm publish --access public', { cwd, stdio: 'inherit' });
+        } catch (err) {
+            throw new Error(`[@mudraforge/statutory] NPM publish failed: ${err.message}`);
         }
     }
 
