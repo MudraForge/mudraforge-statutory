@@ -1,6 +1,6 @@
 {
   "name": "@mudraforge/statutory",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Open Knowledge Format (OKF) client & AI Agent Skill for Indian and cross-border statutory tax provisions. Zero dependencies.",
   "type": "module",
   "main": "src/index.js",
@@ -94,11 +94,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mondeep0123/mudraforge-statutory.git"
+    "url": "git+https://github.com/MudraForge/mudraforge-statutory.git"
   },
   "homepage": "https://mudraforge.in/docs",
   "bugs": {
-    "url": "https://github.com/mondeep0123/mudraforge-statutory/issues"
+    "url": "https://github.com/MudraForge/mudraforge-statutory/issues"
   },
   "keywords": [
     "tax",

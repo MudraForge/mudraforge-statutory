@@ -4,7 +4,7 @@
 > *MudraForge Adesha is an autonomous organizational AI for commercial finance and accounts payable. Its statutory knowledge and deterministic calculation layer is open-sourced here as `@mudraforge/statutory` so engineering teams, Chief Financial Officers, and tax practitioners can independently inspect, verify, and trust the legal and computational foundation it runs on.*
 
 [![npm version](https://img.shields.io/npm/v/@mudraforge/statutory.svg)](https://www.npmjs.com/package/@mudraforge/statutory)
-[![CI](https://github.com/mondeep0123/mudraforge-statutory/actions/workflows/ci.yml/badge.svg)](https://github.com/mondeep0123/mudraforge-statutory/actions/workflows/ci.yml)
+[![CI](https://github.com/MudraForge/mudraforge-statutory/actions/workflows/ci.yml/badge.svg)](https://github.com/MudraForge/mudraforge-statutory/actions/workflows/ci.yml)
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](./LICENSE)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-0%20(Pure%20Node.js)-success.svg)](https://nodejs.org)
 [![Specification: OKF 0.2](https://img.shields.io/badge/Specification-Google%20OKF%20v0.2-green.svg)](https://cloud.google.com/blog)

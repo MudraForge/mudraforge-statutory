@@ -33,7 +33,7 @@ To ensure complete clarity for developers, auditors, and enterprise clients, Mud
 
 | Tier | Component | Repository & Distribution | Pricing & License | Operational Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **Tier 1** | **Open-Source Statutory Commons** (`@mudraforge/statutory`) | Public GitHub (`mondeep0123/mudraforge-statutory`) & NPM Registry | **100% Free** (MIT License / CC BY 4.0 Data) | **`CURRENT_PRODUCTION`** (Working offline software) |
+| **Tier 1** | **Open-Source Statutory Commons** (`@mudraforge/statutory`) | Public GitHub (`MudraForge/mudraforge-statutory`) & NPM Registry | **100% Free** (MIT License / CC BY 4.0 Data) | **`CURRENT_PRODUCTION`** (Working offline software) |
 | **Tier 2** | **Hosted Statutory API & Edge Sync** | Cloudflare Global Anycast Edge (`api.mudraforge.in`) | Best-Effort Free Beta (Metered Cloud API) | **`CURRENT_BETA`** (Edge endpoints & caching) |
 | **Tier 3** | **Commercial Adesha Runtime** | Enterprise Private VPC / On-Premise Worker Deployment | Commercial Enterprise SaaS | **`PILOT_STAGE_INTERNAL`** / **`SANDBOX_VALIDATED`** |
 

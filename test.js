@@ -6424,7 +6424,7 @@ async function run() {
     {
         // 1. Test getRemoteRepoInfo parsing
         const repoInfo = getRemoteRepoInfo('origin');
-        if (!repoInfo || repoInfo.owner !== 'mondeep0123' || repoInfo.repo !== 'mudraforge-statutory') {
+        if (!repoInfo || !['MudraForge', 'mondeep0123'].includes(repoInfo.owner) || repoInfo.repo !== 'mudraforge-statutory') {
             throw new Error(`getRemoteRepoInfo failed to parse canonical GitHub remote: ${JSON.stringify(repoInfo)}`);
         }
 

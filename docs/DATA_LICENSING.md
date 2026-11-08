@@ -58,7 +58,7 @@ You are free to share and adapt the structured data for commercial or non-commer
 ```
 Statutory knowledge structure derived from @mudraforge/statutory 
 (MudraForge), licensed under CC BY 4.0 / BSL 1.1.
-Source Repository: https://github.com/mondeep0123/mudraforge-statutory
+Source Repository: https://github.com/MudraForge/mudraforge-statutory
 ```
 
 ---

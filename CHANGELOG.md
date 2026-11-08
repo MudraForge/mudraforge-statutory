@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.0.1] - 2026-11-09
+
+### Security
+- **Elimination of Polynomial Regular Expression ReDoS (CodeQL Alerts #11, #12, #13, #14)**:
+  - Replaced catastrophic polynomial regexes in `src/numeric.js` (`cleanNumericAmount`) with deterministic O(1) string parsing (`stripAccountingSuffix`).
+- **Complete URL Substring Sanitization (CodeQL Alert #15)**:
+  - Replaced insecure `.includes('github.com')` substring checks in `src/workflow.js` with anchored regular expression `/^(?:https?:\/\/(?:[a-zA-Z0-9-]+\.)*github\.com\/|git@github\.com:)([\w.-]+\/[\w.-]+?)(?:\.git)?$/`.
+- **Second-Order Command Line Injection Protection (CodeQL Alerts #16, #17)**:
+  - Hardened git command execution in `src/workflow.js` by adding strict alphanumeric whitelisting and character validation via `sanitizeRemoteName()` and `sanitizeGitBranch()`.
+  - Enforced POSIX option terminator (`--`) on git invocations (`ls-remote`) to prevent argument injection attacks via crafted ref names.
+- **Automated Local Security Audit Gate (`scripts/security_audit_gate.js`)**:
+  - Introduced automated sub-50ms static security gate verifying zero runtime dependencies, zero emojis (Rule 20), URL sanitization integrity, ReDoS prevention, and command injection safety.
+  - Integrated into prepublish lifecycle (`prepublishOnly`) and CI parity suite (`npm run ci:local`).
+
+### Changed
+- **Official Organization Migration**:
+  - Transferred official repository coordinates and issue tracker to the MudraForge organization (`https://github.com/MudraForge/mudraforge-statutory`).
+- **CLI Workflow Engine Upgrades**:
+  - Added remote GitHub Actions CI status monitoring (`getRemoteCIStatus`, `waitForRemoteCI`) and CLI command `ci-status [branch]`.
+  - Added pre-merge verification requiring all remote CI checks to pass before merging feature branches.
+
 ## [3.0.0] - 2026-11-08
 
 ### Changed

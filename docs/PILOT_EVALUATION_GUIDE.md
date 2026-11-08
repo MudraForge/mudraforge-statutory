@@ -212,4 +212,4 @@ To schedule an architecture review, receive sample ingestion schemas, or coordin
 - **Enterprise Inquiries**: [hello@mudraforge.in](mailto:hello@mudraforge.in) or [support@mudraforge.in](mailto:support@mudraforge.in)
 - **Direct Founder Contact**: Mondeep Engti at [mondeepe@gmail.com](mailto:mondeepe@gmail.com)
 - **Technical Architecture Documentation**: [https://mudraforge.in/docs](https://mudraforge.in/docs)
-- **Open Trust Anchor Repository**: [https://github.com/mondeep0123/mudraforge-statutory](https://github.com/mondeep0123/mudraforge-statutory)
+- **Open Trust Anchor Repository**: [https://github.com/MudraForge/mudraforge-statutory](https://github.com/MudraForge/mudraforge-statutory)
