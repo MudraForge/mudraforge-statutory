@@ -196,16 +196,12 @@ export function parseTallyDaybookXml(xmlText) {
         const partyName = extractXmlTag(block, 'PARTYLEDGERNAME') || extractXmlTag(block, 'PARTYNAME') || 'Unknown Vendor';
         const gstin = extractXmlTag(block, 'PARTYGSTIN') || extractXmlTag(block, 'GSTIN');
 
-        // Extract amounts from ledger entries
+        // Extract amounts from ledger entries using deterministic non-regex scanner
         let grossAmount = 0;
         let tdsDeducted = 0;
 
-        // Match all <ALLLEDGERENTRIES.LIST> or <LEDGERENTRIES.LIST>
-        const ledgerEntryRegex = /<(?:ALL)?LEDGERENTRIES\.LIST>([\s\S]*?)<\/(?:ALL)?LEDGERENTRIES\.LIST>/gi;
-        let ledgerMatch;
-
-        while ((ledgerMatch = ledgerEntryRegex.exec(block)) !== null) {
-            const entryBlock = ledgerMatch[1];
+        const ledgerBlocks = extractLedgerBlocks(block);
+        for (const entryBlock of ledgerBlocks) {
             const ledger = extractXmlTag(entryBlock, 'LEDGERNAME') || '';
             const rawAmt = extractXmlTag(entryBlock, 'AMOUNT') || '0';
             const amtVal = parseFloat(rawAmt) || 0;
@@ -785,6 +781,30 @@ function formatTallyDate(raw) {
         return `${clean.slice(0, 4)}-${clean.slice(4, 6)}-${clean.slice(6, 8)}`;
     }
     return normalizeIsoDate(clean);
+}
+
+function extractLedgerBlocks(xmlBlock) {
+    const blocks = [];
+    if (!xmlBlock || typeof xmlBlock !== 'string') return blocks;
+    const lower = xmlBlock.toLowerCase();
+    const tags = ['allledgerentries.list', 'ledgerentries.list'];
+    for (const tag of tags) {
+        const openPrefix = `<${tag}`;
+        const closeTag = `</${tag}>`;
+        let startIdx = 0;
+        while (startIdx < lower.length) {
+            const openIdx = lower.indexOf(openPrefix, startIdx);
+            if (openIdx === -1) break;
+            const tagEnd = lower.indexOf('>', openIdx);
+            if (tagEnd === -1) break;
+            const contentStart = tagEnd + 1;
+            const closeIdx = lower.indexOf(closeTag, contentStart);
+            if (closeIdx === -1) break;
+            blocks.push(xmlBlock.slice(contentStart, closeIdx));
+            startIdx = closeIdx + closeTag.length;
+        }
+    }
+    return blocks;
 }
 
 function extractXmlTag(xmlBlock, tagName) {

@@ -375,7 +375,6 @@ export async function probeUrlLiveness(url, options = {}) {
                 port: parsed.port || 443,
                 path: parsed.pathname + parsed.search,
                 method: 'GET',
-                rejectUnauthorized: false, // Trust Indian Govt NIC PKI root certificates
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 MudraForge-Statutory-Verifier/2.8.1',
                     'Accept': 'text/html,application/xhtml+xml,application/xml,application/pdf;q=0.9,*/*;q=0.8',
@@ -438,13 +437,8 @@ export async function probeUrlLiveness(url, options = {}) {
                     if (isPdf) {
                         textBody = buffer.toString('latin1').toLowerCase();
                     } else {
-                        // Strip HTML tags and scripts
-                        const rawHtml = buffer.toString('utf8');
-                        textBody = rawHtml
-                            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
-                            .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
-                            .replace(/<[^>]+>/g, ' ')
-                            .toLowerCase();
+                        // Inspect raw HTML text for semantic keyword matches
+                        textBody = buffer.toString('utf8').toLowerCase();
                     }
 
                     // Normalized URL string for path-token matching

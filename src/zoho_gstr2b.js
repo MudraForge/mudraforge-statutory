@@ -665,6 +665,20 @@ export function normalizeInvoiceNumber(raw) {
 }
 
 /**
+ * Deterministically checks if category/description indicates commercial immovable property renting.
+ * Replaces polynomial backtracking regexes to eliminate ReDoS vulnerabilities.
+ *
+ * @param {string} text
+ * @returns {boolean}
+ */
+export function isCommercialRentCategory(text) {
+    if (!text || typeof text !== 'string') return false;
+    const lower = text.toLowerCase();
+    if (!lower.includes('rent')) return false;
+    return lower.includes('commercial') || lower.includes('office') || lower.includes('property') || lower.includes('warehouse') || lower.includes('godown');
+}
+
+/**
  * Normalizes and validates a GSTIN string.
  *
  * @param {string} raw
@@ -756,7 +770,7 @@ export function parseZohoBillsCsv(csvText) {
         const rawSgst = colIndex.sgst !== -1 ? row[colIndex.sgst] : '0';
         const rawIgst = colIndex.igst !== -1 ? row[colIndex.igst] : '0';
 
-        const isCommercialRentRcm = /commercial.*rent|office.*rent|property.*rent|warehouse.*rent|renting.*commercial/i.test(category) &&
+        const isCommercialRentRcm = isCommercialRentCategory(category) &&
             (!normalizedGstinObj.gstin || normalizedGstinObj.gstin === 'UNREGISTERED' || normalizedGstinObj.gstin.length < 15) &&
             (!billDate || billDate >= '2024-10-10');
         const isRcm = Boolean((colIndex.isRcm !== -1 ? /true|yes|y|1/i.test(row[colIndex.isRcm] || '') : false) || isCommercialRentRcm);
@@ -861,7 +875,7 @@ export function parseZohoBillsJson(jsonData) {
         }
 
         const billDateNorm = normalizeIsoDate(b.date || b.bill_date);
-        const isCommercialRentRcm = /commercial.*rent|office.*rent|property.*rent|warehouse.*rent|renting.*commercial/i.test(category) &&
+        const isCommercialRentRcm = isCommercialRentCategory(category) &&
             (!normalizedGstinObj.gstin || normalizedGstinObj.gstin === 'UNREGISTERED' || normalizedGstinObj.gstin.length < 15) &&
             (!billDateNorm || billDateNorm >= '2024-10-10');
         const isRcm = Boolean(b.is_reverse_charge_applied || b.reverse_charge_vat_registered || b.is_rcm || isCommercialRentRcm);
@@ -1189,7 +1203,7 @@ export function reconcileZohoGstr2b({ zohoBills, gstr2b, options = {} }) {
         const isBlocked17_5 = typeof b.isBlocked17_5 === 'boolean' ? b.isBlocked17_5 : /motor|vehicle|food|beverage|catering|club|fitness|personal|gift/i.test(b.category || '');
 
         const descText = Array.isArray(b.lineItems) ? b.lineItems.map(l => l.description || '').join(' ') : '';
-        const isCommercialRent = /commercial.*rent|office.*rent|property.*rent|warehouse.*rent|renting.*commercial|godown.*rent/i.test((b.category || '') + ' ' + descText) || Boolean(b.isCommercialRent || b.isCommercialRentRcm);
+        const isCommercialRent = isCommercialRentCategory((b.category || '') + ' ' + descText) || Boolean(b.isCommercialRent || b.isCommercialRentRcm);
         const isUnregLandlord = (!vendorGstin || vendorGstin === 'UNREGISTERED' || vendorGstin.length < 15);
         const billDateStr = b.billDate || null;
 

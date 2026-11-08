@@ -125,15 +125,15 @@ export function cleanNumericAmount(val, options = {}) {
             // Explicit leading minus with possible whitespace: "- ₹ 1,500.00" or "-1500"
             isNegative = true;
             s = s.replace(/^\s*-\s*/, '').trim();
-        } else if (/(?:\s+)?(?:cr|credit)\.?$/i.test(s)) {
+        } else if (/\s*(?:cr|credit)\.?$/i.test(s)) {
             // Accounting credit suffix: "1,500.00 CR"
             if (interpretCreditAsNegative) {
                 isNegative = true;
             }
-            s = s.replace(/(?:\s+)?(?:cr|credit)\.?$/i, '').trim();
-        } else if (/(?:\s+)?(?:dr|debit)\.?$/i.test(s)) {
+            s = s.replace(/\s*(?:cr|credit)\.?$/i, '').trim();
+        } else if (/\s*(?:dr|debit)\.?$/i.test(s)) {
             // Accounting debit suffix: "1,500.00 DR"
-            s = s.replace(/(?:\s+)?(?:dr|debit)\.?$/i, '').trim();
+            s = s.replace(/\s*(?:dr|debit)\.?$/i, '').trim();
         }
 
         // Strip remaining currency symbols, commas, and currency labels

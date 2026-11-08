@@ -9,7 +9,6 @@ const DOCS_DIR = path.join(ROOT_DIR, 'docs');
 
 function slugify(text) {
     return text.toLowerCase().trim()
-        .replace(/<[^>]+>/g, '')
         .replace(/[^\w\s-]/g, '')
         .replace(/\s+/g, '-');
 }
