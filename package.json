@@ -89,8 +89,8 @@
     "manifest:check": "node scripts/generate_manifest.js --check",
     "watchtower": "node scripts/watchtower.js",
     "catalog": "node scripts/build_catalog.js",
-    "size": "export-size .",
-    "size:report": "export-size . --report",
+    "size": "npx export-size .",
+    "size:report": "npx export-size . --report",
     "diagnose": "node ../../mudraforge-sarvam/tools/diagnose_dual_repositories.js",
     "release": "node scripts/release.js"
   },
@@ -119,8 +119,5 @@
     "okf"
   ],
   "author": "MudraForge Technologies <engineering@mudraforge.in>",
-  "license": "BUSL-1.1 AND CC-BY-4.0",
-  "devDependencies": {
-    "export-size": "^0.9.0"
-  }
+  "license": "BUSL-1.1 AND CC-BY-4.0"
 }
