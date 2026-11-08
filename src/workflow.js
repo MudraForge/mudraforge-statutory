@@ -371,6 +371,14 @@ export function createWorkflowCommit(params) {
 
     // 4. Run automated pre-commit verification gates
     if (!skipPreCommitChecks) {
+        const securityAuditScript = path.join(cwd, 'scripts', 'security_audit_gate.js');
+        if (fs.existsSync(securityAuditScript)) {
+            const secRes = spawnSync('node', [securityAuditScript], { cwd, encoding: 'utf8' });
+            if (secRes.status !== 0) {
+                throw new Error(`[@mudraforge/statutory] Pre-commit security audit gate failed:\n${secRes.stderr || secRes.stdout}`);
+            }
+        }
+
         const manifestCheckScript = path.join(cwd, 'scripts', 'generate_manifest.js');
         if (fs.existsSync(manifestCheckScript)) {
             const manifestRes = spawnSync('node', [manifestCheckScript, '--check'], { cwd, encoding: 'utf8' });
@@ -446,9 +454,15 @@ export function pushWorkflowBranch(params = {}) {
     } catch (_) {}
 
     let prUrl = null;
-    if (repoUrl.includes('github.com')) {
-        const cleanRepo = repoUrl.replace(/^.*github\.com[:\/]/, '').replace(/\.git$/, '');
-        prUrl = `https://github.com/${cleanRepo}/pull/new/${currentBranch}`;
+    if (typeof repoUrl === 'string' && repoUrl.length > 0) {
+        // Strict match against canonical GitHub SSH or HTTPS remotes
+        // e.g. https://github.com/owner/repo.git or git@github.com:owner/repo.git
+        const githubMatch = repoUrl.match(/^(?:https?:\/\/(?:[a-zA-Z0-9-]+\.)*github\.com\/|git@github\.com:)([\w.-]+\/[\w.-]+?)(?:\.git)?$/);
+        if (githubMatch) {
+            const cleanRepo = githubMatch[1];
+            const safeBranch = currentBranch.split('/').map(encodeURIComponent).join('/');
+            prUrl = `https://github.com/${cleanRepo}/pull/new/${safeBranch}`;
+        }
     }
 
     const event = appendWorkflowJournal({

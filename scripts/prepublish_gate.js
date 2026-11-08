@@ -20,13 +20,14 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
 const steps = [
-    { name: '1/7: Cryptographic Merkle Manifest Verification', cmd: 'node scripts/generate_manifest.js --check' },
-    { name: '2/7: OKF v0.2 Schema & Provenance Validation', cmd: 'node scripts/validate_okf.js' },
-    { name: '3/7: Primary Citation & Trust Anchor Integrity Audit', cmd: 'node scripts/verify_citation_links.js' },
-    { name: '4/7: OKF Conformance Specification Suite', cmd: 'node conformance/test_conformance.js' },
-    { name: '5/7: Package Export Linting (publint)', cmd: 'npx --yes publint' },
-    { name: '6/7: TypeScript Export Resolution (@arethetypeswrong/cli)', cmd: 'npx --yes @arethetypeswrong/cli --pack . --profile esm-only' },
-    { name: '7/7: Multi-Domain Ground Truth Regression Test Suite', cmd: 'node test.js' }
+    { name: '1/8: Static Security & Anti-Pattern Audits (CodeQL Parity)', cmd: 'node scripts/security_audit_gate.js' },
+    { name: '2/8: Cryptographic Merkle Manifest Verification', cmd: 'node scripts/generate_manifest.js --check' },
+    { name: '3/8: OKF v0.2 Schema & Provenance Validation', cmd: 'node scripts/validate_okf.js' },
+    { name: '4/8: Primary Citation & Trust Anchor Integrity Audit', cmd: 'node scripts/verify_citation_links.js' },
+    { name: '5/8: OKF Conformance Specification Suite', cmd: 'node conformance/test_conformance.js' },
+    { name: '6/8: Package Export Linting (publint)', cmd: 'npx --yes publint' },
+    { name: '7/8: TypeScript Export Resolution (@arethetypeswrong/cli)', cmd: 'npx --yes @arethetypeswrong/cli --pack . --profile esm-only' },
+    { name: '8/8: Multi-Domain Ground Truth Regression Test Suite', cmd: 'node test.js' }
 ];
 
 console.log('═══════════════════════════════════════════════════════════════════════════');

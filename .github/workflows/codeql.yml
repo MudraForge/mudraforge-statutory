@@ -1,0 +1,39 @@
+name: "CodeQL Security Analysis"
+
+on:
+  push:
+    branches: [ main, 'feat/**', 'fix/**', 'refactor/**' ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'javascript-typescript' ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@6bb034414c761b303577800539fb5986521e3977 # v3.28.11
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@6bb034414c761b303577800539fb5986521e3977 # v3.28.11
+        with:
+          category: "/language:${{ matrix.language }}"

@@ -31,6 +31,9 @@ jobs:
       - name: Verify Zero Dependency Audit
         run: npm audit --audit-level=high
 
+      - name: Verify Static Security & Anti-Pattern Audits (CodeQL Parity)
+        run: node scripts/security_audit_gate.js
+
       - name: Verify Cryptographic Manifest Integrity
         run: node scripts/generate_manifest.js --check
 

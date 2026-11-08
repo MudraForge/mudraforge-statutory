@@ -55,6 +55,39 @@ export function assertMandatoryNumeric(val, fieldName, functionName, options = {
 }
 
 /**
+ * Strips accounting suffix (CR/Credit/DR/Debit) deterministically without regular expressions.
+ * Guarantees O(1) evaluation time and zero risk of polynomial ReDoS backtracking.
+ *
+ * @param {string} str
+ * @returns {{ type: 'CR'|'DR', stripped: string } | null}
+ */
+function stripAccountingSuffix(str) {
+    if (typeof str !== 'string' || !str) return null;
+    const trimmed = str.trimEnd();
+    const lower = trimmed.toLowerCase();
+
+    // Check credit suffixes: 'credit.', 'credit', 'cr.', 'cr'
+    for (const suffix of ['credit.', 'credit', 'cr.', 'cr']) {
+        if (lower.endsWith(suffix)) {
+            const cutIdx = trimmed.length - suffix.length;
+            const stripped = trimmed.slice(0, cutIdx).trimEnd();
+            return { type: 'CR', stripped };
+        }
+    }
+
+    // Check debit suffixes: 'debit.', 'debit', 'dr.', 'dr'
+    for (const suffix of ['debit.', 'debit', 'dr.', 'dr']) {
+        if (lower.endsWith(suffix)) {
+            const cutIdx = trimmed.length - suffix.length;
+            const stripped = trimmed.slice(0, cutIdx).trimEnd();
+            return { type: 'DR', stripped };
+        }
+    }
+
+    return null;
+}
+
+/**
  * Safely normalizes numeric inputs from numbers, strings with currency symbols (₹, $, €, Rs, INR),
  * thousands separators (commas), and whitespace into valid finite numbers.
  * 
@@ -114,26 +147,26 @@ export function cleanNumericAmount(val, options = {}) {
         s = s.replace(/^(?:₹|\$|€|INR|Rs\.?)\s*/i, '');
 
         // Accounting parentheses: (1,500.00) or (₹ 1,500.00)
-        if (/^\(.*\)$/.test(s)) {
+        if (s.startsWith('(') && s.endsWith(')')) {
             isNegative = true;
             s = s.slice(1, -1).trim();
-        } else if (/-\s*$/.test(s)) {
+        } else if (s.endsWith('-')) {
             // Trailing minus from legacy ERP dumps: "1,500.00-"
             isNegative = true;
-            s = s.replace(/-\s*$/, '').trim();
-        } else if (/^\s*-\s*/.test(s)) {
+            s = s.slice(0, -1).trim();
+        } else if (s.startsWith('-')) {
             // Explicit leading minus with possible whitespace: "- ₹ 1,500.00" or "-1500"
             isNegative = true;
-            s = s.replace(/^\s*-\s*/, '').trim();
-        } else if (/\s*(?:cr|credit)\.?$/i.test(s)) {
-            // Accounting credit suffix: "1,500.00 CR"
-            if (interpretCreditAsNegative) {
-                isNegative = true;
+            s = s.slice(1).trim();
+        } else {
+            // Accounting credit/debit suffixes parsed deterministically without regex backtracking
+            const suffixResult = stripAccountingSuffix(s);
+            if (suffixResult) {
+                if (suffixResult.type === 'CR' && interpretCreditAsNegative) {
+                    isNegative = true;
+                }
+                s = suffixResult.stripped;
             }
-            s = s.replace(/\s*(?:cr|credit)\.?$/i, '').trim();
-        } else if (/\s*(?:dr|debit)\.?$/i.test(s)) {
-            // Accounting debit suffix: "1,500.00 DR"
-            s = s.replace(/\s*(?:dr|debit)\.?$/i, '').trim();
         }
 
         // Strip remaining currency symbols, commas, and currency labels
