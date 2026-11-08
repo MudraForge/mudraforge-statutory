@@ -186,6 +186,7 @@ export function resolveTemporalCrystallization(triggerPolicy, facts, cutoverDate
  * @returns {Object} Fiduciary statutory evaluation voucher
  */
 export function evaluateStatutoryAst(ruleAst, facts = {}) {
+    facts = (facts && typeof facts === 'object') ? facts : {};
     // 1. Strict AST validation
     validateStatutoryAst(ruleAst);
 
