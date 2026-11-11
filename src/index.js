@@ -20,7 +20,12 @@ import {
     getStatutoryAst,
     validateStatutoryAst,
     toBigIntPaise,
-    fromBigIntPaise
+    fromBigIntPaise,
+    evaluateExpression,
+    executeDeclarativePipeline,
+    UNIVERSAL_OPERATORS,
+    parseInfixExpression,
+    UniversalStatutoryVM
 } from './usvm/index.js';
 import {
     roundToPaisa,
@@ -1856,6 +1861,17 @@ export class StatutoryClient {
         return evaluateStatutoryAst(ast, facts, options);
     }
 
+    evaluateAst(ruleAst, facts, options = {}) {
+        return this.evaluateStatutoryAst(ruleAst, facts, options);
+    }
+
+    get vm() {
+        if (!this._vm) {
+            this._vm = new UniversalStatutoryVM();
+        }
+        return this._vm;
+    }
+
     /**
      * Parse raw Tally or ERP daybook CSV text into normalized vouchers.
      * @param {string} csvText
@@ -3124,7 +3140,12 @@ export {
     getStatutoryAst,
     validateStatutoryAst,
     toBigIntPaise,
-    fromBigIntPaise
+    fromBigIntPaise,
+    evaluateExpression,
+    executeDeclarativePipeline,
+    UNIVERSAL_OPERATORS,
+    parseInfixExpression,
+    UniversalStatutoryVM
 };
 
 export {

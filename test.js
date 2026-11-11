@@ -40,6 +40,12 @@ import {
     assertMandatoryNumeric,
     resolveMissingPanPenaltyFloor,
     evaluateStatutoryAst,
+    validateStatutoryAst,
+    evaluateExpression,
+    executeDeclarativePipeline,
+    UNIVERSAL_OPERATORS,
+    parseInfixExpression,
+    UniversalStatutoryVM,
     getStatutoryAst,
     getStatutoryOutcomes,
     explainStatutoryDisposition,
@@ -6457,8 +6463,367 @@ async function run() {
         console.log(`[PASS] Remote CI Verification & Pre-Merge Gate Engine Verified: Repo [${repoInfo.owner}/${repoInfo.repo}] status=${ciStatus.status}, total=${ciStatus.total}, passed=${ciStatus.passed}`);
     }
 
+    // 169. Universal Statutory Virtual Machine (USVM) Declarative Expression Pipeline & Infix Engine
+    console.log('\n── Test 169: USVM Universal Declarative Expression Pipeline & Infix Engine ──');
+    {
+        // 1. Operator Allowlist Integrity (Pure General-Purpose ALU, No Domain Cheats)
+        if (UNIVERSAL_OPERATORS.includes('THRESHOLD_EXCESS')) {
+            throw new Error('Security/Architecture violation: Custom domain opcode THRESHOLD_EXCESS found in ALU');
+        }
+        const requiredPrimitives = ['ADD', 'SUB', 'MUL', 'DIV', 'MOD', 'MIN', 'MAX', 'CLAMP', 'RATIONAL_MULTIPLY', 'EQ', 'GT', 'LT', 'CONDITIONAL', 'SWITCH'];
+        for (const prim of requiredPrimitives) {
+            if (!UNIVERSAL_OPERATORS.includes(prim)) {
+                throw new Error(`ALU missing primitive operator: ${prim}`);
+            }
+        }
+
+        // 2. Pure ALU Section 194Q Excess Math: max(0, min(current, prior + current - threshold))
+        const pureAluAst = {
+            sectionId: 'SEC_194Q_PURE_ALU',
+            version: '3.0.0',
+            governingStatute: 'Income-tax Act, 1961',
+            statutorySection: 'Section 194Q',
+            triggerPolicy: { type: 'EARLIER_OF', events: ['BOOK_CREDIT', 'PAYMENT_DISBURSEMENT'] },
+            guards: [
+                {
+                    id: 'RESIDENT_PAYEE_GUARD',
+                    field: 'payee.isResident',
+                    operator: 'IS_TRUE',
+                    onMismatch: { action: 'HALT_EXEMPT', disposition: 'EXEMPT_NON_RESIDENT' }
+                }
+            ],
+            computation: {
+                archetype: 'DECLARATIVE_PIPELINE',
+                thresholdPaisa: '500000000', // ₹50 Lakhs
+                standardRateBps: 10,          // 0.1%
+                steps: [
+                    {
+                        assign: 'isThresholdBreached',
+                        expr: {
+                            op: 'GT',
+                            left: {
+                                op: 'ADD',
+                                left: { var: 'facts.priorPurchasesPaisa' },
+                                right: { var: 'facts.currentInvoicePaisa' }
+                            },
+                            right: { var: 'rules.thresholdPaisa' }
+                        }
+                    },
+                    {
+                        assign: 'taxableBasePaisa',
+                        expr: {
+                            op: 'MAX',
+                            left: 0n,
+                            right: {
+                                op: 'MIN',
+                                left: { var: 'facts.currentInvoicePaisa' },
+                                right: {
+                                    op: 'SUB',
+                                    left: {
+                                        op: 'ADD',
+                                        left: { var: 'facts.priorPurchasesPaisa' },
+                                        right: { var: 'facts.currentInvoicePaisa' }
+                                    },
+                                    right: { var: 'rules.thresholdPaisa' }
+                                }
+                            }
+                        }
+                    },
+                    {
+                        assign: 'tdsAmountPaisa',
+                        expr: {
+                            op: 'RATIONAL_MULTIPLY',
+                            base: { var: 'vars.taxableBasePaisa' },
+                            rateBps: { var: 'rules.effectiveRateBps' },
+                            denominator: 10000
+                        }
+                    }
+                ],
+                output: {
+                    isThresholdBreached: { var: 'vars.isThresholdBreached' },
+                    taxableBasePaisa: { var: 'vars.taxableBasePaisa' },
+                    tdsAmountPaisa: { var: 'vars.tdsAmountPaisa' },
+                    disposition: {
+                        op: 'CONDITIONAL',
+                        test: { var: 'vars.isThresholdBreached' },
+                        then: 'SECTION_194Q_DEDUCTION_MANDATORY',
+                        else: 'EXEMPT_BELOW_STATUTORY_THRESHOLD'
+                    }
+                }
+            }
+        };
+
+        validateStatutoryAst(pureAluAst);
+
+        const v1 = evaluateStatutoryAst(pureAluAst, {
+            invoiceAmount: 8000000,
+            priorPurchasesInCurrentFyInr: 4000000,
+            payee: { isResident: true },
+            hasPan: true,
+            transactionDate: '2025-08-15'
+        });
+
+        if (v1.isAuthorizedToDisburse !== false) throw new Error('Statutory invariant violated');
+        if (v1.taxableBase !== 7000000) throw new Error(`Taxable base mismatch: expected 7000000, got ${v1.taxableBase}`);
+        if (v1.calculatedTdsInr !== 7000) throw new Error(`TDS mismatch: expected 7000, got ${v1.calculatedTdsInr}`);
+        if (v1.netWireInr !== 7993000) throw new Error(`Net wire mismatch: expected 7993000, got ${v1.netWireInr}`);
+        if (v1.disposition !== 'SECTION_194Q_DEDUCTION_MANDATORY') throw new Error(`Disposition mismatch: got ${v1.disposition}`);
+
+        // 3. Infix Expression Strings (Greenspun Tenth Rule Cure)
+        const infixAst = {
+            sectionId: 'SEC_194Q_INFIX_EXPRESSION',
+            version: '3.0.0',
+            governingStatute: 'Income-tax Act, 1961',
+            statutorySection: 'Section 194Q',
+            triggerPolicy: { type: 'EARLIER_OF', events: ['BOOK_CREDIT', 'PAYMENT_DISBURSEMENT'] },
+            computation: {
+                archetype: 'DECLARATIVE_PIPELINE',
+                thresholdPaisa: '500000000',
+                standardRateBps: 10,
+                steps: [
+                    {
+                        assign: 'isThresholdBreached',
+                        expr: 'facts.priorPurchasesPaisa + facts.currentInvoicePaisa > rules.thresholdPaisa'
+                    },
+                    {
+                        assign: 'taxableBasePaisa',
+                        expr: 'max(0, min(facts.currentInvoicePaisa, facts.priorPurchasesPaisa + facts.currentInvoicePaisa - rules.thresholdPaisa))'
+                    },
+                    {
+                        assign: 'tdsAmountPaisa',
+                        expr: 'rational_mult(vars.taxableBasePaisa, rules.effectiveRateBps, 10000)'
+                    }
+                ],
+                output: {
+                    isThresholdBreached: 'vars.isThresholdBreached',
+                    taxableBasePaisa: 'vars.taxableBasePaisa',
+                    tdsAmountPaisa: 'vars.tdsAmountPaisa',
+                    disposition: "vars.isThresholdBreached ? 'SECTION_194Q_DEDUCTION_MANDATORY' : 'EXEMPT_BELOW_STATUTORY_THRESHOLD'"
+                }
+            }
+        };
+
+        const v2 = evaluateStatutoryAst(infixAst, {
+            invoiceAmount: 8000000,
+            priorPurchasesInCurrentFyInr: 4000000,
+            hasPan: true,
+            transactionDate: '2025-08-15'
+        });
+
+        if (v2.taxableBase !== 7000000 || v2.calculatedTdsInr !== 7000) {
+            throw new Error(`Infix pipeline calculation mismatch: taxableBase=${v2.taxableBase}, tds=${v2.calculatedTdsInr}`);
+        }
+        if (v2.disposition !== 'SECTION_194Q_DEDUCTION_MANDATORY') {
+            throw new Error(`Infix disposition mismatch: got ${v2.disposition}`);
+        }
+
+        // 4. Exotic International Law: Singapore GST Partial Exemption
+        const sgGstAst = {
+            sectionId: 'SG_GST_PARTIAL_EXEMPTION',
+            version: '1.0.0',
+            governingStatute: 'Goods and Services Tax Act 1993 (Singapore)',
+            statutorySection: 'Section 20 & Regulation 28',
+            computation: {
+                archetype: 'DECLARATIVE_PIPELINE',
+                steps: [
+                    {
+                        assign: 'totalInputTaxPaisa',
+                        expr: 'rational_mult(facts.invoiceAmountPaisa, 900, 10000)' // 9% GST
+                    },
+                    {
+                        assign: 'isDeMinimisExempt',
+                        expr: 'facts.exemptSuppliesPaisa <= 4000000 && rational_mult(facts.exemptSuppliesPaisa, 10000, facts.totalSuppliesPaisa) <= 500'
+                    },
+                    {
+                        assign: 'recoverableInputTaxPaisa',
+                        expr: 'vars.isDeMinimisExempt ? vars.totalInputTaxPaisa : proportional(vars.totalInputTaxPaisa, facts.taxableSuppliesPaisa, facts.totalSuppliesPaisa)'
+                    }
+                ],
+                output: {
+                    totalGstPaisa: 'vars.totalInputTaxPaisa',
+                    recoverableGstPaisa: 'vars.recoverableInputTaxPaisa',
+                    isDeMinimisExempt: 'vars.isDeMinimisExempt',
+                    disposition: "vars.isDeMinimisExempt ? 'FULL_INPUT_TAX_RECOVERABLE_DEMINIMIS' : 'PARTIAL_INPUT_TAX_APPORTIONMENT'"
+                }
+            }
+        };
+
+        const sgResult = evaluateStatutoryAst(sgGstAst, {
+            invoiceAmount: 100000, // SGD 100,000 expense
+            exemptSuppliesPaisa: 3000000n, // SGD 30,000 exempt supplies (<= SGD 40,000 threshold)
+            taxableSuppliesPaisa: 97000000n, // SGD 970,000 taxable supplies
+            totalSuppliesPaisa: 100000000n // SGD 1,000,000 total (3% <= 5% ratio threshold)
+        });
+
+        if (sgResult.totalGstPaisa !== 900000n || sgResult.isDeMinimisExempt !== true) {
+            throw new Error(`Singapore GST calculation mismatch: totalGst=${sgResult.totalGstPaisa}, deMinimis=${sgResult.isDeMinimisExempt}`);
+        }
+
+        // 5. Execution Safety & Budget Guards
+        // A) Forbidden Operator Rejection
+        let opRejected = false;
+        try {
+            evaluateExpression({ op: 'EXEC_ARBITRARY_CODE', cmd: 'rm -rf' }, {});
+        } catch (err) {
+            if (err.message.includes('Unsupported or forbidden operator')) opRejected = true;
+        }
+        if (!opRejected) throw new Error('VM failed to reject forbidden operator');
+
+        // B) Max Expression Depth Guard (depth > 16)
+        let deepExpr = { op: 'ADD', left: 1, right: 1 };
+        for (let i = 0; i < 20; i++) {
+            deepExpr = { op: 'ADD', left: deepExpr, right: 1 };
+        }
+        let depthRejected = false;
+        try {
+            evaluateExpression(deepExpr, {});
+        } catch (err) {
+            if (err.message.includes('ERR_AST_DEPTH_EXCEEDED')) depthRejected = true;
+        }
+        if (!depthRejected) throw new Error('VM failed to enforce MAX_EXPRESSION_DEPTH = 16');
+
+        // C) Max Pipeline Step Budget Guard (> 100 steps)
+        const excessiveStepsAst = {
+            sectionId: 'SEC_EXCESSIVE_STEPS',
+            version: '1.0.0',
+            computation: {
+                archetype: 'DECLARATIVE_PIPELINE',
+                steps: Array.from({ length: 105 }, (_, i) => ({
+                    assign: `step_${i}`,
+                    expr: { op: 'ADD', left: 1, right: 1 }
+                }))
+            }
+        };
+        let stepsRejected = false;
+        try {
+            evaluateStatutoryAst(excessiveStepsAst, {});
+        } catch (err) {
+            if (err.message.includes('ERR_STEP_BUDGET_EXHAUSTED')) stepsRejected = true;
+        }
+        if (!stepsRejected) throw new Error('VM failed to enforce MAX_PIPELINE_STEPS = 100');
+
+        console.log('[PASS] USVM Universal Declarative Virtual Machine Verified: Pure ALU primitives, Infix parser lowering, Singapore GST, depth limit 16, step budget 100, and disbursement invariant confirmed.');
+    }
+
+    // 170. USVM Universal First-Order Logic & Bounded Quantifiers
+    console.log('\n── Test 170: USVM Bounded Quantifiers, Scoped Lexical Stacks & UniversalStatutoryVM Class ──');
+    {
+        const vm = new UniversalStatutoryVM();
+
+        // 1. First-Order Quantifier AST
+        const quantifierAst = {
+            sectionId: 'USVM_QUANTIFIER_TEST_SPEC',
+            version: '1.0.0',
+            ruleDomain: 'GENERAL_LOGIC',
+            executionMode: 'DEVELOPMENT',
+            computation: {
+                archetype: 'PURE_LOGIC_PIPELINE',
+                steps: [
+                    {
+                        assign: 'hasExceedingItem',
+                        expr: {
+                            op: 'EXISTS',
+                            iteratorVar: 'item',
+                            collection: 'facts.lineItems',
+                            predicate: { op: 'GT', left: 'item.amount', right: 50000 }
+                        }
+                    },
+                    {
+                        assign: 'allApproved',
+                        expr: {
+                            op: 'FORALL',
+                            iteratorVar: 'item',
+                            collection: 'facts.lineItems',
+                            predicate: { op: 'EQ', left: 'item.approved', right: true }
+                        }
+                    },
+                    {
+                        assign: 'over50kCount',
+                        expr: {
+                            op: 'COUNT',
+                            iteratorVar: 'item',
+                            collection: 'facts.lineItems',
+                            predicate: { op: 'GT', left: 'item.amount', right: 50000 }
+                        }
+                    },
+                    {
+                        assign: 'totalOver50kAmount',
+                        expr: {
+                            op: 'SUM_OVER',
+                            iteratorVar: 'item',
+                            collection: 'facts.lineItems',
+                            body: 'item.amount',
+                            predicate: { op: 'GT', left: 'item.amount', right: 50000 }
+                        }
+                    },
+                    {
+                        assign: 'isCompliant',
+                        expr: {
+                            op: 'IMPLIES',
+                            left: 'vars.hasExceedingItem',
+                            right: 'vars.allApproved'
+                        }
+                    }
+                ],
+                output: {
+                    hasExceedingItem: 'vars.hasExceedingItem',
+                    allApproved: 'vars.allApproved',
+                    over50kCount: 'vars.over50kCount',
+                    totalOver50kAmount: 'vars.totalOver50kAmount',
+                    isCompliant: 'vars.isCompliant',
+                    isAuthorizedToDisburse: false
+                }
+            },
+            statutoryInvariants: { isAuthorizedToDisburse: false }
+        };
+
+        const facts1 = {
+            lineItems: [
+                { id: 'item1', amount: 30000, approved: true },
+                { id: 'item2', amount: 80000, approved: true },
+                { id: 'item3', amount: 60000, approved: false }
+            ]
+        };
+
+        const res1 = vm.evaluate(quantifierAst, facts1);
+        if (res1.hasExceedingItem !== true) throw new Error('Expected hasExceedingItem to be true');
+        if (res1.allApproved !== false) throw new Error('Expected allApproved to be false');
+        if (res1.over50kCount !== 2) throw new Error(`Expected over50kCount to be 2, got ${res1.over50kCount}`);
+        if (res1.totalOver50kAmount !== 140000) throw new Error(`Expected totalOver50kAmount to be 140000, got ${res1.totalOver50kAmount}`);
+        if (res1.isCompliant !== false) throw new Error('Expected isCompliant to be false (true implies false is false)');
+        if (res1.isAuthorizedToDisburse !== false) throw new Error('Invariant breach: isAuthorizedToDisburse must be false');
+
+        // 2. Infix Parser with Quantifier macros: any(), all(), count(), sum_over()
+        const parsedAny = vm.parseInfix('any(item, facts.lineItems, item.amount > 50000)');
+        if (parsedAny.op !== 'EXISTS' || parsedAny.iteratorVar !== 'item') {
+            throw new Error(`Infix any() lowering failed: ${JSON.stringify(parsedAny)}`);
+        }
+
+        const parsedAll = vm.parseInfix('all(item, facts.lineItems, item.approved == true)');
+        if (parsedAll.op !== 'FORALL' || parsedAll.iteratorVar !== 'item') {
+            throw new Error(`Infix all() lowering failed: ${JSON.stringify(parsedAll)}`);
+        }
+
+        // 3. DoS and Bound Safety: MAX_COLLECTION_ITEMS (500)
+        let collectionBounded = false;
+        try {
+            const bigList = Array.from({ length: 505 }, (_, i) => ({ amount: i }));
+            vm.evaluateExpression({
+                op: 'EXISTS',
+                iteratorVar: 'x',
+                collection: 'facts.bigList',
+                predicate: { op: 'GT', left: 'x.amount', right: 10 }
+            }, { facts: { bigList } });
+        } catch (err) {
+            if (err.message.includes('ERR_COLLECTION_BUDGET_EXCEEDED') || err.message.includes('ERR_COLLECTION_LIMIT_EXCEEDED')) collectionBounded = true;
+        }
+        if (!collectionBounded) throw new Error('VM failed to enforce MAX_COLLECTION_ITEMS = 500');
+
+        console.log('[PASS] USVM Bounded Quantifiers, Scoped Lexical Stacks & UniversalStatutoryVM Verified: EXISTS, FORALL, COUNT, SUM_OVER, IMPLIES, infix macros, and DoS bounds confirmed.');
+    }
+
     console.log('\n===========================================================================');
-    console.log('ALL 168 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
+    console.log('ALL 170 TEST SUITES PASSED (100% REPRODUCIBLE PRECISION)');
     console.log('===========================================================================\n');
 }
 

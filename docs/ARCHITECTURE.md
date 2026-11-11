@@ -158,18 +158,21 @@ The journey of an accounts payable transaction from incoming PDF invoice to gene
   - `ledgerHistory`: Verified historical purchases from the same vendor within the active financial year.
 - **Deterministic Computation Algorithms**:
   1. *Declarative AST Rule Traversal*: The USVM kernel (`evaluation_vm.js`, 355 lines) evaluates statutory expressions over facts in <15 microseconds without relying on hardcoded procedural conditionals.
-  2. *Cumulative Threshold Evaluation (Section 194Q)*:
+  2. *Security Boundary & Operator Allowlist*: The AST is strictly declarative data (`ast.json`), never executable code. The virtual machine executes exclusively via a rigid operator allowlist (`+`, `-`, `*`, `/`, `min`, `max`, `floor`, `ceil`, `and`, `or`, `not`, comparison, slab lookups). Dynamic code execution, `eval()`, network calls, and file I/O are structurally impossible.
+  3. *Graph-Driven Symbol Legend Projection (`symbolLegend`)*: The AST dynamically projects concept structs and semantic roles (`TAX_RATE`, `TRANSACTION_THRESHOLD`, `AGGREGATION_WINDOW`) inferred by the semantic parser, decoupling statutory rules from vendor-specific invoice key formats.
+  4. *Dual-Act Temporal Crystallization*: Enforces the statutory transition between the *Income-tax Act, 1961* and the *Income-tax Act, 2025* (effective 1 April 2026). Liability attaches upon the earlier of credit or payment. If credited on or before 31 March 2026, the transaction is governed permanently by Section 194Q (1961 Act) under Section 536 savings clauses; if credited on or after 1 April 2026, it is governed by Section 393 (2025 Act).
+  5. *Cumulative Threshold Evaluation (Section 194Q)*:
      - Retrieves cumulative prior FY purchases from the verified ERP ledger: $\text{Prior Purchases} = \text{INR } 45,00,000$.
      - Computes cumulative aggregate: $\text{Cumulative} = 45,00,000 + 60,00,000 = \text{INR } 1,05,00,000$.
-  3. *GST Unbundling & Taxable Base Netting*:
+  6. *GST Unbundling & Taxable Base Netting*:
      - Strictly enforces CBDT Circular 13/2021 and Circular 23/2017: GST components (CGST/SGST/IGST) are excluded from the withholding base when charged separately.
      - Computes marginal taxable excess:
        $$\text{Taxable Excess} = \max(0, \min(\text{Basic Value}, \text{Cumulative} - 50,00,000)) = \text{INR } 55,00,000$$
-  4. *PAN Compliance & Penalty Rate Interception*:
+  7. *PAN Compliance & Penalty Rate Interception*:
      - Inspects vendor PAN validity and Section 206AB compliance. If PAN is valid and active, standard rate ($0.1\%$) applies:
        $$\text{TDS Deducted} = \lfloor 55,00,000 \times 0.001 \rfloor = \text{INR } 5,500$$
      - If PAN is inoperative or specified non-filer, automatically elevates rate to 5% u/s 206AA/206AB.
-  5. *Net Payable Allocation & Rational BigInt Precision*:
+  8. *Net Payable Allocation & Rational BigInt Precision*:
      - Computed via 5-stage rational fractions (`math_rational.js`) eliminating IEEE 754 float drift:
        $$\text{Net Payable to Vendor} = \text{Gross Invoice Total} - \text{TDS Deducted} = 70,80,000 - 5,500 = \text{INR } 70,74,500$$
 - **Outbound Payload**: Canonical `StatutoryCalculationResult` detailing basic value, unbundled taxes, taxable excess, deduction, net payable, and mandatory fiduciary invariant `isAuthorizedToDisburse: false`.

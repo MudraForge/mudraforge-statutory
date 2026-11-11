@@ -143,16 +143,18 @@ Prior to merging any composite transaction prototype into `main`, the implementa
 ## ADR-0007: Universal Statutory Virtual Machine (USVM) Declarative AST Kernel
 
 ### Context
-Historically, statutory tax calculations were coded as imperative JavaScript branching functions. As statutory provisions grew to 46+ sections across 5 domains, imperative functions introduced code duplication, maintenance overhead, and higher bundle sizes for edge and browser environments. Imperative procedural code also made independent statutory verification opaque for non-developer tax professionals and audit teams.
+Historically, statutory tax calculations were coded as imperative JavaScript branching functions. As statutory provisions grew across 5 canonical domains, imperative functions introduced code duplication, maintenance overhead, and higher bundle sizes for edge and browser environments. Imperative procedural code also made independent statutory verification opaque for non-developer tax professionals and audit teams.
 
 ### Decision
 We introduce the Universal Statutory Virtual Machine (USVM) declarative Abstract Syntax Tree (AST) evaluation kernel:
 1. **Stateless AST Evaluation Kernel (`src/usvm/evaluation_vm.js`)**: A compact 355-line stateless virtual machine evaluating declarative AST rule definitions without imperative branching.
 2. **5-Stage Rational BigInt Arithmetic (`src/usvm/math_rational.js`)**: Arithmetic is evaluated using exact rational fractions (`[numerator, denominator]` pairs) to eliminate IEEE 754 floating-point precision loss.
-3. **Co-Located Declarative Rules**: 46 `ast.json` rule packages co-located within the 5 canonical OKF domains, alongside 48 pre-cached rules in `src/usvm/rules/*.json`.
-4. **Tree-Shakable Subpath (`@mudraforge/statutory/usvm`)**: Exposes `evaluateStatutoryAst`, `validateStatutoryAst`, and `toBigIntPaise` in an ultra-lightweight bundle (~12 kB GZIP vs 92.9 kB full library).
-5. **Fiduciary Statutory Invariant**: Every evaluation strictly enforces `isAuthorizedToDisburse: false`.
+3. **Co-Located Declarative Rules**: 55 `ast.json` rule packages co-located within the 5 canonical OKF domains, alongside 64 pre-cached rules in `src/usvm/rules/*.json`.
+4. **Strict Operator Allowlist & Passive AST Data**: The AST is strictly declarative data (`ast.json`) evaluated against an operator allowlist (`+`, `-`, `*`, `/`, `min`, `max`, `floor`, `ceil`, `and`, `or`, `not`, comparison, slab lookups). Dynamic execution, `eval()`, network I/O, and file system calls are structurally barred.
+5. **Graph-Driven Symbol Legend Projection (`symbolLegend`)**: Inferred semantic roles and concept structs map statutory variables to typed AST nodes without requiring hardcoded schema drift.
+6. **Tree-Shakable Subpath (`@mudraforge/statutory/usvm`)**: Exposes `evaluateStatutoryAst`, `validateStatutoryAst`, and `toBigIntPaise` in an ultra-lightweight bundle (~12 kB GZIP vs 92.9 kB full library).
+7. **Fiduciary Statutory Invariant**: Every evaluation strictly enforces `isAuthorizedToDisburse: false`.
 
 ### Consequences
-- **Positive**: Replaces thousands of lines of imperative procedural code with declarative JSON AST definitions; achieves sub-microsecond evaluation latency (p50: 14.32 microseconds); enables tree-shakable client bundles.
+- **Positive**: Replaces thousands of lines of imperative procedural code with declarative JSON AST definitions; achieves sub-microsecond evaluation latency (p50: 14.32 microseconds); enables tree-shakable client bundles; guarantees complete decoupling between computation and cash movement.
 - **Backward Compatibility**: Fully backward compatible with existing procedural API callers.

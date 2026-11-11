@@ -10,6 +10,38 @@
  * Specification: RFC-009 (Revision 2.1)
  */
 
+import {
+    UNIVERSAL_OPERATORS,
+    MAX_EXPRESSION_DEPTH as EVAL_MAX_EXPRESSION_DEPTH,
+    MAX_PIPELINE_STEPS as EVAL_MAX_PIPELINE_STEPS,
+    MAX_QUANTIFIER_NESTING as EVAL_MAX_QUANTIFIER_NESTING
+} from '../universal_evaluator.js';
+
+export const EXECUTION_MODES = Object.freeze([
+    'DEVELOPMENT',
+    'PRODUCTION'
+]);
+
+export const RULE_DOMAINS = Object.freeze([
+    'STATUTORY_FINANCE',
+    'GENERAL_LOGIC'
+]);
+
+export const OKF_LIFECYCLE_STATUSES = Object.freeze([
+    'OKF_VERIFIED_ACTIVE',
+    'OKF_AMENDMENT_STALE_DETECTED',
+    'OKF_UNREGISTERED_NEW'
+]);
+
+export const ALLOWED_CITATION_DOMAINS = Object.freeze([
+    '.gov.in',
+    '.rbi.org.in',
+    '.mca.gov.in',
+    '.icai.org',
+    'indiankanoon.org',
+    '.irs.gov'
+]);
+
 export const SUPPORTED_NODE_TYPES = Object.freeze([
     'PREDICATE',
     'TEMPORAL_VALIDITY',
@@ -21,7 +53,22 @@ export const SUPPORTED_NODE_TYPES = Object.freeze([
     'PRECEDENCE',
     'ARITHMETIC',
     'QUANTIZATION',
-    'ASSESSMENT_ROUND'
+    'ASSESSMENT_ROUND',
+    'DECLARATIVE_PIPELINE',
+    'PIPELINE_STEP',
+    'DEONTIC_STATE_GATE',
+    'STATUS_DISQUALIFICATION_GATE',
+    'CORPORATE_APPROVAL_GATE',
+    'PROCEDURAL_NOTICE_GATE',
+    'TEMPORAL_WINDOW_GATE',
+    'BOOLEAN_PROHIBITION_GATE',
+    'SUBJECTIVE_EVIDENCE_GATE',
+    'ACCOUNTING_RECOGNITION_GATE',
+    'ACCOUNTING_ELECTION_CARVEOUT',
+    'MEASUREMENT_VALUATION_RULE',
+    'DISCLOSURE_PRESENTATION_OBLIGATION',
+    'TRANSACTIONAL_WITHHOLDING',
+    'GENERAL_RULE_GATE'
 ]);
 
 export const TYPED_OPERATORS = Object.freeze([
@@ -37,6 +84,29 @@ export const TYPED_OPERATORS = Object.freeze([
     'IS_FALSE',
     'EXISTS',
     'NOT_EXISTS'
+]);
+
+export const SYMBOL_TYPES = Object.freeze([
+    'MONETARY_QUANTUM',
+    'PERCENTAGE_RATE',
+    'TEMPORAL_DURATION',
+    'EXEMPTION_CONDITION',
+    'DOCUMENT_VERIFICATION',
+    'SUBJECTIVE_CRITERION_EVALUATION',
+    'ENTITY_CLASSIFICATION',
+    'PREREQUISITE_STATUS',
+    'BOOLEAN_FLAG'
+]);
+
+export const SYMBOL_DATA_TYPES = Object.freeze([
+    'CURRENCY_PAISA',
+    'CURRENCY_CENTS',
+    'CURRENCY_MINOR_UNITS',
+    'PERCENT',
+    'NUMBER',
+    'BOOLEAN',
+    'DOCUMENT_ID',
+    'CATEGORICAL_STRING'
 ]);
 
 export const TRIGGER_POLICIES = Object.freeze([
@@ -107,7 +177,27 @@ export const MATH_ARCHETYPES = Object.freeze([
     'TDS_LIFE_INSURANCE_194DA',
     'TDS_MUTUAL_FUNDS_194K',
     'TCS_REMITTANCE_LRS_206C1G',
-    'GST_TCS_ECOMMERCE_SEC52'
+    'GST_TCS_ECOMMERCE_SEC52',
+    'DECLARATIVE_PIPELINE',
+    'UNIVERSAL_PIPELINE',
+    'UNIVERSAL_EXPRESSION',
+    'DEONTIC_STATE_GATE',
+    'STATUS_DISQUALIFICATION_GATE',
+    'CORPORATE_APPROVAL_GATE',
+    'PROCEDURAL_NOTICE_GATE',
+    'TEMPORAL_WINDOW_GATE',
+    'BOOLEAN_PROHIBITION_GATE',
+    'SUBJECTIVE_EVIDENCE_GATE',
+    'ACCOUNTING_RECOGNITION_GATE',
+    'ACCOUNTING_ELECTION_CARVEOUT',
+    'MEASUREMENT_VALUATION_RULE',
+    'DISCLOSURE_PRESENTATION_OBLIGATION',
+    'FRACTIONAL_RATIO_ACCRUAL',
+    'BOOLEAN_BINARY_GATE',
+    'EXEMPTION_THRESHOLD_GATE',
+    'STATUTORY_PREDICATE_EVALUATION',
+    'PURE_LOGIC_PIPELINE',
+    'GENERAL_RULE_GATE'
 ]);
 
 export const ROUNDING_POLICIES = Object.freeze([
@@ -125,21 +215,258 @@ export class StatutoryAstValidationError extends Error {
     }
 }
 
+export const MAX_EXPRESSION_DEPTH = EVAL_MAX_EXPRESSION_DEPTH ?? 16;
+export const MAX_PIPELINE_STEPS = EVAL_MAX_PIPELINE_STEPS ?? 100;
+export const MAX_QUANTIFIER_NESTING = EVAL_MAX_QUANTIFIER_NESTING ?? 3;
+
+export const QUANTIFIER_OPERATORS = Object.freeze(['EXISTS', 'FORALL', 'FILTER', 'MAP', 'COUNT', 'SUM_OVER']);
+const QUANTIFIER_OPS = new Set(QUANTIFIER_OPERATORS);
+const RESERVED_ITERATOR_NAMES = new Set(['facts', 'rules', 'vars', 'temporal', 'output', '__proto__', 'constructor', 'prototype']);
+
+const EXPRESSION_CHILD_KEYS = Object.freeze([
+    'left', 'right', 'operand', 'value', 'base', 'min', 'max',
+    'principal', 'rateBps', 'rate', 'denominator', 'total', 'numerator',
+    'periods', 'months', 'discriminant', 'default', 'start', 'end', 'date', 'amount',
+    'test', 'then', 'else', 'consequent', 'alternate',
+    'collection', 'items', 'predicate', 'where', 'body', 'map', 'expr',
+    'target', 'object', 'key', 'attr', 'list', 'antecedent'
+]);
+
+function forEachExpressionChild(expr, visitChild) {
+    if (!expr || typeof expr !== 'object') return;
+
+    for (const key of EXPRESSION_CHILD_KEYS) {
+        const child = expr[key];
+        if (child && typeof child === 'object') {
+            visitChild(child);
+        }
+    }
+
+    if (Array.isArray(expr.operands)) {
+        for (const op of expr.operands) {
+            if (op && typeof op === 'object') visitChild(op);
+        }
+    }
+    if (Array.isArray(expr.cases)) {
+        for (const c of expr.cases) {
+            if (c && typeof c === 'object') {
+                if (c.test && typeof c.test === 'object') visitChild(c.test);
+                if (c.case && typeof c.case === 'object') visitChild(c.case);
+                if (c.value && typeof c.value === 'object') visitChild(c.value);
+                if (c.then && typeof c.then === 'object') visitChild(c.then);
+            }
+        }
+    }
+    if (Array.isArray(expr.slabs)) {
+        for (const slab of expr.slabs) {
+            if (slab && typeof slab === 'object') {
+                if (slab.upTo && typeof slab.upTo === 'object') visitChild(slab.upTo);
+                if (slab.floor && typeof slab.floor === 'object') visitChild(slab.floor);
+                if (slab.rateBps && typeof slab.rateBps === 'object') visitChild(slab.rateBps);
+                if (slab.baseTax && typeof slab.baseTax === 'object') visitChild(slab.baseTax);
+            }
+        }
+    }
+}
+
+export function validateNodeDepth(expr, depth = 0) {
+    if (depth > MAX_EXPRESSION_DEPTH) {
+        throw new StatutoryAstValidationError(
+            `Expression depth exceeded maximum limit of ${MAX_EXPRESSION_DEPTH} levels (ERR_AST_DEPTH_EXCEEDED)`,
+            { depth, limit: MAX_EXPRESSION_DEPTH }
+        );
+    }
+    forEachExpressionChild(expr, (child) => validateNodeDepth(child, depth + 1));
+}
+
+export function validateDeepOfficialCitations(officialCitations) {
+    if (!Array.isArray(officialCitations) || officialCitations.length === 0) {
+        return {
+            valid: false,
+            normalizedUrls: [],
+            reason: 'PRODUCTION mode requires at least one verified officialCitations entry.'
+        };
+    }
+
+    const normalizedUrls = [];
+    for (const cit of officialCitations) {
+        const rawUrl = typeof cit === 'string'
+            ? cit.trim()
+            : String(cit?.canonicalDocumentUrl || cit?.officialUrl || cit?.url || '').trim();
+
+        if (!rawUrl) {
+            return {
+                valid: false,
+                normalizedUrls,
+                reason: 'Citation entry is missing canonicalDocumentUrl / url.'
+            };
+        }
+
+        if (!rawUrl.startsWith('https://')) {
+            return {
+                valid: false,
+                normalizedUrls,
+                reason: `Insecure citation protocol rejected (HTTPS strictly required): ${rawUrl}`
+            };
+        }
+
+        let parsed;
+        try {
+            parsed = new URL(rawUrl);
+        } catch {
+            return {
+                valid: false,
+                normalizedUrls,
+                reason: `Malformed citation URL: ${rawUrl}`
+            };
+        }
+
+        const host = parsed.hostname.toLowerCase();
+        const isDomainAllowed = ALLOWED_CITATION_DOMAINS.some((allowed) => {
+            const cleanAllowed = allowed.startsWith('.') ? allowed.slice(1) : allowed;
+            return host === cleanAllowed || host.endsWith(`.${cleanAllowed}`);
+        });
+
+        if (!isDomainAllowed) {
+            return {
+                valid: false,
+                normalizedUrls,
+                reason: `Citation domain '${host}' is not on the whitelisted government/regulatory domains.`
+            };
+        }
+
+        const cleanPath = parsed.pathname.replace(/^\/+|\/+$/g, '');
+        if (!cleanPath && !parsed.search) {
+            return {
+                valid: false,
+                normalizedUrls,
+                reason: `Generic portal root URL is forbidden in PRODUCTION mode (deep canonical document path required): ${rawUrl}`
+            };
+        }
+
+        normalizedUrls.push(rawUrl);
+    }
+
+    return {
+        valid: true,
+        normalizedUrls
+    };
+}
+
+function validateUniversalExpressionOperators(expr, contextLabel = 'expression', depth = 0, qDepth = 0) {
+    if (depth > MAX_EXPRESSION_DEPTH) {
+        throw new StatutoryAstValidationError(
+            `Expression depth exceeded maximum limit of ${MAX_EXPRESSION_DEPTH} levels (ERR_AST_DEPTH_EXCEEDED)`,
+            { depth, limit: MAX_EXPRESSION_DEPTH, contextLabel }
+        );
+    }
+    if (!expr || typeof expr !== 'object') return;
+    if (expr.op && expr.op !== 'LITERAL' && expr.op !== 'VARIABLE' && !UNIVERSAL_OPERATORS.includes(expr.op)) {
+        throw new StatutoryAstValidationError(
+            `Operator '${expr.op}' in step '${contextLabel}' not in universal allowlist`,
+            { expr, allowed: UNIVERSAL_OPERATORS }
+        );
+    }
+
+    let nextQDepth = qDepth;
+    if (expr.op && QUANTIFIER_OPS.has(expr.op)) {
+        nextQDepth = qDepth + 1;
+        if (nextQDepth > MAX_QUANTIFIER_NESTING) {
+            throw new StatutoryAstValidationError(
+                `Quantifier nesting depth exceeded maximum limit of ${MAX_QUANTIFIER_NESTING} levels (ERR_QUANTIFIER_DEPTH_EXCEEDED)`,
+                { code: 'ERR_QUANTIFIER_DEPTH_EXCEEDED', quantifierDepth: nextQDepth, limit: MAX_QUANTIFIER_NESTING, contextLabel }
+            );
+        }
+        const iterVar = expr.iteratorVar ?? expr.varName;
+        if (iterVar !== undefined) {
+            if (typeof iterVar !== 'string' || !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(iterVar) || RESERVED_ITERATOR_NAMES.has(iterVar)) {
+                throw new StatutoryAstValidationError(
+                    `Invalid quantifier iteratorVar '${iterVar}' in '${contextLabel}'`,
+                    { code: 'ERR_INVALID_ITERATOR_VAR', iteratorVar, contextLabel }
+                );
+            }
+        }
+    }
+
+    forEachExpressionChild(expr, (child) => validateUniversalExpressionOperators(child, contextLabel, depth + 1, nextQDepth));
+}
+
 /**
- * Validates a declarative statutory AST rule package against RFC-009 Revision 2.1 contracts.
+ * Validates a declarative statutory AST rule package against RFC-009 Revision 3.1 contracts.
+ * Supports explicit execution modes:
+ * - DEVELOPMENT: allows draft/unregistered rules without sectionId, version, or officialCitations.
+ * - PRODUCTION: fail-closed enforcement of verified sectionId, version, and deep officialCitations.
+ * - Omitted (legacy default): validates identity fields without requiring officialCitations.
+ *
  * Throws StatutoryAstValidationError if any contract is violated.
  */
-export function validateStatutoryAst(ruleAst) {
+export function validateStatutoryAst(ruleAst, options = {}) {
     if (!ruleAst || typeof ruleAst !== 'object') {
         throw new StatutoryAstValidationError('Rule AST must be a non-null object', { ruleAst });
     }
 
-    // 1. Mandatory Identity Fields
-    if (!ruleAst.sectionId || typeof ruleAst.sectionId !== 'string') {
-        throw new StatutoryAstValidationError('Rule AST must contain a valid string sectionId', { ruleAst });
+    // Absolute Fiduciary Invariant Check
+    if (ruleAst.isAuthorizedToDisburse === true || ruleAst.statutoryInvariants?.isAuthorizedToDisburse === true) {
+        throw new StatutoryAstValidationError(
+            'Fiduciary invariant violation: rule AST cannot declare isAuthorizedToDisburse = true (ERR_FIDUCIARY_INVARIANT_VIOLATION)',
+            { code: 'ERR_FIDUCIARY_INVARIANT_VIOLATION', sectionId: ruleAst.sectionId }
+        );
     }
-    if (!ruleAst.version || typeof ruleAst.version !== 'string') {
-        throw new StatutoryAstValidationError('Rule AST must contain a valid string version', { sectionId: ruleAst.sectionId });
+
+    const rawRequestedMode = options?.mode ?? ruleAst.executionMode ?? null;
+    const requestedMode = rawRequestedMode ? String(rawRequestedMode).trim().toUpperCase() : null;
+
+    if (requestedMode !== null && !EXECUTION_MODES.includes(requestedMode)) {
+        throw new StatutoryAstValidationError(
+            `Unsupported executionMode '${requestedMode}'. Must be one of: ${EXECUTION_MODES.join(', ')}`,
+            { code: 'ERR_INVALID_EXECUTION_MODE', mode: requestedMode }
+        );
+    }
+
+    // 1. Mode-Aware Identity & Provenance Validation
+    if (requestedMode === 'PRODUCTION') {
+        if (!ruleAst.sectionId || typeof ruleAst.sectionId !== 'string' || (!ruleAst.isVerifiedInternalPolicy && ruleAst.sectionId.startsWith('DRAFT_'))) {
+            throw new StatutoryAstValidationError(
+                'ERR_UNVERIFIED_PRODUCTION_RULE: PRODUCTION mode requires a verified non-draft sectionId',
+                { code: 'ERR_UNVERIFIED_PRODUCTION_RULE', sectionId: ruleAst.sectionId }
+            );
+        }
+        if (!ruleAst.version || typeof ruleAst.version !== 'string') {
+            throw new StatutoryAstValidationError(
+                'ERR_UNVERIFIED_PRODUCTION_RULE: PRODUCTION mode requires a valid semantic version string',
+                { code: 'ERR_UNVERIFIED_PRODUCTION_RULE', sectionId: ruleAst.sectionId }
+            );
+        }
+        if (!ruleAst.isVerifiedInternalPolicy && !options?.allowInternalPolicy) {
+            const citCheck = validateDeepOfficialCitations(ruleAst.officialCitations);
+            if (!citCheck.valid) {
+                throw new StatutoryAstValidationError(
+                    `ERR_UNVERIFIED_PRODUCTION_RULE: ${citCheck.reason}`,
+                    { code: 'ERR_UNVERIFIED_PRODUCTION_RULE', sectionId: ruleAst.sectionId, reason: citCheck.reason }
+                );
+            }
+        }
+        if (ruleAst.okfVerificationStatus === 'UNREGISTERED' || ruleAst.okfVerificationStatus === 'STALE') {
+            throw new StatutoryAstValidationError(
+                `ERR_UNVERIFIED_PRODUCTION_RULE: Rule okfVerificationStatus is '${ruleAst.okfVerificationStatus}'`,
+                { code: 'ERR_UNVERIFIED_PRODUCTION_RULE', sectionId: ruleAst.sectionId, okfVerificationStatus: ruleAst.okfVerificationStatus }
+            );
+        }
+    } else if (requestedMode === 'DEVELOPMENT') {
+        if (ruleAst.sectionId !== undefined && typeof ruleAst.sectionId !== 'string') {
+            throw new StatutoryAstValidationError('sectionId, when provided in DEVELOPMENT mode, must be a string', { sectionId: ruleAst.sectionId });
+        }
+        if (ruleAst.version !== undefined && typeof ruleAst.version !== 'string') {
+            throw new StatutoryAstValidationError('version, when provided in DEVELOPMENT mode, must be a string', { version: ruleAst.version });
+        }
+    } else {
+        // Legacy / omitted mode contract
+        if (!ruleAst.sectionId || typeof ruleAst.sectionId !== 'string') {
+            throw new StatutoryAstValidationError('Rule AST must contain a valid string sectionId', { ruleAst });
+        }
+        if (!ruleAst.version || typeof ruleAst.version !== 'string') {
+            throw new StatutoryAstValidationError('Rule AST must contain a valid string version', { sectionId: ruleAst.sectionId });
+        }
     }
 
     // 2. Trigger Policy Validation
@@ -176,7 +503,7 @@ export function validateStatutoryAst(ruleAst) {
         }
     }
 
-    // 4. Threshold & Math Archetype Validation
+    // 4. Threshold, Math Archetype & Declarative Pipeline Validation
     if (ruleAst.computation) {
         const comp = ruleAst.computation;
         if (comp.archetype && !MATH_ARCHETYPES.includes(comp.archetype)) {
@@ -185,17 +512,89 @@ export function validateStatutoryAst(ruleAst) {
                 { computation: comp }
             );
         }
-        if (comp.thresholdPaisa !== undefined && typeof comp.thresholdPaisa !== 'string' && typeof comp.thresholdPaisa !== 'number') {
+        if (comp.thresholdPaisa !== undefined && comp.thresholdPaisa !== null && typeof comp.thresholdPaisa !== 'string' && typeof comp.thresholdPaisa !== 'number' && typeof comp.thresholdPaisa !== 'bigint') {
             throw new StatutoryAstValidationError(
                 'thresholdPaisa must be a valid decimal string or number',
                 { thresholdPaisa: comp.thresholdPaisa }
             );
         }
-        if (comp.standardRateBps !== undefined && (typeof comp.standardRateBps !== 'number' || comp.standardRateBps < 0)) {
+        if (comp.standardRateBps !== undefined && comp.standardRateBps !== null && (typeof comp.standardRateBps !== 'number' || comp.standardRateBps < 0)) {
             throw new StatutoryAstValidationError(
                 'standardRateBps must be a non-negative number',
                 { standardRateBps: comp.standardRateBps }
             );
+        }
+
+        const steps = comp.steps || comp.pipeline?.steps;
+        if (steps) {
+            if (!Array.isArray(steps)) {
+                throw new StatutoryAstValidationError(
+                    'Declarative pipeline steps must be an array of step objects',
+                    { steps }
+                );
+            }
+            if (steps.length > MAX_PIPELINE_STEPS) {
+                throw new StatutoryAstValidationError(
+                    `Step count (${steps.length}) exceeds maximum limit of ${MAX_PIPELINE_STEPS} steps (ERR_STEP_BUDGET_EXHAUSTED)`,
+                    { stepCount: steps.length, limit: MAX_PIPELINE_STEPS }
+                );
+            }
+            for (const step of steps) {
+                if (!step || typeof step !== 'object') {
+                    throw new StatutoryAstValidationError(
+                        'Each step in declarative pipeline must be a valid object',
+                        { step }
+                    );
+                }
+                const assignVar = step.assign || step.name;
+                if (!assignVar || typeof assignVar !== 'string') {
+                    throw new StatutoryAstValidationError(
+                        'Each step in declarative pipeline must define an assignment variable (assign or name)',
+                        { step }
+                    );
+                }
+                const expr = step.expr ?? step;
+                if (expr && typeof expr === 'object') {
+                    validateUniversalExpressionOperators(expr, assignVar, 0, 0);
+                    validateNodeDepth(expr, 0);
+                }
+            }
+        }
+
+        const pipelineOutput = comp.pipeline?.output || comp.output;
+        if (pipelineOutput && typeof pipelineOutput === 'object' && !Array.isArray(pipelineOutput)) {
+            for (const [outKey, outExpr] of Object.entries(pipelineOutput)) {
+                if (outExpr && typeof outExpr === 'object') {
+                    validateUniversalExpressionOperators(outExpr, `output.${outKey}`, 0, 0);
+                    validateNodeDepth(outExpr, 0);
+                }
+            }
+        }
+
+        // Validate optional declarative Deontic Gate structure
+        const deonticGate = comp.deonticGate || ruleAst.deonticGate;
+        if (deonticGate && typeof deonticGate === 'object') {
+            if (deonticGate.prohibitionPredicate && typeof deonticGate.prohibitionPredicate === 'object') {
+                validateUniversalExpressionOperators(deonticGate.prohibitionPredicate, 'deonticGate.prohibitionPredicate', 0);
+                validateNodeDepth(deonticGate.prohibitionPredicate, 0);
+            }
+            if (deonticGate.obligationPredicate && typeof deonticGate.obligationPredicate === 'object') {
+                validateUniversalExpressionOperators(deonticGate.obligationPredicate, 'deonticGate.obligationPredicate', 0);
+                validateNodeDepth(deonticGate.obligationPredicate, 0);
+            }
+            for (const arrKey of ['exceptionCarveouts', 'disqualificationTriggers', 'mandatoryApprovals', 'gates']) {
+                if (Array.isArray(deonticGate[arrKey])) {
+                    for (const item of deonticGate[arrKey]) {
+                        if (item && typeof item === 'object') {
+                            const exprNode = item.expr || item.predicate || item.condition;
+                            if (exprNode && typeof exprNode === 'object') {
+                                validateUniversalExpressionOperators(exprNode, `deonticGate.${arrKey}`, 0);
+                                validateNodeDepth(exprNode, 0);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -212,6 +611,30 @@ export function validateStatutoryAst(ruleAst) {
                 `Unsupported assessmentTotal rounding policy: '${ruleAst.rounding.assessmentTotal}'`,
                 { rounding: ruleAst.rounding }
             );
+        }
+    }
+
+    // 6. Symbol Legend Validation
+    if (ruleAst.symbolLegend) {
+        if (typeof ruleAst.symbolLegend !== 'object' || Array.isArray(ruleAst.symbolLegend)) {
+            throw new StatutoryAstValidationError(
+                'symbolLegend must be an object map of symbolId -> symbol definition',
+                { symbolLegend: ruleAst.symbolLegend }
+            );
+        }
+        for (const [symId, sym] of Object.entries(ruleAst.symbolLegend)) {
+            if (!sym || typeof sym !== 'object') {
+                throw new StatutoryAstValidationError(
+                    `Symbol definition for '${symId}' must be a valid non-null object`,
+                    { symId }
+                );
+            }
+            if (sym.comparisonOperator && !TYPED_OPERATORS.includes(sym.comparisonOperator)) {
+                throw new StatutoryAstValidationError(
+                    `Operator '${sym.comparisonOperator}' in symbol '${symId}' not in typed allowlist: ${TYPED_OPERATORS.join(', ')}`,
+                    { symId, comparisonOperator: sym.comparisonOperator }
+                );
+            }
         }
     }
 

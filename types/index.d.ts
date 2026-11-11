@@ -860,7 +860,22 @@ export interface UsvmEvaluationResult {
 }
 
 export declare function evaluateStatutoryAst(ast: UsvmAstRule, facts: Record<string, any>, options?: { asOfDate?: string; trace?: boolean }): UsvmEvaluationResult;
-export declare function validateStatutoryAst(ast: unknown): { valid: boolean; errors?: string[] };
+export declare function evaluateExpression(node: any, context: Record<string, any>): any;
+export declare function executeDeclarativePipeline(pipeline: any, context: Record<string, any>): Record<string, any>;
+export declare function parseInfixExpression(input: string): any;
+export declare const UNIVERSAL_OPERATORS: readonly string[];
+export declare const QUANTIFIER_OPERATORS: readonly string[];
+export declare class UniversalStatutoryVM {
+    defaultMode: string;
+    constructor(options?: { mode?: 'DEVELOPMENT' | 'PRODUCTION' });
+    evaluate(ast: UsvmAstRule | any, facts?: Record<string, any>, options?: { mode?: 'DEVELOPMENT' | 'PRODUCTION'; trace?: boolean }): UsvmEvaluationResult;
+    evaluatePipeline(pipeline: any, context?: Record<string, any>): Record<string, any>;
+    evaluateExpression(expr: any, context?: Record<string, any>): any;
+    parseInfix(formula: string): any;
+    validate(ast: unknown): boolean;
+    classifyLifecycle(ast: unknown, baseline?: unknown): { status: string; reason?: string };
+}
+export declare function validateStatutoryAst(ast: unknown): boolean;
 export declare function toBigIntPaise(amountInr: number | string | bigint): bigint;
 export declare function fromBigIntPaise(paiseBigInt: bigint): number;
 export declare function getStatutoryAst(sectionKey: string): UsvmAstRule | null;
