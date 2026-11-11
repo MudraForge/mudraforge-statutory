@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.1.0] - 2026-11-11
+
+### Added
+- **Universal Statutory Virtual Machine (USVM) Kernel RFC-009 (Revision 3.1)**:
+  - Upgraded declarative ALU evaluator with 43 universal opcodes across arithmetic, relational, boolean logic, and collection operations.
+  - Added first-order collection quantifiers: `EXISTS`, `FORALL`, `COUNT`, `SUM_OVER`, `FILTER`, `MAP`, `LEN`, and `GET_ATTR`.
+  - Added boolean macro operators: `IMPLIES` and `XOR`.
+  - Implemented scoped lexical stack frames (`context.scopeVars`) for nested collection iterators with variable shadowing protection.
+  - Enforced deterministic DoS limits: `MAX_COLLECTION_ITEMS = 500`, `MAX_TOTAL_QUANTIFIER_ITERATIONS = 5000`, and `MAX_QUANTIFIER_NESTING = 3`.
+- **Infix Quantifier Parser Lowering (`src/usvm/infix_parser.js`)**:
+  - Implemented recursive-descent lowering of quantifier macro invocations (`any(...)`, `all(...)`, `count(...)`, `sum_over(...)`, `filter(...)`, `map(...)`, `len(...)`, `get_attr(...)`, `implies(...)`, `xor(...)`).
+- **UniversalStatutoryVM Class Export (`src/usvm/index.js` & `src/index.js`)**:
+  - Exported standalone `UniversalStatutoryVM` class with `executePipeline()`, `evaluateExpression()`, `evaluateAst()`, and `parseInfix()`.
+  - Added `client.vm` getter and `evaluateAst()` method to `StatutoryClient.prototype`.
+  - Exported `QUANTIFIER_OPERATORS` and `RULE_DOMAINS` enums.
+  - Added full TypeScript definitions in `types/index.d.ts`.
+
+### Changed
+- **Pure Logic Pipeline Support**:
+  - Added support for `archetype: 'PURE_LOGIC_PIPELINE'` and `ruleDomain: 'GENERAL_LOGIC'` in `evaluation_vm.js` to execute general regulatory rules without injecting Indian tax schema fields while strictly preserving exact 64-bit BigInt rational math and `isAuthorizedToDisburse: false`.
+
 ## [3.0.1] - 2026-11-09
 
 ### Security
